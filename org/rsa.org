@@ -1,0 +1,106 @@
+#+TITILE: RSA总结
+#+HTML_HEAD: <link rel="stylesheet" href="./css/org-css.css" type="text/css" />
+
+* rsa 原理
+** rsa算法原理 
+rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, e. 私钥也主要保持两个数字n, d.对于任一一个数字a满足(a^ed) mod n = a, 其中 ed mod (p-1)(q-1) = 1, n = pq. 这就保证了一个数字经过公钥加密后能被私钥解密.
+
+#+BEGIN_SRC math 
+加密算法: c = a^e mod n
+解密算法: a = c^d mod n
+#+END_SRC
+
+公钥跟私钥在原则上并没有什么不同，(只不过d一般是个很大的数, e一般相对较小)。所以私钥，公钥都可以加密，都可以解密.(私钥加密又叫做签名)
+
+但是如果对于一个很小的数字a, 由于n很大，所以有可能出现a^e < n 这时候就会出现 a^e mod n = a^e, 也就是说加密前后的数字是一样的，并没有起到加密的作用. 所以代码会填充随机字符,把数字的数量级提升到跟N一样。
+
+*** 公式推导
+#+BEGIN_SRC math
+我们主要推导以下公式成立:
+(a^ed) mod n = a
+
+这里用到欧拉定理:
+a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特殊情况，
+当p,q互质的时候,f(pq) = (p-1)(q-1)
+
+由于: ed mod (p-1)(q-1) = 1
+所以: ed = h(p-1)(q-1) + 1
+所以我们要证明: a^(h(p-1)(q-1)+1) mod n = a
+=> a*a^(h*(p-1)*(q-1)) mod n = a
+
+
+#+END_SRC
+
+** ASN1格式
+*** 私有类型
+1. BOOLEAN
+2. INTEGER
+3. REAL
+4. NULL
+5. BIT STRING
+6. OCTET STRING
+7. Character Strings
+8. OBJECT IDENTIFIER
+9. Object Descriptor
+10. TIME TYPES
+*** 组合类型
+1. SEQUENCE
+2. SET
+3. CHOICE
+4. SET OF AND SEQUENCE OF
+5. ANY
+6. ANY DEFINED BY
+7. EXTERNAL
+8. EMBEDDED PDV
+9. CHARACTER STRING
+
+** PKCS#1 格式
+#+BEGIN_SRC golang
+//公钥
+type public struct {
+  n INTEGER // n
+  e INTEGER // e
+}
+
+//私钥
+type private struct {
+  version Version
+  n INTEGER
+  e INTEGER
+  d INTEGER
+  p INTEGER
+  q INTEGER
+  e1 INTEGER
+  e2 INTEGER
+  c INTEGER
+  other OtherInfo //可选
+}
+#+END_SRC
+** PKCS#8
+由于PKCS#1不够通用，所以提出#8
+#+BEGIN_SRC golang
+type AlgorithmIdentifier struct {
+  algorithm OID // 用的哪种算法
+  parameters //可选信息
+}
+//公钥
+type public struct {
+  algorithm AlgorithmIdentifier
+  publicKey []byte // 具体公钥信息 
+}
+
+
+// 私钥
+type private struct {
+  version Version
+  algorithm AlgorithmIdentifier
+  privateKey []byte //具体私钥信息, rsa 的话就是上面的PKCS#1私钥的结构
+}
+
+#+END_SRC
+
+** 资料
+1. [[https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf][ASN1编码规则]]
+2. [[https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem][rsa密钥文件格式]]
+3. [[http://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html][阮一峰{RSA算法原理-}]]
+4. [[http://www.ruanyifeng.com/blog/2013/07/rsa_algorithm_part_two.html][阮一峰{RSA算法原理二}]]
