@@ -105,7 +105,8 @@ type private struct {
 1. PKCS#1格式
 #+BEGIN_SRC golang
 //公钥:
-//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
+//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）
+//由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
   k := new(rsa.PublicKey)
 	_, err = asn1.Unmarshal(der, k)
 

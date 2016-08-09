@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-09 二 17:49 -->
+<!-- 2016-08-09 二 17:50 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="viewport" content="width=device-width, initial-scale=1" />
 <title></title>
@@ -335,7 +335,8 @@ type private struct {
 <div class="org-src-container">
 
 <pre class="src src-golang">//公钥:
-//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
+//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）
+//由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
   k := new(rsa.PublicKey)
   _, err = asn1.Unmarshal(der, k)
 
@@ -417,7 +418,7 @@ if err == nil {
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: fengche</p>
-<p class="date">Created: 2016-08-09 二 17:49</p>
+<p class="date">Created: 2016-08-09 二 17:50</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
