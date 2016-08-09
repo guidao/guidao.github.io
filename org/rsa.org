@@ -99,6 +99,56 @@ type private struct {
 
 #+END_SRC
 
+** go 中的rsa包
+*** 获取公钥或私钥
+要使用rsa包，首先要得到公钥或者私钥,对于不同的格式有不同的方法调用。
+1. PKCS#1格式
+#+BEGIN_SRC golang
+//公钥:
+//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
+  k := new(rsa.PublicKey)
+	_, err = asn1.Unmarshal(der, k)
+
+//私钥:
+  x509.ParsePKCS1PrivateKey(der []byte)
+//der为私钥文件进行base64解码获得
+#+END_SRC
+
+2. PKCS#8格式
+#+BEGIN_SRC golang
+//公钥:
+	x509.ParsePKIXPublicKey(derBytes []byte)
+//这里derBytes一般由公钥文件进行base64解码获得
+
+//私钥:
+  x509.ParsePKCS8PrivateKey(der []byte)
+//der为私钥文件进行base64解码获得
+
+#+END_SRC
+
+*** 签名与验签
+对于rsa，我们最常做的操作就是签名与验签。
+1. 签名
+一般来说签名之前我们需要对数据进行hash得到签名串，再对签名串进行加密.hash算法可以是md5,sha1等。这里我们使用md5
+#+BEGIN_SRC go
+d := "this is test" 
+m := md5.New()
+m.Write([]byte(d))
+h := m.Sum(nil)
+var b *rsa.PrivateKey //这里使用签名的方法获取
+sign, err := b.Sign(rand.rander, h, crypto.MD5)
+#+END_SRC
+
+2. 验证签名
+#+BEGIN_SRC golang
+sign := "xxxx" //这是我们的签名
+hash := "xxx" // 对数据进行的hash
+var pk *rsa.PublicKey //公钥
+err := rsa.VerifyPKCS1v15(pk, crypto.MD5, hash, sign)
+if err == nil {
+  //sucess
+}
+#+END_SRC
 ** 资料
 1. [[https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf][ASN1编码规则]]
 2. [[https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem][rsa密钥文件格式]]

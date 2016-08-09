@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-09 二 17:05 -->
+<!-- 2016-08-09 二 17:49 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="viewport" content="width=device-width, initial-scale=1" />
 <title></title>
@@ -148,7 +148,7 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgheadline9">1. rsa 原理</a>
+<li><a href="#orgheadline12">1. rsa 原理</a>
 <ul>
 <li><a href="#orgheadline2">1.1. rsa算法原理</a>
 <ul>
@@ -163,15 +163,21 @@ for the JavaScript code in this tag.
 </li>
 <li><a href="#orgheadline6">1.3. PKCS#1 格式</a></li>
 <li><a href="#orgheadline7">1.4. PKCS#8</a></li>
-<li><a href="#orgheadline8">1.5. 资料</a></li>
+<li><a href="#orgheadline10">1.5. go 中的rsa包</a>
+<ul>
+<li><a href="#orgheadline8">1.5.1. 获取公钥或私钥</a></li>
+<li><a href="#orgheadline9">1.5.2. 签名与验签</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline11">1.6. 资料</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgheadline9" class="outline-2">
-<h2 id="orgheadline9"><span class="section-number-2">1</span> rsa 原理</h2>
+<div id="outline-container-orgheadline12" class="outline-2">
+<h2 id="orgheadline12"><span class="section-number-2">1</span> rsa 原理</h2>
 <div class="outline-text-2" id="text-1">
 </div><div id="outline-container-orgheadline2" class="outline-3">
 <h3 id="orgheadline2"><span class="section-number-3">1.1</span> rsa算法原理</h3>
@@ -314,9 +320,91 @@ type private struct {
 </div>
 </div>
 
-<div id="outline-container-orgheadline8" class="outline-3">
-<h3 id="orgheadline8"><span class="section-number-3">1.5</span> 资料</h3>
+<div id="outline-container-orgheadline10" class="outline-3">
+<h3 id="orgheadline10"><span class="section-number-3">1.5</span> go 中的rsa包</h3>
 <div class="outline-text-3" id="text-1-5">
+</div><div id="outline-container-orgheadline8" class="outline-4">
+<h4 id="orgheadline8"><span class="section-number-4">1.5.1</span> 获取公钥或私钥</h4>
+<div class="outline-text-4" id="text-1-5-1">
+<p>
+要使用rsa包，首先要得到公钥或者私钥,对于不同的格式有不同的方法调用。
+</p>
+<ol class="org-ol">
+<li>PKCS#1格式</li>
+</ol>
+<div class="org-src-container">
+
+<pre class="src src-golang">//公钥:
+//不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
+  k := new(rsa.PublicKey)
+  _, err = asn1.Unmarshal(der, k)
+
+//私钥:
+  x509.ParsePKCS1PrivateKey(der []byte)
+//der为私钥文件进行base64解码获得
+</pre>
+</div>
+
+<ol class="org-ol">
+<li>PKCS#8格式</li>
+</ol>
+<div class="org-src-container">
+
+<pre class="src src-golang">//公钥:
+  x509.ParsePKIXPublicKey(derBytes []byte)
+//这里derBytes一般由公钥文件进行base64解码获得
+
+//私钥:
+  x509.ParsePKCS8PrivateKey(der []byte)
+//der为私钥文件进行base64解码获得
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-4">
+<h4 id="orgheadline9"><span class="section-number-4">1.5.2</span> 签名与验签</h4>
+<div class="outline-text-4" id="text-1-5-2">
+<p>
+对于rsa，我们最常做的操作就是签名与验签。
+</p>
+<ol class="org-ol">
+<li>签名</li>
+</ol>
+<p>
+一般来说签名之前我们需要对数据进行hash得到签名串，再对签名串进行加密.hash算法可以是md5,sha1等。这里我们使用md5
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go">d := <span style="color: #E6DB74;">"this is test"</span> 
+m := md5.<span style="color: #A6E22E;">New</span><span style="color: #AE81FF;">()</span>
+m.<span style="color: #A6E22E;">Write</span><span style="color: #AE81FF;">(</span><span style="color: #66D9EF;">[]</span><span style="color: #A6E22E;">byte</span><span style="color: #66D9EF;">(</span>d<span style="color: #66D9EF;">)</span><span style="color: #AE81FF;">)</span>
+h := m.<span style="color: #A6E22E;">Sum</span><span style="color: #AE81FF;">(</span><span style="color: #AE81FF;">nil</span><span style="color: #AE81FF;">)</span>
+<span style="color: #F92672;">var</span> b *rsa.PrivateKey <span style="color: #75715E;">//</span><span style="color: #75715E;">&#36825;&#37324;&#20351;&#29992;&#31614;&#21517;&#30340;&#26041;&#27861;&#33719;&#21462;</span>
+sign, err := b.<span style="color: #A6E22E;">Sign</span><span style="color: #AE81FF;">(</span>rand.rander, h, crypto.MD5<span style="color: #AE81FF;">)</span>
+</pre>
+</div>
+
+<ol class="org-ol">
+<li>验证签名</li>
+</ol>
+<div class="org-src-container">
+
+<pre class="src src-golang">sign := "xxxx" //这是我们的签名
+hash := "xxx" // 对数据进行的hash
+var pk *rsa.PublicKey //公钥
+err := rsa.VerifyPKCS1v15(pk, crypto.MD5, hash, sign)
+if err == nil {
+  //sucess
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgheadline11" class="outline-3">
+<h3 id="orgheadline11"><span class="section-number-3">1.6</span> 资料</h3>
+<div class="outline-text-3" id="text-1-6">
 <ol class="org-ol">
 <li><a href="https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf">ASN1编码规则</a></li>
 <li><a href="https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem">rsa密钥文件格式</a></li>
@@ -329,7 +417,7 @@ type private struct {
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: fengche</p>
-<p class="date">Created: 2016-08-09 二 17:05</p>
+<p class="date">Created: 2016-08-09 二 17:49</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
