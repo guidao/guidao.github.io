@@ -1,6 +1,5 @@
 #+TITILE: RSA总结
 #+HTML_HEAD: <link rel="stylesheet" href="./css/org-css.css" type="text/css" />
-
 * rsa 原理
 ** rsa算法原理 
 rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, e. 私钥也主要保持两个数字n, d.对于任一一个数字a满足(a^ed) mod n = a, 其中 ed mod (p-1)(q-1) = 1, n = pq. 这就保证了一个数字经过公钥加密后能被私钥解密.
