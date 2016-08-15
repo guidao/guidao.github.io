@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-11 四 19:44 -->
+<!-- 2016-08-15 一 09:57 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="viewport" content="width=device-width, initial-scale=1" />
 <title></title>
@@ -94,6 +94,7 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   /*]]>*/-->
 </style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -167,44 +168,46 @@ for the JavaScript code in this tag.
 <div class="outline-text-2" id="text-2">
 <div class="org-src-container">
 
-<pre class="src src-golang">package main
+<pre class="src src-go"><span style="color: #F92672;">package</span> main
 
-import (
-  "fmt"
-  "go/ast"
-  "go/importer"
-  "go/parser"
-  "go/token"
-  "go/types"
-  "reflect"
-)
+<span style="color: #F92672;">import</span> <span style="color: #AE81FF;">(</span>
+  <span style="color: #E6DB74;">"fmt"</span>
+  <span style="color: #E6DB74;">"go/ast"</span>
+  <span style="color: #E6DB74;">"go/importer"</span>
+  <span style="color: #E6DB74;">"go/parser"</span>
+  <span style="color: #E6DB74;">"go/token"</span>
+  <span style="color: #E6DB74;">"go/types"</span>
+  <span style="color: #E6DB74;">"reflect"</span>
+<span style="color: #AE81FF;">)</span>
 
-func main() {
-  m, _ := ParseFile("./errcode.go")
-  fmt.Printf("%#v", m)
-}
+<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">main</span><span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
+  m, _ := <span style="color: #A6E22E;">ParseFile</span><span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"./errcode.go"</span><span style="color: #66D9EF;">)</span>
+  fmt.<span style="color: #A6E22E;">Printf</span><span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"%#v"</span>, m<span style="color: #66D9EF;">)</span>
+<span style="color: #AE81FF;">}</span>
 
-func ParseFile(fileName string) (map[string]string, error) {
-  fset := token.NewFileSet()
-  f, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
-  if err != nil {
-    return nil, err
-  }
+<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">ParseFile</span><span style="color: #AE81FF;">(</span>fileName <span style="color: #66D9EF;">string</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">(</span><span style="color: #F92672;">map</span><span style="color: #66D9EF;">[</span><span style="color: #66D9EF;">string</span><span style="color: #66D9EF;">]</span><span style="color: #66D9EF;">string</span>, <span style="color: #66D9EF;">error</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
+  fset := token.<span style="color: #A6E22E;">NewFileSet</span><span style="color: #66D9EF;">()</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">&#35299;&#26512;&#25991;&#20214;&#65292;&#20027;&#35201;&#35299;&#26512;token</span>
+  f, err := parser.<span style="color: #A6E22E;">ParseFile</span><span style="color: #66D9EF;">(</span>fset, fileName, <span style="color: #AE81FF;">nil</span>, parser.ParseComments<span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">if</span> err != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">return</span> <span style="color: #AE81FF;">nil</span>, err
+  <span style="color: #66D9EF;">}</span>
 
-  conf := types.Config{Importer: importer.Default()}
-  pkg, err := conf.Check("cmd/hello", fset, []*ast.File{f}, nil)
-  if err != nil {
-    return nil, err
-  }
-  m := make(map[string]string)
-  for _, v := range f.Scope.Objects {
-    if v.Kind == ast.Con {
-      d := v.Decl.(*ast.ValueSpec)
-      m[pkg.Scope().Lookup(v.Name).(*types.Const).Val().String()] = d.Comment.Text()
-    }
-  }
-  return m, nil
-}
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">&#31867;&#22411;&#26816;&#26597;, &#24471;&#21040;&#24120;&#37327;&#30340;&#20540;</span>
+  conf := types.<span style="color: #66D9EF;">Config</span><span style="color: #66D9EF;">{</span>Importer: importer.<span style="color: #A6E22E;">Default</span><span style="color: #A6E22E;">()</span><span style="color: #66D9EF;">}</span>
+  pkg, err := conf.<span style="color: #A6E22E;">Check</span><span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"cmd/hello"</span>, fset, <span style="color: #A6E22E;">[]</span>*<span style="color: #66D9EF;">ast.File</span><span style="color: #A6E22E;">{</span>f<span style="color: #A6E22E;">}</span>, <span style="color: #AE81FF;">nil</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">if</span> err != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">return</span> <span style="color: #AE81FF;">nil</span>, err
+  <span style="color: #66D9EF;">}</span>
+  m := <span style="color: #F92672;">make</span><span style="color: #66D9EF;">(</span><span style="color: #F92672;">map</span><span style="color: #A6E22E;">[</span><span style="color: #66D9EF;">string</span><span style="color: #A6E22E;">]</span><span style="color: #66D9EF;">string</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">for</span> _, v := <span style="color: #F92672;">range</span> f.Scope.Objects <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">if</span> v.Kind == ast.Con <span style="color: #A6E22E;">{</span>
+      d := v.Decl.<span style="color: #E6DB74;">(</span>*<span style="color: #66D9EF;">ast.ValueSpec</span><span style="color: #E6DB74;">)</span>
+      m<span style="color: #E6DB74;">[</span>pkg.<span style="color: #A6E22E;">Scope</span><span style="color: #FD971F;">()</span>.<span style="color: #A6E22E;">Lookup</span><span style="color: #FD971F;">(</span>v.Name<span style="color: #FD971F;">)</span>.<span style="color: #FD971F;">(</span>*<span style="color: #66D9EF;">types.Const</span><span style="color: #FD971F;">)</span>.<span style="color: #A6E22E;">Val</span><span style="color: #FD971F;">()</span>.<span style="color: #A6E22E;">String</span><span style="color: #FD971F;">()</span><span style="color: #E6DB74;">]</span> = d.Comment.<span style="color: #A6E22E;">Text</span><span style="color: #E6DB74;">()</span>
+    <span style="color: #A6E22E;">}</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">return</span> m, <span style="color: #AE81FF;">nil</span>
+<span style="color: #AE81FF;">}</span>
 </pre>
 </div>
 </div>
@@ -215,14 +218,14 @@ func ParseFile(fileName string) (map[string]string, error) {
 <div class="outline-text-2" id="text-3">
 <ul class="org-ul">
 <li><a href="https://github.com/golang/example/tree/master/gotypes#introduction">https://github.com/golang/example/tree/master/gotypes#introduction</a> 主要介绍了go/ast, go/token, go/parse等几个包的使用</li>
-<li><a href="https://golang.org/pkg/go/">https://golang.org/pkg/go/</a> 标准库文档</li>
+<li><a href="https://golang.org/pkg/go/">https://golang.org/pkg/go/</a> 标准库文</li>
 </ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: fengche</p>
-<p class="date">Created: 2016-08-11 四 19:44</p>
+<p class="date">Created: 2016-08-15 一 09:57</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

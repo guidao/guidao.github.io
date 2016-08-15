@@ -3,7 +3,8 @@
 * 问题描述
 我需要一个能够手动解析.go文件程序，获取其中定义的常量的值和之后的注释。这个需求还是很常见的，例如在项目中常把errcode定义为常量，然后需要根据注释解析成errmsg给前端用。但是对于go来说我们不能使用一般的正则来干这件事情，因为在go中iota使用的地方很多，如果要解析得到常量的值的话，用正则太过麻烦。恰好go提供了解析.go文件的包，例如: go/token, go/ast, go/parse等。详细情况可以见：，经过半天折腾，终于完满解决此问题。现在记录在此，不过go的这些包有很多干货啊，以后再深入研究。
 * 实际代码
-#+BEGIN_SRC golang
+
+#+BEGIN_SRC go
 package main
 
 import (
@@ -23,11 +24,13 @@ func main() {
 
 func ParseFile(fileName string) (map[string]string, error) {
 	fset := token.NewFileSet()
+  // 解析文件，主要解析token
 	f, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
 
+  // 类型检查, 得到常量的值
 	conf := types.Config{Importer: importer.Default()}
 	pkg, err := conf.Check("cmd/hello", fset, []*ast.File{f}, nil)
 	if err != nil {
@@ -46,4 +49,11 @@ func ParseFile(fileName string) (map[string]string, error) {
 
 * 参考资料
 - https://github.com/golang/example/tree/master/gotypes#introduction 主要介绍了go/ast, go/token, go/parse等几个包的使用
-- https://golang.org/pkg/go/ 标准库文档
+- https://golang.org/pkg/go/ 标准库文
+
+
+
+
+
+
+
