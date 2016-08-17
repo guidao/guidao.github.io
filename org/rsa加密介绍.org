@@ -1,7 +1,6 @@
-#+TITILE: RSA总结
-#+HTML_HEAD: <link rel="stylesheet" href="./css/org-css.css" type="text/css" />
-* rsa 原理
-** rsa算法原理 
+#+TITLE: RSA总结
+
+* rsa算法原理 
 rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, e. 私钥也主要保持两个数字n, d.对于任一一个数字a满足(a^ed) mod n = a, 其中 ed mod (p-1)(q-1) = 1, n = pq. 这就保证了一个数字经过公钥加密后能被私钥解密.
 
 #+BEGIN_SRC math 
@@ -30,7 +29,7 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 
 #+END_SRC
 
-** ASN1格式
+* ASN1格式
 *** 私有类型
 1. BOOLEAN
 2. INTEGER
@@ -53,7 +52,7 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 8. EMBEDDED PDV
 9. CHARACTER STRING
 
-** PKCS#1 格式
+* PKCS#1 格式
 #+BEGIN_SRC golang
 //公钥
 type public struct {
@@ -75,7 +74,7 @@ type private struct {
   other OtherInfo //可选
 }
 #+END_SRC
-** PKCS#8
+* PKCS#8
 由于PKCS#1不够通用，所以提出#8
 #+BEGIN_SRC golang
 type AlgorithmIdentifier struct {
@@ -98,7 +97,7 @@ type private struct {
 
 #+END_SRC
 
-** go 中的rsa包
+* go 中的rsa包
 *** 获取公钥或私钥
 要使用rsa包，首先要得到公钥或者私钥,对于不同的格式有不同的方法调用。
 1. PKCS#1格式
@@ -149,7 +148,7 @@ if err == nil {
   //sucess
 }
 #+END_SRC
-** 资料
+* 资料
 1. [[https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf][ASN1编码规则]]
 2. [[https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem][rsa密钥文件格式]]
 3. [[http://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html][阮一峰{RSA算法原理-}]]

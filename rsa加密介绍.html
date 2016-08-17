@@ -3,12 +3,11 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-15 一 09:57 -->
+<!-- 2016-08-17 三 16:59 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="viewport" content="width=device-width, initial-scale=1" />
-<title></title>
+<title>RSA总结</title>
 <meta  name="generator" content="Org-mode" />
-<meta  name="author" content="fengche" />
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   .title  { text-align: center;
@@ -94,7 +93,7 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   /*]]>*/-->
 </style>
-<link rel="stylesheet" href="./css/org-css.css" type="text/css" />
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -143,44 +142,55 @@ for the JavaScript code in this tag.
 </script>
 </head>
 <body>
-<div id="content">
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">RSA总结</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgheadline12">1. rsa 原理</a>
+<li><a href="#orgheadline2">1. rsa算法原理</a>
 <ul>
-<li><a href="#orgheadline2">1.1. rsa算法原理</a>
+<li>
 <ul>
-<li><a href="#orgheadline1">1.1.1. 公式推导</a></li>
+<li><a href="#orgheadline1">1.0.1. 公式推导</a></li>
 </ul>
 </li>
-<li><a href="#orgheadline5">1.2. ASN1格式</a>
+</ul>
+</li>
+<li><a href="#orgheadline5">2. ASN1格式</a>
 <ul>
-<li><a href="#orgheadline3">1.2.1. 私有类型</a></li>
-<li><a href="#orgheadline4">1.2.2. 组合类型</a></li>
-</ul>
-</li>
-<li><a href="#orgheadline6">1.3. PKCS#1 格式</a></li>
-<li><a href="#orgheadline7">1.4. PKCS#8</a></li>
-<li><a href="#orgheadline10">1.5. go 中的rsa包</a>
+<li>
 <ul>
-<li><a href="#orgheadline8">1.5.1. 获取公钥或私钥</a></li>
-<li><a href="#orgheadline9">1.5.2. 签名与验签</a></li>
+<li><a href="#orgheadline3">2.0.1. 私有类型</a></li>
+<li><a href="#orgheadline4">2.0.2. 组合类型</a></li>
 </ul>
 </li>
-<li><a href="#orgheadline11">1.6. 资料</a></li>
 </ul>
 </li>
+<li><a href="#orgheadline6">3. PKCS#1 格式</a></li>
+<li><a href="#orgheadline7">4. PKCS#8</a></li>
+<li><a href="#orgheadline10">5. go 中的rsa包</a>
+<ul>
+<li>
+<ul>
+<li><a href="#orgheadline8">5.0.1. 获取公钥或私钥</a></li>
+<li><a href="#orgheadline9">5.0.2. 签名与验签</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgheadline11">6. 资料</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgheadline12" class="outline-2">
-<h2 id="orgheadline12"><span class="section-number-2">1</span> rsa 原理</h2>
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2"><span class="section-number-2">1</span> rsa算法原理</h2>
 <div class="outline-text-2" id="text-1">
-</div><div id="outline-container-orgheadline2" class="outline-3">
-<h3 id="orgheadline2"><span class="section-number-3">1.1</span> rsa算法原理</h3>
-<div class="outline-text-3" id="text-1-1">
 <p>
 rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, e. 私钥也主要保持两个数字n, d.对于任一一个数字a满足(a<sup>ed</sup>) mod n = a, 其中 ed mod (p-1)(q-1) = 1, n = pq. 这就保证了一个数字经过公钥加密后能被私钥解密.
 </p>
@@ -202,8 +212,8 @@ rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, 
 </div>
 
 <div id="outline-container-orgheadline1" class="outline-4">
-<h4 id="orgheadline1"><span class="section-number-4">1.1.1</span> 公式推导</h4>
-<div class="outline-text-4" id="text-1-1-1">
+<h4 id="orgheadline1"><span class="section-number-4">1.0.1</span> 公式推导</h4>
+<div class="outline-text-4" id="text-1-0-1">
 <div class="org-src-container">
 
 <pre class="src src-math">我们主要推导以下公式成立:
@@ -223,12 +233,12 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 </div>
 </div>
 
-<div id="outline-container-orgheadline5" class="outline-3">
-<h3 id="orgheadline5"><span class="section-number-3">1.2</span> ASN1格式</h3>
-<div class="outline-text-3" id="text-1-2">
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">2</span> ASN1格式</h2>
+<div class="outline-text-2" id="text-2">
 </div><div id="outline-container-orgheadline3" class="outline-4">
-<h4 id="orgheadline3"><span class="section-number-4">1.2.1</span> 私有类型</h4>
-<div class="outline-text-4" id="text-1-2-1">
+<h4 id="orgheadline3"><span class="section-number-4">2.0.1</span> 私有类型</h4>
+<div class="outline-text-4" id="text-2-0-1">
 <ol class="org-ol">
 <li>BOOLEAN</li>
 <li>INTEGER</li>
@@ -244,8 +254,8 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 </div>
 </div>
 <div id="outline-container-orgheadline4" class="outline-4">
-<h4 id="orgheadline4"><span class="section-number-4">1.2.2</span> 组合类型</h4>
-<div class="outline-text-4" id="text-1-2-2">
+<h4 id="orgheadline4"><span class="section-number-4">2.0.2</span> 组合类型</h4>
+<div class="outline-text-4" id="text-2-0-2">
 <ol class="org-ol">
 <li>SEQUENCE</li>
 <li>SET</li>
@@ -261,9 +271,9 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 </div>
 </div>
 
-<div id="outline-container-orgheadline6" class="outline-3">
-<h3 id="orgheadline6"><span class="section-number-3">1.3</span> PKCS#1 格式</h3>
-<div class="outline-text-3" id="text-1-3">
+<div id="outline-container-orgheadline6" class="outline-2">
+<h2 id="orgheadline6"><span class="section-number-2">3</span> PKCS#1 格式</h2>
+<div class="outline-text-2" id="text-3">
 <div class="org-src-container">
 
 <pre class="src src-golang">//公钥
@@ -289,9 +299,9 @@ type private struct {
 </div>
 </div>
 </div>
-<div id="outline-container-orgheadline7" class="outline-3">
-<h3 id="orgheadline7"><span class="section-number-3">1.4</span> PKCS#8</h3>
-<div class="outline-text-3" id="text-1-4">
+<div id="outline-container-orgheadline7" class="outline-2">
+<h2 id="orgheadline7"><span class="section-number-2">4</span> PKCS#8</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 由于PKCS#1不够通用，所以提出#8
 </p>
@@ -319,12 +329,12 @@ type private struct {
 </div>
 </div>
 
-<div id="outline-container-orgheadline10" class="outline-3">
-<h3 id="orgheadline10"><span class="section-number-3">1.5</span> go 中的rsa包</h3>
-<div class="outline-text-3" id="text-1-5">
+<div id="outline-container-orgheadline10" class="outline-2">
+<h2 id="orgheadline10"><span class="section-number-2">5</span> go 中的rsa包</h2>
+<div class="outline-text-2" id="text-5">
 </div><div id="outline-container-orgheadline8" class="outline-4">
-<h4 id="orgheadline8"><span class="section-number-4">1.5.1</span> 获取公钥或私钥</h4>
-<div class="outline-text-4" id="text-1-5-1">
+<h4 id="orgheadline8"><span class="section-number-4">5.0.1</span> 获取公钥或私钥</h4>
+<div class="outline-text-4" id="text-5-0-1">
 <p>
 要使用rsa包，首先要得到公钥或者私钥,对于不同的格式有不同的方法调用。
 </p>
@@ -363,8 +373,8 @@ type private struct {
 </div>
 
 <div id="outline-container-orgheadline9" class="outline-4">
-<h4 id="orgheadline9"><span class="section-number-4">1.5.2</span> 签名与验签</h4>
-<div class="outline-text-4" id="text-1-5-2">
+<h4 id="orgheadline9"><span class="section-number-4">5.0.2</span> 签名与验签</h4>
+<div class="outline-text-4" id="text-5-0-2">
 <p>
 对于rsa，我们最常做的操作就是签名与验签。
 </p>
@@ -376,12 +386,12 @@ type private struct {
 </p>
 <div class="org-src-container">
 
-<pre class="src src-go">d := <span style="color: #E6DB74;">"this is test"</span> 
-m := md5.<span style="color: #A6E22E;">New</span><span style="color: #AE81FF;">()</span>
-m.<span style="color: #A6E22E;">Write</span><span style="color: #AE81FF;">(</span><span style="color: #66D9EF;">[]</span><span style="color: #A6E22E;">byte</span><span style="color: #66D9EF;">(</span>d<span style="color: #66D9EF;">)</span><span style="color: #AE81FF;">)</span>
-h := m.<span style="color: #A6E22E;">Sum</span><span style="color: #AE81FF;">(</span><span style="color: #AE81FF;">nil</span><span style="color: #AE81FF;">)</span>
-<span style="color: #F92672;">var</span> b *rsa.PrivateKey <span style="color: #75715E;">//</span><span style="color: #75715E;">&#36825;&#37324;&#20351;&#29992;&#31614;&#21517;&#30340;&#26041;&#27861;&#33719;&#21462;</span>
-sign, err := b.<span style="color: #A6E22E;">Sign</span><span style="color: #AE81FF;">(</span>rand.rander, h, crypto.MD5<span style="color: #AE81FF;">)</span>
+<pre class="src src-go">d := <span style="color: #CDC673;">"this is test"</span> 
+m := md5.<span style="color: #87D700;">New</span><span style="color: #AF87FF;">()</span>
+m.<span style="color: #87D700;">Write</span><span style="color: #AF87FF;">(</span><span style="color: #5FD7FF;">[]</span><span style="color: #87D700;">byte</span><span style="color: #5FD7FF;">(</span>d<span style="color: #5FD7FF;">)</span><span style="color: #AF87FF;">)</span>
+h := m.<span style="color: #87D700;">Sum</span><span style="color: #AF87FF;">(</span><span style="color: #AF87FF;">nil</span><span style="color: #AF87FF;">)</span>
+<span style="color: #FF1493;">var</span> b *rsa.PrivateKey <span style="color: #8B8878;">//</span><span style="color: #8B8878;">&#36825;&#37324;&#20351;&#29992;&#31614;&#21517;&#30340;&#26041;&#27861;&#33719;&#21462;</span>
+sign, err := b.<span style="color: #87D700;">Sign</span><span style="color: #AF87FF;">(</span>rand.rander, h, crypto.MD5<span style="color: #AF87FF;">)</span>
 </pre>
 </div>
 
@@ -402,9 +412,9 @@ if err == nil {
 </div>
 </div>
 </div>
-<div id="outline-container-orgheadline11" class="outline-3">
-<h3 id="orgheadline11"><span class="section-number-3">1.6</span> 资料</h3>
-<div class="outline-text-3" id="text-1-6">
+<div id="outline-container-orgheadline11" class="outline-2">
+<h2 id="orgheadline11"><span class="section-number-2">6</span> 资料</h2>
+<div class="outline-text-2" id="text-6">
 <ol class="org-ol">
 <li><a href="https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf">ASN1编码规则</a></li>
 <li><a href="https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem">rsa密钥文件格式</a></li>
@@ -414,11 +424,9 @@ if err == nil {
 </div>
 </div>
 </div>
-</div>
 <div id="postamble" class="status">
-<p class="author">Author: fengche</p>
-<p class="date">Created: 2016-08-15 一 09:57</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+<p class="date">Created: 2016-08-17 三 16:59</p>
+<p class="validation"></p>
 </div>
 </body>
 </html>
