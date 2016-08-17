@@ -1,0 +1,60 @@
+#+TITLE: 使用org-mode写blog
+
+* 介绍org-mode
+orgmode是emacs的一个插件，对于写作有非常好的体验。而且非常强大，实时渲染，日程管理，支持导出pdf，html等多种格式，日期，TODO，表格等操作十分方便，只有你想不到，没有做不到,HAHA。
+
+* markdown的写作模式
+以前也使用过markdown的方式写过blog，开始的时候觉得很新鲜，但是对于体验来说并不能让我很专心的写作。很多markdown工具实时渲染需要新开一个标签。我需要一边写文字一边照顾样式，而且写作窗口不能占据我所有的视野，很是别扭。直到我遇到emacs，从而遇到orgmode，才真正的觉得写作是一件比较舒服的事情。
+
+* 配置orgmode 
+要使用orgmode写blog，还是需要一定的符合个人的配置，也需要css对导出的html进行一些美化, 下面是我配置的地方.(我使用的是spacemacs)
+1. 开启org layer
+在spacemacs中使用orgmode需要在spacemacs的配置文件中开启org layer
+#+BEGIN_SRC elisp
+dotspacemacs-configuration-layers '(org) 
+#+END_SRC
+
+1. 设置org-publish-project-alist
+
+#+BEGIN_SRC elisp
+(setq org-publish-project-alist
+        '(
+          ;; ... add all the components here (see below)...
+          ("org-notes"
+           :base-directory "~/guidao.github.io/org/" ;org文件的目录
+           :base-extension "org" ;扩展名
+           :publishing-directory "~/guidao.github.io/" ;导出目录
+           :html-head "<link rel=\"stylesheet\" type=\"text/css\" href=\"./css/org-css.css\"/>";自定义样式
+           :recursive t
+           :publishing-function org-html-publish-to-html
+           :headline-levels 4             ; Just the default for this project.
+           :auto-preamble t
+           :timestamp nil
+           :author nil
+           )
+          ("org" :components ("org-notes"))
+          ))
+
+(setq org-html-validation-link nil) ; 去掉validation显示
+(setq org-html-link-home "index.html"); 设置home超链接
+(setq org-html-link-up "index.html")
+#+END_SRC
+我是把guidao.github.io/org/目录的文件导出到guidao.github.io/下,在guidao.github.io下会有org文件的同名的html格式的文件，之所以我把org也放在github上，是因为我工作跟家里使用两台不同的电脑，需要在两个地方进行修改。
+
+现在可以执行命令 =M-x org-publish= 选择org导出文件了。但是blog一般来说需要一个首页对所有文件进行汇总。目前这个功能是手动进行.在org目录想创建一个index.org文件，贴上下面内容:
+#+BEGIN_SRC org 
+#+OPTIONS: TOC:nil ;关闭目录
+#+OPTIONS: NUM:nil ;关闭标题前面的数字
+#+OPTIONS: AUTHOR:nil ;不显示作者
+#+OPTIONS: TIMESTAMP:nil ;不显示创建时间
+
+ * 2016年8月 
+- [[file:xxx.org][xxx]]
+#+END_SRC
+然后就可以看见跟我一样的首页了。
+
+* 参考资料
+- http://dayigu.github.io/WhyUseOrgModeToWriteBlog.html
+- http://orgmode.org/worg/org-tutorials/org-publish-html-tutorial.html
+- http://wiki.houye.xyz/blogwithorg-mode.html
+有兴趣的可以一起交流交流
