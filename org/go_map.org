@@ -10,6 +10,8 @@ a["first"] = "first"
 //读取
 fmt.Println(a["first"])
 #+END_SRC
+不是所有的key都能作为map的key类型，只有能够比较的类型才能作为key类型。所以例如切片，函数，map类型是不能作为map的key类型的。具体可见[[https://blog.golang.org/go-maps-in-action]]。
+在go语言中，map是非线程安全的，也就是说go中的map类型不能放在多个goroutine中，只能自己维护线程安全。
 
 * 内部实现
 在实现map的过程中，最需要注意的就是 =装载因子= ,当它过大时需要增长map的空间，重新映射值到新的空间。
@@ -18,9 +20,9 @@ fmt.Println(a["first"])
 type hmap struct {
 	// Note: the format of the Hmap is encoded in ../../cmd/internal/gc/reflect.go and
 	// ../reflect/type.go.  Don't change this structure without also changing that code!
-	count int // # live cells == size of map.  Must be first (used by len() builtin)
+	count int // # live cells == size of map.  Must be first (used by len() builtin) map中key的个数，被len()函数使用。
 	flags uint8
-	B     uint8  // log_2 of # of buckets (can hold up to loadFactor * 2^B items)
+	B     uint8  // log_2 of # of buckets (can hold up to loadFactor * 2^B items) 
 	hash0 uint32 // hash seed
 
 	buckets    unsafe.Pointer // array of 2^B Buckets. may be nil if count==0.
