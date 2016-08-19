@@ -1,0 +1,55 @@
+#+TITLE: GO Map内部实现
+
+* go map操作
+map类型不管在哪个语言中都是很常用的类型，它具有O(1)的存取速度。十分高效，虽然内存可能会多占用一点。但是也是非常值得的事情，网上的文章大多是讨论slice的内部结构，很少讨论map，不过map跟slice同作为 =引用类型= 看看内部实现也是很有必要的。map的操作主要有以下内容：
+#+BEGIN_SRC go
+//创建map
+a := make(map[string]string)
+//存入
+a["first"] = "first"
+//读取
+fmt.Println(a["first"])
+#+END_SRC
+
+* 内部实现
+在实现map的过程中，最需要注意的就是 =装载因子= ,当它过大时需要增长map的空间，重新映射值到新的空间。
+源码位置: $GOROOT/src/runtime/hashmap.go
+#+BEGIN_SRC go
+type hmap struct {
+	// Note: the format of the Hmap is encoded in ../../cmd/internal/gc/reflect.go and
+	// ../reflect/type.go.  Don't change this structure without also changing that code!
+	count int // # live cells == size of map.  Must be first (used by len() builtin)
+	flags uint8
+	B     uint8  // log_2 of # of buckets (can hold up to loadFactor * 2^B items)
+	hash0 uint32 // hash seed
+
+	buckets    unsafe.Pointer // array of 2^B Buckets. may be nil if count==0.
+	oldbuckets unsafe.Pointer // previous bucket array of half the size, non-nil only when growing
+	nevacuate  uintptr        // progress counter for evacuation (buckets less than this have been evacuated)
+
+	// If both key and value do not contain pointers and are inline, then we mark bucket
+	// type as containing no pointers. This avoids scanning such maps.
+	// However, bmap.overflow is a pointer. In order to keep overflow buckets
+	// alive, we store pointers to all overflow buckets in hmap.overflow.
+	// Overflow is used only if key and value do not contain pointers.
+	// overflow[0] contains overflow buckets for hmap.buckets.
+	// overflow[1] contains overflow buckets for hmap.oldbuckets.
+	// The first indirection allows us to reduce static size of hmap.
+	// The second indirection allows to store a pointer to the slice in hiter.
+	overflow *[2]*[]*bmap
+}
+#+END_SRC
+这是源码中map的header,其中buckets主要存放数据，结构如下图所示:
+
+[[file:..//image/2016-08-18-162914_462x441_scrot.png]] 
+
+首先buckets指向一个数组的bucket，取值的时候。先对key进行hash算法得到的值假若为h,用h对len(buckets)取余为hl那么就在buckets[hl]这一个链表中找。
+
+对于一个bucket，最多存放8个kv对，以此存放key的hash值的高八位，八个key，八个value，指向下一个bucket的指针。如下图所示:
+[[../image/2016-08-19-141335_329x487_scrot.png]]
+这里key跟key放在一起而不是形成k|v|k|v的原因是减少内存对齐的内存消耗。
+
+当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存取在哪个bucket，就移动那一个bucket链。
+
+* 总结
+总的来说golang的map类型实现比较中规中矩，亮点是延迟移动bucket。一个bucket能存放8个kv对的设计也很有趣。感觉上综合了链表与数组的优点。

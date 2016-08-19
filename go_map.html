@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2016-08-19 五 14:26 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="viewport" content="width=device-width, initial-scale=1" />
+<title>GO Map内部实现</title>
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">GO Map内部实现</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">1. go map操作</a></li>
+<li><a href="#orgheadline2">2. 内部实现</a></li>
+<li><a href="#orgheadline3">3. 总结</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> go map操作</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+map类型不管在哪个语言中都是很常用的类型，它具有O(1)的存取速度。十分高效，虽然内存可能会多占用一点。但是也是非常值得的事情，网上的文章大多是讨论slice的内部结构，很少讨论map，不过map跟slice同作为 <code>引用类型</code> 看看内部实现也是很有必要的。map的操作主要有以下内容：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go"><span style="color: #75715E;">//</span><span style="color: #75715E;">&#21019;&#24314;map</span>
+a := <span style="color: #F92672;">make</span><span style="color: #AE81FF;">(</span><span style="color: #F92672;">map</span><span style="color: #66D9EF;">[</span><span style="color: #66D9EF;">string</span><span style="color: #66D9EF;">]</span><span style="color: #66D9EF;">string</span><span style="color: #AE81FF;">)</span>
+<span style="color: #75715E;">//</span><span style="color: #75715E;">&#23384;&#20837;</span>
+a<span style="color: #AE81FF;">[</span><span style="color: #E6DB74;">"first"</span><span style="color: #AE81FF;">]</span> = <span style="color: #E6DB74;">"first"</span>
+<span style="color: #75715E;">//</span><span style="color: #75715E;">&#35835;&#21462;</span>
+fmt.<span style="color: #A6E22E;">Println</span><span style="color: #AE81FF;">(</span>a<span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"first"</span><span style="color: #66D9EF;">]</span><span style="color: #AE81FF;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2"><span class="section-number-2">2</span> 内部实现</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+在实现map的过程中，最需要注意的就是 <code>装载因子</code> ,当它过大时需要增长map的空间，重新映射值到新的空间。
+源码位置: $GOROOT/src/runtime/hashmap.go
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go"><span style="color: #F92672;">type</span> <span style="color: #66D9EF;">hmap</span> <span style="color: #F92672;">struct</span> <span style="color: #AE81FF;">{</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">Note: the format of the Hmap is encoded in ../../cmd/internal/gc/reflect.go and</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">../reflect/type.go.  Don't change this structure without also changing that code!</span>
+  count int <span style="color: #75715E;">// </span><span style="color: #75715E;"># live cells == size of map.  Must be first (used by len() builtin)</span>
+  flags uint8
+  B     uint8  <span style="color: #75715E;">// </span><span style="color: #75715E;">log_2 of # of buckets (can hold up to loadFactor * 2^B items)</span>
+  hash0 uint32 <span style="color: #75715E;">// </span><span style="color: #75715E;">hash seed</span>
+
+  buckets    unsafe.Pointer <span style="color: #75715E;">// </span><span style="color: #75715E;">array of 2^B Buckets. may be nil if count==0.</span>
+  oldbuckets unsafe.Pointer <span style="color: #75715E;">// </span><span style="color: #75715E;">previous bucket array of half the size, non-nil only when growing</span>
+  nevacuate  uintptr        <span style="color: #75715E;">// </span><span style="color: #75715E;">progress counter for evacuation (buckets less than this have been evacuated)</span>
+
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">If both key and value do not contain pointers and are inline, then we mark bucket</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">type as containing no pointers. This avoids scanning such maps.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">However, bmap.overflow is a pointer. In order to keep overflow buckets</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">alive, we store pointers to all overflow buckets in hmap.overflow.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">Overflow is used only if key and value do not contain pointers.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">overflow[0] contains overflow buckets for hmap.buckets.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">overflow[1] contains overflow buckets for hmap.oldbuckets.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">The first indirection allows us to reduce static size of hmap.</span>
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">The second indirection allows to store a pointer to the slice in hiter.</span>
+  overflow *<span style="color: #66D9EF;">[</span><span style="color: #AE81FF;">2</span><span style="color: #66D9EF;">]</span>*<span style="color: #66D9EF;">[]</span>*<span style="color: #66D9EF;">bmap</span>
+<span style="color: #AE81FF;">}</span>
+</pre>
+</div>
+<p>
+这是源码中map的header,其中buckets主要存放数据，结构如下图所示:
+</p>
+
+
+<div class="figure">
+<p><img src="..//image/2016-08-18-162914_462x441_scrot.png" alt="2016-08-18-162914_462x441_scrot.png" /> 
+</p>
+</div>
+
+<p>
+首先buckets指向一个数组的bucket，取值的时候。先对key进行hash算法得到的值假若为h,用h对len(buckets)取余为hl那么就在buckets[hl]这一个链表中找。
+</p>
+
+<p>
+对于一个bucket，最多存放8个kv对，以此存放key的hash值的高八位，八个key，八个value，指向下一个bucket的指针。如下图所示:
+<img src="../image/2016-08-19-141335_329x487_scrot.png" alt="2016-08-19-141335_329x487_scrot.png" />
+这里key跟key放在一起而不是形成k|v|k|v的原因是减少内存对齐的内存消耗。
+</p>
+
+<p>
+当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存取在哪个bucket，就移动那一个bucket链。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3"><span class="section-number-2">3</span> 总结</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+总的来说golang的map类型实现比较中规中矩，亮点是延迟移动bucket。一个bucket能存放8个kv对的设计也很有趣。感觉上综合了链表与数组的优点。
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2016-08-19 五 14:26</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
