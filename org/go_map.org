@@ -51,7 +51,209 @@ type hmap struct {
 [[../image/2016-08-19-141335_329x487_scrot.png]]
 这里key跟key放在一起而不是形成k|v|k|v的原因是减少内存对齐的内存消耗。
 
-当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存取在哪个bucket，就移动那一个bucket链。
+当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存或者删除哪个bucket，就移动那一个bucket链。
+
+访问map的源码:
+#+BEGIN_SRC go
+// mapaccess1 returns a pointer to h[key].  Never returns nil, instead
+// it will return a reference to the zero object for the value type if
+// the key is not in the map.
+// NOTE: The returned pointer may keep the whole map live, so don't
+// hold onto it for very long.
+func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
+	if raceenabled && h != nil {
+		callerpc := getcallerpc(unsafe.Pointer(&t))
+		pc := funcPC(mapaccess1)
+		racereadpc(unsafe.Pointer(h), callerpc, pc)
+		raceReadObjectPC(t.key, key, callerpc, pc)
+	}
+	if msanenabled && h != nil {
+		msanread(key, t.key.size)
+	}
+	if h == nil || h.count == 0 {
+		return unsafe.Pointer(&zeroVal[0])
+	}
+	if h.flags&hashWriting != 0 {
+		throw("concurrent map read and map write")
+	}
+  //得到key的hash函数
+	alg := t.key.alg
+	hash := alg.hash(key, uintptr(h.hash0))
+	m := uintptr(1)<<h.B - 1
+  //根据hash值对m取余找到对于的bucket
+	b := (*bmap)(add(h.buckets, (hash&m)*uintptr(t.bucketsize)))
+	if c := h.oldbuckets; c != nil {
+   //如果老的bucket还没有迁移，在老的bucket里面找,
+		oldb := (*bmap)(add(c, (hash&(m>>1))*uintptr(t.bucketsize)))
+		if !evacuated(oldb) {
+			b = oldb
+		}
+	}
+  //hash的高8位
+	top := uint8(hash >> (sys.PtrSize*8 - 8))
+	if top < minTopHash {
+		top += minTopHash
+	}
+	for {
+		for i := uintptr(0); i < bucketCnt; i++ {
+      //如果hash的高8位跟记录的不一样，就找下一个
+			if b.tophash[i] != top {
+				continue
+			}
+			k := add(unsafe.Pointer(b), dataOffset+i*uintptr(t.keysize))
+			if t.indirectkey {
+				k = *((*unsafe.Pointer)(k))
+			}
+			if alg.equal(key, k) {
+        //如果找到了同一个key，取出value.
+				v := add(unsafe.Pointer(b), dataOffset+bucketCnt*uintptr(t.keysize)+i*uintptr(t.valuesize))
+				if t.indirectvalue {
+					v = *((*unsafe.Pointer)(v))
+				}
+				return v
+			}
+		}
+    //这个bucket没找到，找这个bucket链的下一个bucket
+		b = b.overflow(t)
+		if b == nil {
+			return unsafe.Pointer(&zeroVal[0])
+		}
+	}
+}
+#+END_SRC
+从map的读取代码中，我们可以看到map的buckets的结构跟前面说的一样.
+
+map存值的源码:
+#+BEGIN_SRC go
+func mapassign1(t *maptype, h *hmap, key unsafe.Pointer, val unsafe.Pointer) {
+	if h == nil {
+		panic(plainError("assignment to entry in nil map"))
+	}
+	if raceenabled {
+		callerpc := getcallerpc(unsafe.Pointer(&t))
+		pc := funcPC(mapassign1)
+		racewritepc(unsafe.Pointer(h), callerpc, pc)
+		raceReadObjectPC(t.key, key, callerpc, pc)
+		raceReadObjectPC(t.elem, val, callerpc, pc)
+	}
+	if msanenabled {
+		msanread(key, t.key.size)
+		msanread(val, t.elem.size)
+	}
+	if h.flags&hashWriting != 0 {
+		throw("concurrent map writes")
+	}
+	h.flags |= hashWriting
+
+  //得到key的hash函数
+	alg := t.key.alg
+	hash := alg.hash(key, uintptr(h.hash0))
+
+  //如果buckets为空，则分配一个
+	if h.buckets == nil {
+		h.buckets = newarray(t.bucket, 1)
+	}
+
+again:
+  //得到hash的低b位,等同于对buckets的大小取余
+	bucket := hash & (uintptr(1)<<h.B - 1)
+  //如果老的bucket还没有迁移，则对老的bucket迁移
+	if h.oldbuckets != nil {
+		growWork(t, h, bucket)
+	}
+  //根据hash值的低b位找到对于的bucket
+	b := (*bmap)(unsafe.Pointer(uintptr(h.buckets) + bucket*uintptr(t.bucketsize)))
+  //计算hash值的高8位
+	top := uint8(hash >> (sys.PtrSize*8 - 8))
+	if top < minTopHash {
+		top += minTopHash
+	}
+
+	var inserti *uint8
+	var insertk unsafe.Pointer
+	var insertv unsafe.Pointer
+	for {
+		for i := uintptr(0); i < bucketCnt; i++ {
+			if b.tophash[i] != top {
+				if b.tophash[i] == empty && inserti == nil {
+          //如果以后没有找到，这里先预留一个可以插入的位置
+					inserti = &b.tophash[i]
+					insertk = add(unsafe.Pointer(b), dataOffset+i*uintptr(t.keysize))
+					insertv = add(unsafe.Pointer(b), dataOffset+bucketCnt*uintptr(t.keysize)+i*uintptr(t.valuesize))
+				}
+				continue
+			}
+			k := add(unsafe.Pointer(b), dataOffset+i*uintptr(t.keysize))
+			k2 := k
+			if t.indirectkey {
+				k2 = *((*unsafe.Pointer)(k2))
+			}
+			if !alg.equal(key, k2) {
+				continue
+			}
+      // 找到一个相同的key
+			// already have a mapping for key. Update it.
+			if t.needkeyupdate {
+				typedmemmove(t.key, k2, key)
+			}
+			v := add(unsafe.Pointer(b), dataOffset+bucketCnt*uintptr(t.keysize)+i*uintptr(t.valuesize))
+			v2 := v
+			if t.indirectvalue {
+				v2 = *((*unsafe.Pointer)(v2))
+			}
+      //更新值
+			typedmemmove(t.elem, v2, val)
+      //跳出循环到完成
+			goto done
+		}
+		ovf := b.overflow(t)
+		if ovf == nil {
+			break
+		}
+		b = ovf
+	}
+
+	// did not find mapping for key. Allocate new cell & add entry.
+	if float32(h.count) >= loadFactor*float32((uintptr(1)<<h.B)) && h.count >= bucketCnt {
+		hashGrow(t, h)
+		goto again // Growing the table invalidates everything, so try again
+	}
+  //没有找到可以插入的位置，分配一个
+	if inserti == nil {
+		// all current buckets are full, allocate a new one.
+		newb := (*bmap)(newobject(t.bucket))
+		h.setoverflow(t, b, newb)
+		inserti = &newb.tophash[0]
+		insertk = add(unsafe.Pointer(newb), dataOffset)
+		insertv = add(insertk, bucketCnt*uintptr(t.keysize))
+	}
+
+	// store new key/value at insert position
+	if t.indirectkey {
+		kmem := newobject(t.key)
+		*(*unsafe.Pointer)(insertk) = kmem
+		insertk = kmem
+	}
+	if t.indirectvalue {
+		vmem := newobject(t.elem)
+		*(*unsafe.Pointer)(insertv) = vmem
+		insertv = vmem
+	}
+  //存kv
+	typedmemmove(t.key, insertk, key)
+	typedmemmove(t.elem, insertv, val)
+	*inserti = top
+	h.count++
+
+done:
+	if h.flags&hashWriting == 0 {
+		throw("concurrent map writes")
+	}
+	h.flags &^= hashWriting
+}
+#+END_SRC
+
+其他的源码就不一一列举了, 有兴趣可以看runtime/hashmap.go。
 
 * 总结
 总的来说golang的map类型实现比较中规中矩，亮点是延迟移动bucket。一个bucket能存放8个kv对的设计也很有趣。感觉上综合了链表与数组的优点。

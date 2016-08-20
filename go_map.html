@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-19 五 14:26 -->
+<!-- 2016-08-20 六 10:13 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="viewport" content="width=device-width, initial-scale=1" />
 <title>GO Map内部实现</title>
@@ -175,6 +175,10 @@ a<span style="color: #AE81FF;">[</span><span style="color: #E6DB74;">"first"</sp
 fmt.<span style="color: #A6E22E;">Println</span><span style="color: #AE81FF;">(</span>a<span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"first"</span><span style="color: #66D9EF;">]</span><span style="color: #AE81FF;">)</span>
 </pre>
 </div>
+<p>
+不是所有的key都能作为map的key类型，只有能够比较的类型才能作为key类型。所以例如切片，函数，map类型是不能作为map的key类型的。具体可见<a href="https://blog.golang.org/go-maps-in-action">https://blog.golang.org/go-maps-in-action</a>。
+在go语言中，map是非线程安全的，也就是说go中的map类型不能放在多个goroutine中，只能自己维护线程安全。
+</p>
 </div>
 </div>
 
@@ -190,9 +194,9 @@ fmt.<span style="color: #A6E22E;">Println</span><span style="color: #AE81FF;">(<
 <pre class="src src-go"><span style="color: #F92672;">type</span> <span style="color: #66D9EF;">hmap</span> <span style="color: #F92672;">struct</span> <span style="color: #AE81FF;">{</span>
   <span style="color: #75715E;">// </span><span style="color: #75715E;">Note: the format of the Hmap is encoded in ../../cmd/internal/gc/reflect.go and</span>
   <span style="color: #75715E;">// </span><span style="color: #75715E;">../reflect/type.go.  Don't change this structure without also changing that code!</span>
-  count int <span style="color: #75715E;">// </span><span style="color: #75715E;"># live cells == size of map.  Must be first (used by len() builtin)</span>
+  count int <span style="color: #75715E;">// </span><span style="color: #75715E;"># live cells == size of map.  Must be first (used by len() builtin) map&#20013;key&#30340;&#20010;&#25968;&#65292;&#34987;len()&#20989;&#25968;&#20351;&#29992;&#12290;</span>
   flags uint8
-  B     uint8  <span style="color: #75715E;">// </span><span style="color: #75715E;">log_2 of # of buckets (can hold up to loadFactor * 2^B items)</span>
+  B     uint8  <span style="color: #75715E;">// </span><span style="color: #75715E;">log_2 of # of buckets (can hold up to loadFactor * 2^B items) </span>
   hash0 uint32 <span style="color: #75715E;">// </span><span style="color: #75715E;">hash seed</span>
 
   buckets    unsafe.Pointer <span style="color: #75715E;">// </span><span style="color: #75715E;">array of 2^B Buckets. may be nil if count==0.</span>
@@ -233,7 +237,221 @@ fmt.<span style="color: #A6E22E;">Println</span><span style="color: #AE81FF;">(<
 </p>
 
 <p>
-当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存取在哪个bucket，就移动那一个bucket链。
+当map中的kv对越来越多的时候，会造成buckets的重新分配，新的buckets的大小是原来大小的2倍。但是老的buckets的值并不会立即移动到新buckets中来，而是等下一次存或者删除哪个bucket，就移动那一个bucket链。
+</p>
+
+<p>
+访问map的源码:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go"><span style="color: #75715E;">// </span><span style="color: #75715E;">mapaccess1 returns a pointer to h[key].  Never returns nil, instead</span>
+<span style="color: #75715E;">// </span><span style="color: #75715E;">it will return a reference to the zero object for the value type if</span>
+<span style="color: #75715E;">// </span><span style="color: #75715E;">the key is not in the map.</span>
+<span style="color: #75715E;">// </span><span style="color: #d0bf8f;">NOTE</span><span style="color: #75715E;">: The returned pointer may keep the whole map live, so don't</span>
+<span style="color: #75715E;">// </span><span style="color: #75715E;">hold onto it for very long.</span>
+<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">mapaccess1</span><span style="color: #AE81FF;">(</span>t *<span style="color: #66D9EF;">maptype</span>, h *<span style="color: #66D9EF;">hmap</span>, key <span style="color: #66D9EF;">unsafe.Pointer</span><span style="color: #AE81FF;">)</span> <span style="color: #66D9EF;">unsafe.Pointer</span> <span style="color: #AE81FF;">{</span>
+  <span style="color: #F92672;">if</span> raceenabled &amp;&amp; h != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    callerpc := <span style="color: #A6E22E;">getcallerpc</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>&amp;t<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+    pc := <span style="color: #A6E22E;">funcPC</span><span style="color: #A6E22E;">(</span>mapaccess1<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">racereadpc</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>h<span style="color: #E6DB74;">)</span>, callerpc, pc<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">raceReadObjectPC</span><span style="color: #A6E22E;">(</span>t.key, key, callerpc, pc<span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> msanenabled &amp;&amp; h != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">msanread</span><span style="color: #A6E22E;">(</span>key, t.key.size<span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> h == <span style="color: #AE81FF;">nil</span> || h.count == <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">return</span> unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #A6E22E;">(</span>&amp;zeroVal<span style="color: #E6DB74;">[</span><span style="color: #AE81FF;">0</span><span style="color: #E6DB74;">]</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> h.flags&amp;hashWriting != <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">throw</span><span style="color: #A6E22E;">(</span><span style="color: #E6DB74;">"concurrent map read and map write"</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#24471;&#21040;key&#30340;hash&#20989;&#25968;</span>
+  alg := t.key.alg
+  hash := alg.<span style="color: #A6E22E;">hash</span><span style="color: #66D9EF;">(</span>key, <span style="color: #A6E22E;">uintptr</span><span style="color: #A6E22E;">(</span>h.hash0<span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+  m := <span style="color: #A6E22E;">uintptr</span><span style="color: #66D9EF;">(</span><span style="color: #AE81FF;">1</span><span style="color: #66D9EF;">)</span>&lt;&lt;h.B - <span style="color: #AE81FF;">1</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#26681;&#25454;hash&#20540;&#23545;m&#21462;&#20313;&#25214;&#21040;&#23545;&#20110;&#30340;bucket</span>
+  b := <span style="color: #66D9EF;">(</span>*bmap<span style="color: #66D9EF;">)(</span><span style="color: #A6E22E;">add</span><span style="color: #A6E22E;">(</span>h.buckets, <span style="color: #E6DB74;">(</span>hash&amp;m<span style="color: #E6DB74;">)</span>*<span style="color: #A6E22E;">uintptr</span><span style="color: #E6DB74;">(</span>t.bucketsize<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">if</span> c := h.oldbuckets; c != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+   <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#32769;&#30340;bucket&#36824;&#27809;&#26377;&#36801;&#31227;&#65292;&#22312;&#32769;&#30340;bucket&#37324;&#38754;&#25214;,</span>
+    oldb := <span style="color: #A6E22E;">(</span>*bmap<span style="color: #A6E22E;">)(</span><span style="color: #A6E22E;">add</span><span style="color: #E6DB74;">(</span>c, <span style="color: #FD971F;">(</span>hash&amp;<span style="color: #F92672;">(</span>m&gt;&gt;<span style="color: #AE81FF;">1</span><span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>*<span style="color: #A6E22E;">uintptr</span><span style="color: #FD971F;">(</span>t.bucketsize<span style="color: #FD971F;">)</span><span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+    <span style="color: #F92672;">if</span> !<span style="color: #A6E22E;">evacuated</span><span style="color: #A6E22E;">(</span>oldb<span style="color: #A6E22E;">)</span> <span style="color: #A6E22E;">{</span>
+      b = oldb
+    <span style="color: #A6E22E;">}</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">hash&#30340;&#39640;8&#20301;</span>
+  top := <span style="color: #A6E22E;">uint8</span><span style="color: #66D9EF;">(</span>hash &gt;&gt; <span style="color: #A6E22E;">(</span>sys.PtrSize*<span style="color: #AE81FF;">8</span> - <span style="color: #AE81FF;">8</span><span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">if</span> top &lt; minTopHash <span style="color: #66D9EF;">{</span>
+    top += minTopHash
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">for</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">for</span> i := <span style="color: #A6E22E;">uintptr</span><span style="color: #A6E22E;">(</span><span style="color: #AE81FF;">0</span><span style="color: #A6E22E;">)</span>; i &lt; bucketCnt; i++ <span style="color: #A6E22E;">{</span>
+      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;hash&#30340;&#39640;8&#20301;&#36319;&#35760;&#24405;&#30340;&#19981;&#19968;&#26679;&#65292;&#23601;&#25214;&#19979;&#19968;&#20010;</span>
+      <span style="color: #F92672;">if</span> b.tophash<span style="color: #E6DB74;">[</span>i<span style="color: #E6DB74;">]</span> != top <span style="color: #E6DB74;">{</span>
+        <span style="color: #F92672;">continue</span>
+      <span style="color: #E6DB74;">}</span>
+      k := <span style="color: #A6E22E;">add</span><span style="color: #E6DB74;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #FD971F;">(</span>b<span style="color: #FD971F;">)</span>, dataOffset+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #FD971F;">(</span>t.keysize<span style="color: #FD971F;">)</span><span style="color: #E6DB74;">)</span>
+      <span style="color: #F92672;">if</span> t.indirectkey <span style="color: #E6DB74;">{</span>
+        k = *<span style="color: #FD971F;">(</span><span style="color: #F92672;">(</span>*unsafe.Pointer<span style="color: #F92672;">)(</span>k<span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>
+      <span style="color: #E6DB74;">}</span>
+      <span style="color: #F92672;">if</span> alg.<span style="color: #A6E22E;">equal</span><span style="color: #E6DB74;">(</span>key, k<span style="color: #E6DB74;">)</span> <span style="color: #E6DB74;">{</span>
+        <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#25214;&#21040;&#20102;&#21516;&#19968;&#20010;key&#65292;&#21462;&#20986;value.</span>
+        v := <span style="color: #A6E22E;">add</span><span style="color: #FD971F;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #F92672;">(</span>b<span style="color: #F92672;">)</span>, dataOffset+bucketCnt*<span style="color: #A6E22E;">uintptr</span><span style="color: #F92672;">(</span>t.keysize<span style="color: #F92672;">)</span>+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #F92672;">(</span>t.valuesize<span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>
+        <span style="color: #F92672;">if</span> t.indirectvalue <span style="color: #FD971F;">{</span>
+          v = *<span style="color: #F92672;">(</span><span style="color: #AE81FF;">(</span>*unsafe.Pointer<span style="color: #AE81FF;">)(</span>v<span style="color: #AE81FF;">)</span><span style="color: #F92672;">)</span>
+        <span style="color: #FD971F;">}</span>
+        <span style="color: #F92672;">return</span> v
+      <span style="color: #E6DB74;">}</span>
+    <span style="color: #A6E22E;">}</span>
+    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#36825;&#20010;bucket&#27809;&#25214;&#21040;&#65292;&#25214;&#36825;&#20010;bucket&#38142;&#30340;&#19979;&#19968;&#20010;bucket</span>
+    b = b.<span style="color: #A6E22E;">overflow</span><span style="color: #A6E22E;">(</span>t<span style="color: #A6E22E;">)</span>
+    <span style="color: #F92672;">if</span> b == <span style="color: #AE81FF;">nil</span> <span style="color: #A6E22E;">{</span>
+      <span style="color: #F92672;">return</span> unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>&amp;zeroVal<span style="color: #FD971F;">[</span><span style="color: #AE81FF;">0</span><span style="color: #FD971F;">]</span><span style="color: #E6DB74;">)</span>
+    <span style="color: #A6E22E;">}</span>
+  <span style="color: #66D9EF;">}</span>
+<span style="color: #AE81FF;">}</span>
+</pre>
+</div>
+<p>
+从map的读取代码中，我们可以看到map的buckets的结构跟前面说的一样.
+</p>
+
+<p>
+map存值的源码:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go"><span style="color: #F92672;">func</span> <span style="color: #A6E22E;">mapassign1</span><span style="color: #AE81FF;">(</span>t *<span style="color: #66D9EF;">maptype</span>, h *<span style="color: #66D9EF;">hmap</span>, key <span style="color: #66D9EF;">unsafe.Pointer</span>, val <span style="color: #66D9EF;">unsafe.Pointer</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
+  <span style="color: #F92672;">if</span> h == <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">panic</span><span style="color: #A6E22E;">(</span><span style="color: #A6E22E;">plainError</span><span style="color: #E6DB74;">(</span><span style="color: #E6DB74;">"assignment to entry in nil map"</span><span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> raceenabled <span style="color: #66D9EF;">{</span>
+    callerpc := <span style="color: #A6E22E;">getcallerpc</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>&amp;t<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+    pc := <span style="color: #A6E22E;">funcPC</span><span style="color: #A6E22E;">(</span>mapassign1<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">racewritepc</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>h<span style="color: #E6DB74;">)</span>, callerpc, pc<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">raceReadObjectPC</span><span style="color: #A6E22E;">(</span>t.key, key, callerpc, pc<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">raceReadObjectPC</span><span style="color: #A6E22E;">(</span>t.elem, val, callerpc, pc<span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> msanenabled <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">msanread</span><span style="color: #A6E22E;">(</span>key, t.key.size<span style="color: #A6E22E;">)</span>
+    <span style="color: #A6E22E;">msanread</span><span style="color: #A6E22E;">(</span>val, t.elem.size<span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> h.flags&amp;hashWriting != <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">throw</span><span style="color: #A6E22E;">(</span><span style="color: #E6DB74;">"concurrent map writes"</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  h.flags |= hashWriting
+
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#24471;&#21040;key&#30340;hash&#20989;&#25968;</span>
+  alg := t.key.alg
+  hash := alg.<span style="color: #A6E22E;">hash</span><span style="color: #66D9EF;">(</span>key, <span style="color: #A6E22E;">uintptr</span><span style="color: #A6E22E;">(</span>h.hash0<span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;buckets&#20026;&#31354;&#65292;&#21017;&#20998;&#37197;&#19968;&#20010;</span>
+  <span style="color: #F92672;">if</span> h.buckets == <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    h.buckets = <span style="color: #A6E22E;">newarray</span><span style="color: #A6E22E;">(</span>t.bucket, <span style="color: #AE81FF;">1</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+
+<span style="color: #AE81FF;">again</span>:
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#24471;&#21040;hash&#30340;&#20302;b&#20301;,&#31561;&#21516;&#20110;&#23545;buckets&#30340;&#22823;&#23567;&#21462;&#20313;</span>
+  bucket := hash &amp; <span style="color: #66D9EF;">(</span><span style="color: #A6E22E;">uintptr</span><span style="color: #A6E22E;">(</span><span style="color: #AE81FF;">1</span><span style="color: #A6E22E;">)</span>&lt;&lt;h.B - <span style="color: #AE81FF;">1</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#32769;&#30340;bucket&#36824;&#27809;&#26377;&#36801;&#31227;&#65292;&#21017;&#23545;&#32769;&#30340;bucket&#36801;&#31227;</span>
+  <span style="color: #F92672;">if</span> h.oldbuckets != <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">growWork</span><span style="color: #A6E22E;">(</span>t, h, bucket<span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#26681;&#25454;hash&#20540;&#30340;&#20302;b&#20301;&#25214;&#21040;&#23545;&#20110;&#30340;bucket</span>
+  b := <span style="color: #66D9EF;">(</span>*bmap<span style="color: #66D9EF;">)(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #A6E22E;">(</span><span style="color: #A6E22E;">uintptr</span><span style="color: #E6DB74;">(</span>h.buckets<span style="color: #E6DB74;">)</span> + bucket*<span style="color: #A6E22E;">uintptr</span><span style="color: #E6DB74;">(</span>t.bucketsize<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#35745;&#31639;hash&#20540;&#30340;&#39640;8&#20301;</span>
+  top := <span style="color: #A6E22E;">uint8</span><span style="color: #66D9EF;">(</span>hash &gt;&gt; <span style="color: #A6E22E;">(</span>sys.PtrSize*<span style="color: #AE81FF;">8</span> - <span style="color: #AE81FF;">8</span><span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span>
+  <span style="color: #F92672;">if</span> top &lt; minTopHash <span style="color: #66D9EF;">{</span>
+    top += minTopHash
+  <span style="color: #66D9EF;">}</span>
+
+  <span style="color: #F92672;">var</span> inserti *uint8
+  <span style="color: #F92672;">var</span> insertk unsafe.Pointer
+  <span style="color: #F92672;">var</span> insertv unsafe.Pointer
+  <span style="color: #F92672;">for</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #F92672;">for</span> i := <span style="color: #A6E22E;">uintptr</span><span style="color: #A6E22E;">(</span><span style="color: #AE81FF;">0</span><span style="color: #A6E22E;">)</span>; i &lt; bucketCnt; i++ <span style="color: #A6E22E;">{</span>
+      <span style="color: #F92672;">if</span> b.tophash<span style="color: #E6DB74;">[</span>i<span style="color: #E6DB74;">]</span> != top <span style="color: #E6DB74;">{</span>
+        <span style="color: #F92672;">if</span> b.tophash<span style="color: #FD971F;">[</span>i<span style="color: #FD971F;">]</span> == empty &amp;&amp; inserti == <span style="color: #AE81FF;">nil</span> <span style="color: #FD971F;">{</span>
+          <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#20197;&#21518;&#27809;&#26377;&#25214;&#21040;&#65292;&#36825;&#37324;&#20808;&#39044;&#30041;&#19968;&#20010;&#21487;&#20197;&#25554;&#20837;&#30340;&#20301;&#32622;</span>
+          inserti = &amp;b.tophash<span style="color: #F92672;">[</span>i<span style="color: #F92672;">]</span>
+          insertk = <span style="color: #A6E22E;">add</span><span style="color: #F92672;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #AE81FF;">(</span>b<span style="color: #AE81FF;">)</span>, dataOffset+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #AE81FF;">(</span>t.keysize<span style="color: #AE81FF;">)</span><span style="color: #F92672;">)</span>
+          insertv = <span style="color: #A6E22E;">add</span><span style="color: #F92672;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #AE81FF;">(</span>b<span style="color: #AE81FF;">)</span>, dataOffset+bucketCnt*<span style="color: #A6E22E;">uintptr</span><span style="color: #AE81FF;">(</span>t.keysize<span style="color: #AE81FF;">)</span>+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #AE81FF;">(</span>t.valuesize<span style="color: #AE81FF;">)</span><span style="color: #F92672;">)</span>
+        <span style="color: #FD971F;">}</span>
+        <span style="color: #F92672;">continue</span>
+      <span style="color: #E6DB74;">}</span>
+      k := <span style="color: #A6E22E;">add</span><span style="color: #E6DB74;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #FD971F;">(</span>b<span style="color: #FD971F;">)</span>, dataOffset+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #FD971F;">(</span>t.keysize<span style="color: #FD971F;">)</span><span style="color: #E6DB74;">)</span>
+      k2 := k
+      <span style="color: #F92672;">if</span> t.indirectkey <span style="color: #E6DB74;">{</span>
+        k2 = *<span style="color: #FD971F;">(</span><span style="color: #F92672;">(</span>*unsafe.Pointer<span style="color: #F92672;">)(</span>k2<span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>
+      <span style="color: #E6DB74;">}</span>
+      <span style="color: #F92672;">if</span> !alg.<span style="color: #A6E22E;">equal</span><span style="color: #E6DB74;">(</span>key, k2<span style="color: #E6DB74;">)</span> <span style="color: #E6DB74;">{</span>
+        <span style="color: #F92672;">continue</span>
+      <span style="color: #E6DB74;">}</span>
+      <span style="color: #75715E;">// </span><span style="color: #75715E;">&#25214;&#21040;&#19968;&#20010;&#30456;&#21516;&#30340;key</span>
+      <span style="color: #75715E;">// </span><span style="color: #75715E;">already have a mapping for key. Update it.</span>
+      <span style="color: #F92672;">if</span> t.needkeyupdate <span style="color: #E6DB74;">{</span>
+        <span style="color: #A6E22E;">typedmemmove</span><span style="color: #FD971F;">(</span>t.key, k2, key<span style="color: #FD971F;">)</span>
+      <span style="color: #E6DB74;">}</span>
+      v := <span style="color: #A6E22E;">add</span><span style="color: #E6DB74;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #FD971F;">(</span>b<span style="color: #FD971F;">)</span>, dataOffset+bucketCnt*<span style="color: #A6E22E;">uintptr</span><span style="color: #FD971F;">(</span>t.keysize<span style="color: #FD971F;">)</span>+i*<span style="color: #A6E22E;">uintptr</span><span style="color: #FD971F;">(</span>t.valuesize<span style="color: #FD971F;">)</span><span style="color: #E6DB74;">)</span>
+      v2 := v
+      <span style="color: #F92672;">if</span> t.indirectvalue <span style="color: #E6DB74;">{</span>
+        v2 = *<span style="color: #FD971F;">(</span><span style="color: #F92672;">(</span>*unsafe.Pointer<span style="color: #F92672;">)(</span>v2<span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>
+      <span style="color: #E6DB74;">}</span>
+      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#26356;&#26032;&#20540;</span>
+      <span style="color: #A6E22E;">typedmemmove</span><span style="color: #E6DB74;">(</span>t.elem, v2, val<span style="color: #E6DB74;">)</span>
+      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#36339;&#20986;&#24490;&#29615;&#21040;&#23436;&#25104;</span>
+      <span style="color: #F92672;">goto</span> <span style="color: #AE81FF;">done</span>
+    <span style="color: #A6E22E;">}</span>
+    ovf := b.<span style="color: #A6E22E;">overflow</span><span style="color: #A6E22E;">(</span>t<span style="color: #A6E22E;">)</span>
+    <span style="color: #F92672;">if</span> ovf == <span style="color: #AE81FF;">nil</span> <span style="color: #A6E22E;">{</span>
+      <span style="color: #F92672;">break</span>
+    <span style="color: #A6E22E;">}</span>
+    b = ovf
+  <span style="color: #66D9EF;">}</span>
+
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">did not find mapping for key. Allocate new cell &amp; add entry.</span>
+  <span style="color: #F92672;">if</span> <span style="color: #A6E22E;">float32</span><span style="color: #66D9EF;">(</span>h.count<span style="color: #66D9EF;">)</span> &gt;= loadFactor*<span style="color: #A6E22E;">float32</span><span style="color: #66D9EF;">(</span><span style="color: #A6E22E;">(</span><span style="color: #A6E22E;">uintptr</span><span style="color: #E6DB74;">(</span><span style="color: #AE81FF;">1</span><span style="color: #E6DB74;">)</span>&lt;&lt;h.B<span style="color: #A6E22E;">)</span><span style="color: #66D9EF;">)</span> &amp;&amp; h.count &gt;= bucketCnt <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">hashGrow</span><span style="color: #A6E22E;">(</span>t, h<span style="color: #A6E22E;">)</span>
+    <span style="color: #F92672;">goto</span> <span style="color: #AE81FF;">again</span> <span style="color: #75715E;">// </span><span style="color: #75715E;">Growing the table invalidates everything, so try again</span>
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#27809;&#26377;&#25214;&#21040;&#21487;&#20197;&#25554;&#20837;&#30340;&#20301;&#32622;&#65292;&#20998;&#37197;&#19968;&#20010;</span>
+  <span style="color: #F92672;">if</span> inserti == <span style="color: #AE81FF;">nil</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #75715E;">// </span><span style="color: #75715E;">all current buckets are full, allocate a new one.</span>
+    newb := <span style="color: #A6E22E;">(</span>*bmap<span style="color: #A6E22E;">)(</span><span style="color: #A6E22E;">newobject</span><span style="color: #E6DB74;">(</span>t.bucket<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+    h.<span style="color: #A6E22E;">setoverflow</span><span style="color: #A6E22E;">(</span>t, b, newb<span style="color: #A6E22E;">)</span>
+    inserti = &amp;newb.tophash<span style="color: #A6E22E;">[</span><span style="color: #AE81FF;">0</span><span style="color: #A6E22E;">]</span>
+    insertk = <span style="color: #A6E22E;">add</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>newb<span style="color: #E6DB74;">)</span>, dataOffset<span style="color: #A6E22E;">)</span>
+    insertv = <span style="color: #A6E22E;">add</span><span style="color: #A6E22E;">(</span>insertk, bucketCnt*<span style="color: #A6E22E;">uintptr</span><span style="color: #E6DB74;">(</span>t.keysize<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+
+  <span style="color: #75715E;">// </span><span style="color: #75715E;">store new key/value at insert position</span>
+  <span style="color: #F92672;">if</span> t.indirectkey <span style="color: #66D9EF;">{</span>
+    kmem := <span style="color: #A6E22E;">newobject</span><span style="color: #A6E22E;">(</span>t.key<span style="color: #A6E22E;">)</span>
+    *<span style="color: #A6E22E;">(</span>*unsafe.Pointer<span style="color: #A6E22E;">)(</span>insertk<span style="color: #A6E22E;">)</span> = kmem
+    insertk = kmem
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #F92672;">if</span> t.indirectvalue <span style="color: #66D9EF;">{</span>
+    vmem := <span style="color: #A6E22E;">newobject</span><span style="color: #A6E22E;">(</span>t.elem<span style="color: #A6E22E;">)</span>
+    *<span style="color: #A6E22E;">(</span>*unsafe.Pointer<span style="color: #A6E22E;">)(</span>insertv<span style="color: #A6E22E;">)</span> = vmem
+    insertv = vmem
+  <span style="color: #66D9EF;">}</span>
+  <span style="color: #75715E;">//</span><span style="color: #75715E;">&#23384;kv</span>
+  <span style="color: #A6E22E;">typedmemmove</span><span style="color: #66D9EF;">(</span>t.key, insertk, key<span style="color: #66D9EF;">)</span>
+  <span style="color: #A6E22E;">typedmemmove</span><span style="color: #66D9EF;">(</span>t.elem, insertv, val<span style="color: #66D9EF;">)</span>
+  *inserti = top
+  h.count++
+
+<span style="color: #AE81FF;">done</span>:
+  <span style="color: #F92672;">if</span> h.flags&amp;hashWriting == <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
+    <span style="color: #A6E22E;">throw</span><span style="color: #A6E22E;">(</span><span style="color: #E6DB74;">"concurrent map writes"</span><span style="color: #A6E22E;">)</span>
+  <span style="color: #66D9EF;">}</span>
+  h.flags &amp;^= hashWriting
+<span style="color: #AE81FF;">}</span>
+</pre>
+</div>
+
+<p>
+其他的源码就不一一列举了, 有兴趣可以看runtime/hashmap.go。
 </p>
 </div>
 </div>
@@ -248,7 +466,7 @@ fmt.<span style="color: #A6E22E;">Println</span><span style="color: #AE81FF;">(<
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2016-08-19 五 14:26</p>
+<p class="date">Created: 2016-08-20 六 10:13</p>
 <p class="validation"></p>
 </div>
 </body>
