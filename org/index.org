@@ -4,6 +4,8 @@
 #+OPTIONS: AUTHOR:nil 
 #+OPTIONS: TIMESTAMP:nil
 
+* 2016年9月
+- [[file:go_debug.org][golang调试工具]] 
 * 2016年8月 
 - [[file:go_map.org][go语言map结构内部实现]]
 - [[file:emacs_blog.org][使用org-mode写blog]] 

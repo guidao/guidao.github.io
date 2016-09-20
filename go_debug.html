@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2016-09-20 二 10:26 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="viewport" content="width=device-width, initial-scale=1" />
+<title>golang调试工具</title>
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">golang调试工具</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline2">1. 调试工具gdb</a>
+<ul>
+<li><a href="#orgheadline1">1.1. gdb 调试go程序</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline3">2. golang 调试工具delve</a></li>
+<li><a href="#orgheadline4">3. 相关链接</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2"><span class="section-number-2">1</span> 调试工具gdb</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+gdb 是一个调试工具，可以调试很多种语言，当然其中就有golang。由于gdb不能显示go的数据类型，所以在go的runtime源码下有一个python代码文件,runtime-gdb.py，提供给gdb一个扩展。
+</p>
+</div>
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> gdb 调试go程序</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+先写一个很简单的小程序
+</p>
+<div class="org-src-container">
+
+<pre class="src src-go"><span style="color: #F92672;">package</span> main
+
+<span style="color: #F92672;">import</span> <span style="color: #AE81FF;">(</span>
+  <span style="color: #E6DB74;">"fmt"</span>
+<span style="color: #AE81FF;">)</span>
+
+<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">main</span><span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
+  b := <span style="color: #F92672;">make</span><span style="color: #66D9EF;">(</span><span style="color: #F92672;">map</span><span style="color: #A6E22E;">[</span><span style="color: #66D9EF;">string</span><span style="color: #A6E22E;">]</span><span style="color: #66D9EF;">string</span><span style="color: #66D9EF;">)</span>
+  b<span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"write"</span>
+  b<span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"black"</span>
+  fmt.<span style="color: #A6E22E;">Println</span><span style="color: #66D9EF;">(</span>b<span style="color: #66D9EF;">)</span>
+<span style="color: #AE81FF;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-shell">go build -gcflags <span style="color: #E6DB74;">"-N -l"</span> test8.go
+</pre>
+</div>
+<p>
+编译代码，-gcflags是给go编译器的参数，gc是go compile的意思。-N是不要优化代码，-l 是禁止内联代码。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-fundamental">&gt; gdb test8
+GNU gdb (Ubuntu 7.10-1ubuntu2) 7.10
+Copyright (C) 2015 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">&lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type </a><span style="color: #E6DB74;"><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">"show copying"</a></span><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">
+and </a><span style="color: #E6DB74;"><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">"show warranty"</a></span><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/"> for details.
+This GDB was configured as </a><span style="color: #E6DB74;"><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">"x86_64-linux-gnu"</a></span><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">.
+Type </a><span style="color: #E6DB74;"><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/">"show configuration"</a></span><a href="http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+Type &quot;show configuration&quot; for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/"> for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/&gt;</a>.
+For help, type <span style="color: #E6DB74;">"help"</span>.
+Type <span style="color: #E6DB74;">"apropos word"</span> to search for commands related to <span style="color: #E6DB74;">"word"</span>...
+Reading symbols from test8...done.
+warning: File <span style="color: #E6DB74;">"/home/47/go/src/runtime/runtime-gdb.py"</span> auto-loading has been declined by your `auto-load safe-path' set to <span style="color: #E6DB74;">"$debugdir:$datadir/auto-load"</span>.
+To enable execution of this file add
+  add-auto-load-safe-path /home/47/go/src/runtime/runtime-gdb.py
+line to your configuration file <span style="color: #E6DB74;">"/home/47/.gdbinit"</span>.
+To completely disable this security protection add
+  set auto-load safe-path /
+line to your configuration file <span style="color: #E6DB74;">"/home/47/.gdbinit"</span>.
+For more information about this security protection see the
+<span style="color: #E6DB74;">"Auto-loading safe path"</span> section in the GDB manual.  E.g., run from the shell:
+  info <span style="color: #E6DB74;">"(gdb)Auto-loading safe path"</span>
+(gdb) info files
+Symbols from <span style="color: #E6DB74;">"/home/47/code/golang/src/test3/test8"</span>.
+Local exec file:
+  `/home/47/code/golang/src/test3/test8', file type elf64-x86-64.
+  Entry point: 0x456750
+  0x0000000000401000 - 0x00000000004aa960 is .text
+  0x00000000004ab000 - 0x000000000052dc62 is .rodata
+  0x000000000052dc68 - 0x000000000052fd28 is .typelink
+  0x000000000052fd28 - 0x000000000052fd28 is .gosymtab
+  0x000000000052fd40 - 0x00000000005800d8 is .gopclntab
+  0x0000000000581000 - 0x0000000000582ce8 is .noptrdata
+  0x0000000000582d00 - 0x0000000000585250 is .data
+  0x0000000000585260 - 0x000000000059fab8 is .bss
+  0x000000000059fac0 - 0x00000000005a48c0 is .noptrbss
+  0x0000000000400fc8 - 0x0000000000401000 is .note.go.buildid
+(gdb) l main.main
+2 
+3 import (
+4   <span style="color: #E6DB74;">"fmt"</span>
+5 )
+6 
+7 func main() {
+8   fmt.Println(<span style="color: #E6DB74;">"begin==============="</span>)
+9   b := make(map[string]string)
+10    b[<span style="color: #E6DB74;">"write"</span>] = <span style="color: #E6DB74;">"write"</span>
+11    b[<span style="color: #E6DB74;">"black"</span>] = <span style="color: #E6DB74;">"black"</span>
+(gdb) b 10
+Breakpoint 1 at 0x401151: file /home/jyk-47/code/golang/src/test3/test8.go, line 10.
+(gdb) r
+Starting program: /home/jyk-47/code/golang/src/test3/test8 
+[New LWP 21285]
+[New LWP 21286]
+[New LWP 21287]
+begin===============
+
+Breakpoint 1, main.main () at /home/jyk-47/code/golang/src/test3/test8.go:10
+10    b[<span style="color: #E6DB74;">"write"</span>] = <span style="color: #E6DB74;">"write"</span>
+(gdb) l
+5 )
+6 
+7 func main() {
+8   fmt.Println(<span style="color: #E6DB74;">"begin==============="</span>)
+9   b := make(map[string]string)
+10    b[<span style="color: #E6DB74;">"write"</span>] = <span style="color: #E6DB74;">"write"</span>
+11    b[<span style="color: #E6DB74;">"black"</span>] = <span style="color: #E6DB74;">"black"</span>
+12    fmt.Println(b)
+13  }
+(gdb) p b
+$1 = (map[string]string) 0xc8200121e0
+(gdb) p *b
+$2 = {count = 0, flags = 0 '\000', B = 0 '\000', hash0 = 1888351057, buckets = 0x0, oldbuckets = 0x0, nevacuate = 0, overflow = 0x0}
+(gdb) n
+11    b[<span style="color: #E6DB74;">"black"</span>] = <span style="color: #E6DB74;">"black"</span>
+(gdb) bt
+#0  main.main () at /home/jyk-47/code/golang/src/test3/test8.go:11
+(gdb) bp
+</pre>
+</div>
+<p>
+可以看到上面已经加载了golang的扩展脚本runtime-gdb.py, l main.main 是查看main函数的源码，b 10 在第10行设置断点。r 运行程序。p b 是打印变量。n 是单步。gdb不能打印go中map具体的内容，只能够打印map底层的结构，用起来有点不爽。
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3"><span class="section-number-2">2</span> golang 调试工具delve</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+由于gdb对golang支持比较差，只能支持一些简单的功能,比如断点，单步等，但对goroutine, 内置对象的打印等还是不怎么好。所以go有了自己的debug工具delve。安装等可以参考官方文档：<a href="https://github.com/derekparker/delve">https://github.com/derekparker/delve</a>.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-shell">Delve is a source level debugger for Go programs.
+
+Delve enables you to interact with your program by controlling the execution of the process,
+evaluating variables, and providing information of thread / goroutine state, CPU register state and more.
+
+The goal of this tool is to provide a simple yet powerful interface for debugging Go programs.
+
+Usage:
+  dlv <span style="color: #AE81FF;">[</span>command<span style="color: #AE81FF;">]</span>
+
+Available Commands:
+  attach      Attach to running process and begin debugging.
+  connect     Connect to a headless debug server.
+  debug       Compile and begin debugging main package<span style="color: #F92672;"> in</span> current directory, or the package specified.
+  <span style="color: #F92672;">exec</span>        Execute a precompiled binary, and begin a debug session.
+  run         Deprecated command. Use <span style="color: #E6DB74;">'debug'</span> instead.
+  test        Compile test binary and begin debugging program.
+  trace       Compile and begin tracing program.
+  version     Prints version.
+
+Flags:
+      --accept-multiclient<span style="color: #AE81FF;">[</span>=false<span style="color: #AE81FF;">]</span>: Allows a headless server to accept multiple client connections. Note that the server API is not reentrant and clients will have to coordinate.
+      --api-version=<span style="color: #AE81FF;">1:</span> Selects API version when headless.
+      --build-flags=<span style="color: #E6DB74;">""</span>: Build flags, to be passed to the compiler.
+      --headless<span style="color: #AE81FF;">[</span>=false<span style="color: #AE81FF;">]</span>: Run debug server only,<span style="color: #F92672;"> in</span> headless mode.
+  -h, --help<span style="color: #AE81FF;">[</span>=false<span style="color: #AE81FF;">]</span>: help for dlv
+      --init=<span style="color: #E6DB74;">""</span>: Init file, executed by the terminal client.
+  -l, --listen=<span style="color: #E6DB74;">"localhost:0"</span>: Debugging server listen address.
+      --log<span style="color: #AE81FF;">[</span>=false<span style="color: #AE81FF;">]</span>: Enable debugging server logging.
+
+Use <span style="color: #E6DB74;">"dlv [command] --help"</span> for more information about a command.
+</pre>
+</div>
+<p>
+delve 的帮助文档说的非常清楚。我们还是用上面的那个例子来说明.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-shell">&gt; dlv exec ./test8
+Type <span style="color: #E6DB74;">'help'</span> for list of commands.
+//&#26597;&#30475;&#20027;&#20989;&#25968;&#30340;&#20195;&#30721;
+<span style="color: #AE81FF;">(</span>dlv<span style="color: #AE81FF;">)</span> ls main.main 
+   <span style="color: #AE81FF;">2:</span> 
+   <span style="color: #AE81FF;">3:</span> import <span style="color: #AE81FF;">(</span>
+   <span style="color: #AE81FF;">4:</span>   <span style="color: #E6DB74;">"fmt"</span>
+   <span style="color: #AE81FF;">5:</span> <span style="color: #AE81FF;">)</span>
+   <span style="color: #AE81FF;">6:</span> 
+   <span style="color: #AE81FF;">7:</span> func main<span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
+   <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #66D9EF;">)</span>
+   <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #66D9EF;">(</span>map<span style="color: #A6E22E;">[</span>string<span style="color: #A6E22E;">]</span>string<span style="color: #66D9EF;">)</span>
+  <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"write"</span>
+  <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"black"</span>
+  <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #66D9EF;">(</span>b<span style="color: #66D9EF;">)</span>
+//&#35774;&#32622;&#26029;&#28857;
+<span style="color: #66D9EF;">(</span>dlv<span style="color: #66D9EF;">)</span> b main.main
+Breakpoint <span style="color: #AE81FF;">1</span> set at <span style="color: #AE81FF;">0x40101b</span> for main.main<span style="color: #66D9EF;">()</span> ./test8.go:7
+//&#36816;&#34892;&#21040;&#26029;&#28857;&#22788;
+<span style="color: #66D9EF;">(</span>dlv<span style="color: #66D9EF;">)</span> c
+&gt; main.main<span style="color: #66D9EF;">()</span> ./test8.go:7 <span style="color: #66D9EF;">(</span>hits goroutine<span style="color: #A6E22E;">(</span><span style="color: #AE81FF;">1</span><span style="color: #A6E22E;">)</span>:1 total:1<span style="color: #66D9EF;">)</span> <span style="color: #66D9EF;">(</span>PC: <span style="color: #AE81FF;">0x40101b</span><span style="color: #66D9EF;">)</span>
+     <span style="color: #AE81FF;">2:</span> 
+     <span style="color: #AE81FF;">3:</span> import <span style="color: #66D9EF;">(</span>
+     <span style="color: #AE81FF;">4:</span>   <span style="color: #E6DB74;">"fmt"</span>
+     <span style="color: #AE81FF;">5:</span> <span style="color: #66D9EF;">)</span>
+     <span style="color: #AE81FF;">6:</span> 
+=&gt;   <span style="color: #AE81FF;">7:</span> func main<span style="color: #66D9EF;">()</span> <span style="color: #66D9EF;">{</span>
+     <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #A6E22E;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #A6E22E;">)</span>
+     <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #A6E22E;">(</span>map<span style="color: #E6DB74;">[</span>string<span style="color: #E6DB74;">]</span>string<span style="color: #A6E22E;">)</span>
+    <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #A6E22E;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #A6E22E;">]</span> = <span style="color: #E6DB74;">"write"</span>
+    <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #A6E22E;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #A6E22E;">]</span> = <span style="color: #E6DB74;">"black"</span>
+    <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #A6E22E;">(</span>b<span style="color: #A6E22E;">)</span>
+//&#21333;&#27493;&#25191;&#34892;
+<span style="color: #A6E22E;">(</span>dlv<span style="color: #A6E22E;">)</span> n
+&gt; main.main<span style="color: #A6E22E;">()</span> ./test8.go:8 <span style="color: #A6E22E;">(</span>PC: <span style="color: #AE81FF;">0x401022</span><span style="color: #A6E22E;">)</span>
+     <span style="color: #AE81FF;">3:</span> import <span style="color: #A6E22E;">(</span>
+     <span style="color: #AE81FF;">4:</span>   <span style="color: #E6DB74;">"fmt"</span>
+     <span style="color: #AE81FF;">5:</span> <span style="color: #A6E22E;">)</span>
+     <span style="color: #AE81FF;">6:</span> 
+     <span style="color: #AE81FF;">7:</span> func main<span style="color: #A6E22E;">()</span> <span style="color: #A6E22E;">{</span>
+=&gt;   <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #E6DB74;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #E6DB74;">)</span>
+     <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #E6DB74;">(</span>map<span style="color: #FD971F;">[</span>string<span style="color: #FD971F;">]</span>string<span style="color: #E6DB74;">)</span>
+    <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #E6DB74;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #E6DB74;">]</span> = <span style="color: #E6DB74;">"write"</span>
+    <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #E6DB74;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #E6DB74;">]</span> = <span style="color: #E6DB74;">"black"</span>
+    <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #E6DB74;">(</span>b<span style="color: #E6DB74;">)</span>
+    <span style="color: #AE81FF;">13:</span> <span style="color: #A6E22E;">}</span>
+<span style="color: #A6E22E;">(</span>dlv<span style="color: #A6E22E;">)</span> 
+<span style="color: #FD971F;">begin</span>===============
+&gt; main.main<span style="color: #A6E22E;">()</span> ./test8.go:9 <span style="color: #A6E22E;">(</span>PC: <span style="color: #AE81FF;">0x40111c</span><span style="color: #A6E22E;">)</span>
+     <span style="color: #AE81FF;">4:</span>   <span style="color: #E6DB74;">"fmt"</span>
+     <span style="color: #AE81FF;">5:</span> <span style="color: #F8F8F2; background-color: #272822;">)</span>
+     <span style="color: #AE81FF;">6:</span> 
+     <span style="color: #AE81FF;">7:</span> func main<span style="color: #66D9EF;">()</span> <span style="color: #66D9EF;">{</span>
+     <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #A6E22E;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #A6E22E;">)</span>
+=&gt;   <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #A6E22E;">(</span>map<span style="color: #E6DB74;">[</span>string<span style="color: #E6DB74;">]</span>string<span style="color: #A6E22E;">)</span>
+    <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #A6E22E;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #A6E22E;">]</span> = <span style="color: #E6DB74;">"write"</span>
+    <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #A6E22E;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #A6E22E;">]</span> = <span style="color: #E6DB74;">"black"</span>
+    <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #A6E22E;">(</span>b<span style="color: #A6E22E;">)</span>
+    <span style="color: #AE81FF;">13:</span> <span style="color: #66D9EF;">}</span>
+<span style="color: #66D9EF;">(</span>dlv<span style="color: #66D9EF;">)</span> n
+&gt; main.main<span style="color: #66D9EF;">()</span> ./test8.go:10 <span style="color: #66D9EF;">(</span>PC: <span style="color: #AE81FF;">0x401151</span><span style="color: #66D9EF;">)</span>
+     <span style="color: #AE81FF;">5:</span> <span style="color: #F8F8F2; background-color: #272822;">)</span>
+     <span style="color: #AE81FF;">6:</span> 
+     <span style="color: #AE81FF;">7:</span> func main<span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
+     <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #66D9EF;">)</span>
+     <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #66D9EF;">(</span>map<span style="color: #A6E22E;">[</span>string<span style="color: #A6E22E;">]</span>string<span style="color: #66D9EF;">)</span>
+=&gt;  <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"write"</span>
+    <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"black"</span>
+    <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #66D9EF;">(</span>b<span style="color: #66D9EF;">)</span>
+    <span style="color: #AE81FF;">13:</span> <span style="color: #AE81FF;">}</span>
+<span style="color: #AE81FF;">(</span>dlv<span style="color: #AE81FF;">)</span> n
+&gt; main.main<span style="color: #AE81FF;">()</span> ./test8.go:11 <span style="color: #AE81FF;">(</span>PC: <span style="color: #AE81FF;">0x4011bb</span><span style="color: #AE81FF;">)</span>
+     <span style="color: #AE81FF;">6:</span> 
+     <span style="color: #AE81FF;">7:</span> func main<span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
+     <span style="color: #AE81FF;">8:</span>   fmt.Println<span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"begin==============="</span><span style="color: #66D9EF;">)</span>
+     <span style="color: #AE81FF;">9:</span>   b := make<span style="color: #66D9EF;">(</span>map<span style="color: #A6E22E;">[</span>string<span style="color: #A6E22E;">]</span>string<span style="color: #66D9EF;">)</span>
+    <span style="color: #AE81FF;">10:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"write"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"write"</span>
+=&gt;  <span style="color: #AE81FF;">11:</span>   <span style="color: #FD971F;">b</span><span style="color: #66D9EF;">[</span><span style="color: #E6DB74;">"black"</span><span style="color: #66D9EF;">]</span> = <span style="color: #E6DB74;">"black"</span>
+    <span style="color: #AE81FF;">12:</span>   fmt.Println<span style="color: #66D9EF;">(</span>b<span style="color: #66D9EF;">)</span>
+    <span style="color: #AE81FF;">13:</span> <span style="color: #AE81FF;">}</span>
+//&#25171;&#21360;b&#30340;&#20540;
+<span style="color: #AE81FF;">(</span>dlv<span style="color: #AE81FF;">)</span> p b
+map<span style="color: #AE81FF;">[</span>string<span style="color: #AE81FF;">]</span>string <span style="color: #AE81FF;">[</span>
+  <span style="color: #E6DB74;">"write"</span>: <span style="color: #E6DB74;">"write"</span>, 
+<span style="color: #AE81FF;">]</span>
+<span style="color: #AE81FF;">(</span>dlv<span style="color: #AE81FF;">)</span>
+</pre>
+</div>
+<p>
+dlv还提供一些命令，总的来说对于简单的调试足够了。用起来还是比较方便, 不过如果调试go汇编代码，就有点不足，-0- 单步都不能使用。
+</p>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4"><span class="section-number-2">3</span> 相关链接</h2>
+<div class="outline-text-2" id="text-3">
+<ul class="org-ul">
+<li><a href="https://golang.org/doc/gdb">Debugging Go Code with GDB</a></li>
+<li><a href="https://github.com/derekparker/delve">https://github.com/derekparker/delve</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2016-09-20 二 10:26</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
