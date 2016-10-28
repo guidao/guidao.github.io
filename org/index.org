@@ -5,7 +5,7 @@
 #+OPTIONS: TIMESTAMP:nil
 
 * 2016年10月
-- [[file:go_timer.org][go中的定时器]] 
+- [[file:go_timer.org][go中的定时器实现]] 
 * 2016年9月
 - [[file:go_debug.org][golang调试工具]] 
 * 2016年8月 
