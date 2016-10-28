@@ -1,0 +1,163 @@
+#+TITLE: go中的定时器timer
+* 使用方法
+  golang中定时器的使用接口在time包中，其中最主要两个接口是time.After跟,time.AfterFunc其中第一个After接口返回一个chan Time, 当时间到时可以读出Timer, AfterFunc接受一个方法，当时间到时执行这个方法。
+#+BEGIN_SRC go
+  package main
+
+  import (
+    "time"
+    "fmt"
+  )
+
+  func main() {
+    a := time.After(2 * time.Second)
+    <- a
+    fmt.Println("timer receive")
+
+    time.AfterFunc(2 * time.Second, func(){
+      fmt.Println("timer receive")
+    })
+  }
+#+END_SRC
+After其实跟AfterFunc差不多，只不过其中的func参数是先通道中写数据
+
+* 内部实现
+  由于After跟AfterFunc差不多，这里主要看看AfterFunc的实现
+  #+BEGIN_SRC go
+  //time/sleep.go
+ func AfterFunc(d Duration, f func()) *Timer {
+    t := &Timer{
+      r: runtimeTimer{
+        when: when(d),
+        f:    goFunc,
+        arg:  f,
+      },
+    }
+    startTimer(&t.r)
+    return t
+  } 
+  func goFunc(arg interface{}, seq uintptr) {
+	  go arg.(func())()
+}
+  #+END_SRC
+  AfterFunc很简单，就是把参数封装为runtimeTimer,然后启动timer(把timer添加到队列中), 这部分代码在runtime/time.go中,注意这里goFunc新启动了一个goroutine来执行用户的任务,这样用户的func就不会堵塞timer
+  
+  #+BEGIN_SRC go
+    //runtime/time.go
+      func startTimer(t *timer) {
+        if raceenabled {
+          racerelease(unsafe.Pointer(t))
+        }
+        addtimer(t)
+      }
+
+      func addtimer(t *timer) {
+        lock(&timers.lock)
+        addtimerLocked(t)
+        unlock(&timers.lock)
+      }
+
+      // Add a timer to the heap and start or kick the timer proc.
+      // If the new timer is earlier than any of the others.
+      // Timers are locked.
+      func addtimerLocked(t *timer) {
+        // when must never be negative; otherwise timerproc will overflow
+        // during its delta calculation and never expire other runtime·timers.
+        if t.when < 0 {
+          t.when = 1<<63 - 1
+        }
+        //添加time到全局timer
+        t.i = len(timers.t)
+        timers.t = append(timers.t, t)
+        //使用最小堆算法维护timer队列
+        siftupTimer(t.i)
+        //如果是第一个
+        if t.i == 0 {
+          // siftup moved to top: new earliest deadline.
+          //如果在sleep中, 唤醒
+          if timers.sleeping {
+            timers.sleeping = false
+            notewakeup(&timers.waitnote)
+          }
+          //如果在调度中, 等待
+          if timers.rescheduling {
+            timers.rescheduling = false
+            goready(timers.gp, 0)
+          }
+        }
+        //如果timer还没创建,则创建
+        if !timers.created {
+          timers.created = true
+          go timerproc()
+        }
+      }
+
+    func timerproc() {
+      timers.gp = getg()
+      for {
+        lock(&timers.lock)
+        timers.sleeping = false
+        now := nanotime()
+        delta := int64(-1)
+        for {
+          if len(timers.t) == 0 {
+            delta = -1
+            break
+          }
+          t := timers.t[0]
+          //得到剩余时间, 还没到时间就sleep
+          delta = t.when - now
+          if delta > 0 {
+            break
+          }
+          //如果是周期性的就算下一次时间
+          if t.period > 0 {
+            // leave in heap but adjust next time to fire
+            t.when += t.period * (1 + -delta/t.period)
+            //最小堆下沉
+            siftdownTimer(0)
+          } else {
+            // remove from heap
+            //删除将要执行的timer,(最小堆算法)
+            last := len(timers.t) - 1
+            if last > 0 {
+              timers.t[0] = timers.t[last]
+              timers.t[0].i = 0
+            }
+            timers.t[last] = nil
+            timers.t = timers.t[:last]
+            if last > 0 {
+              siftdownTimer(0)
+            }
+            t.i = -1 // mark as removed
+          }
+          f := t.f
+          arg := t.arg
+          seq := t.seq
+          unlock(&timers.lock)
+          if raceenabled {
+            raceacquire(unsafe.Pointer(t))
+          }
+          //执行函数调用函数
+          f(arg, seq)
+          lock(&timers.lock)
+        }
+        //继续下一个,因为可能下一个timer也到时间了
+        if delta < 0 || faketime > 0 {
+          // No timers left - put goroutine to sleep.
+          timers.rescheduling = true
+          goparkunlock(&timers.lock, "timer goroutine (idle)", traceEvGoBlock, 1)
+          continue
+        }
+        // At least one timer pending.  Sleep until then.
+        timers.sleeping = true
+        noteclear(&timers.waitnote)
+        unlock(&timers.lock)
+        //没到时间,睡眠delta时间
+        notetsleepg(&timers.waitnote, delta)
+      }
+    }
+  #+END_SRC
+  
+* 其他实现方法
+  以前也看过erlang的timer的实现，不过erlang的实现是使用时间轮的方式，不同的时间挂在不同的时间刻度上，而golang使用的最小堆维护的一个timer队列。总的来说golang的实现方式比较简单，erlang的方式比较复杂，但是erlang在支持比较大量的timer情况下比较好,效率比较高。而go比较费时，每次操作最坏情况下都是logn（n为时间队列长度）.
