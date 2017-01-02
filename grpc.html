@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-01-02 Mon 16:25 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GRPC golang版源码分析之客户端(一)</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">GRPC golang版源码分析之客户端(一)</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org9fb076e">1. 前言</a></li>
+<li><a href="#orgcb36909">2. 源码目录浏览</a></li>
+<li><a href="#org12daf3f">3. 客户端</a></li>
+<li><a href="#org494b7b7">4. 相关链接</a></li>
+</ul>
+</div>
+</div>
+<css>
+
+<div id="outline-container-org9fb076e" class="outline-2">
+<h2 id="org9fb076e"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+grpc是一个通用的rpc框架，用google实现，当然也有go语言的版本。在工作中主要用到这个库，所以看看源码加强自己对框架的了解。目前来说主要分析的都以go版本为主(并没有看其他语言版本).由于个人水平有限，代码中的有些思想也是个人揣测，难免有些错误，如果发现错误，还望帮忙指出。
+</p>
+</div>
+</div>
+<div id="outline-container-orgcb36909" class="outline-2">
+<h2 id="orgcb36909"><span class="section-number-2">2</span> 源码目录浏览</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+grpc使用protobuf（google的序列化框架）作为通信协议，底层上使用http2作为其传输协议，grpc源码中自己实现了http2的服务端跟客户端，而并没有用net/http包。http2有很多特性能够高效的传输数据，具体特点可以看相关链接详细了解。
+grpc目录如下:
+<img src="./image/grpc_dir.png" alt="grpc_dir.png" />
+看名字大概能看出这些目录中代码是哪些关系，documentation目录是存放一些文档，benchmark是压测，credentials是验证，examples是例子，grpclb是负载均衡，grpclog是日志,health是服务健康检查,metadata是元数据(用户客户端给服务端传送一些特殊数据，具体可以看相关链接),naming目录是提供名字服务需要实现的接口(相当于一个dns),stats是统计信息,transport 传输层实现(主要是http2的客户端与服务端时实现, 不会详细说这个目录),还有其他一些比较无关紧要的目录就不一一介绍了。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org12daf3f" class="outline-2">
+<h2 id="org12daf3f"><span class="section-number-2">3</span> 客户端</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+在example目录中有两个比较简单的例子，就先从这里入手吧，
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">main</span><span style="color: #8c8c8c;">()</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">Set up a connection to the server.</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#24314;&#31435;&#19968;&#20010;&#38142;&#25509;</span>
+  conn, err := grpc.<span style="color: #00ede1; font-weight: bold;">Dial</span><span style="color: #93a8c6;">(</span>address, grpc.<span style="color: #00ede1; font-weight: bold;">WithInsecure</span><span style="color: #b0b1a3;">()</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    log.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"did not connect: %v"</span>, err<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> conn.<span style="color: #00ede1; font-weight: bold;">Close</span><span style="color: #93a8c6;">()</span>
+  c := pb.<span style="color: #00ede1; font-weight: bold;">NewGreeterClient</span><span style="color: #93a8c6;">(</span>conn<span style="color: #93a8c6;">)</span>
+
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">Contact the server and print out its response.</span>
+  name := defaultName
+  <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span><span style="color: #93a8c6;">(</span>os.Args<span style="color: #93a8c6;">)</span> &gt; <span style="color: #008b8b;">1</span> <span style="color: #93a8c6;">{</span>
+    name = os.Args<span style="color: #b0b1a3;">[</span><span style="color: #008b8b;">1</span><span style="color: #b0b1a3;">]</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35843;&#29992;&#20989;&#25968;</span>
+  r, err := c.<span style="color: #00ede1; font-weight: bold;">SayHello</span><span style="color: #93a8c6;">(</span>context.<span style="color: #00ede1; font-weight: bold;">Background</span><span style="color: #b0b1a3;">()</span>, &amp;pb.<span style="color: #34cae2;">HelloRequest</span><span style="color: #b0b1a3;">{</span>Name: name<span style="color: #b0b1a3;">}</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    log.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"could not greet: %v"</span>, err<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  log.<span style="color: #00ede1; font-weight: bold;">Printf</span><span style="color: #93a8c6;">(</span><span style="color: #e67128;">"Greeting: %s"</span>, r.Message<span style="color: #93a8c6;">)</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+<p>
+grcp.WithInsecure参数是在链接https服务端时不用检查服务端的证书(要是你相信服务端就不用检查).Dial函数对服务端建立一个连接，
+grpc.Dial函数:
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">DialContext</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, target <span style="color: #34cae2;">string</span>, opts ...<span style="color: #34cae2;">DialOption</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>conn *<span style="color: #34cae2;">ClientConn</span>, err <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  cc := &amp;<span style="color: #34cae2;">ClientConn</span><span style="color: #93a8c6;">{</span>
+    <span style="color: #008b8b;">target</span>: target,
+    <span style="color: #008b8b;">conns</span>:  <span style="color: #23d7d7;">make</span><span style="color: #b0b1a3;">(</span><span style="color: #ffad29; font-weight: bold;">map</span><span style="color: #97b098;">[</span><span style="color: #34cae2;">Address</span><span style="color: #97b098;">]</span>*<span style="color: #34cae2;">addrConn</span><span style="color: #b0b1a3;">)</span>,
+  <span style="color: #93a8c6;">}</span>
+  cc.ctx, cc.cancel = context.<span style="color: #00ede1; font-weight: bold;">WithCancel</span><span style="color: #93a8c6;">(</span>context.<span style="color: #00ede1; font-weight: bold;">Background</span><span style="color: #b0b1a3;">()</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">select</span> <span style="color: #b0b1a3;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">case</span> &lt;-ctx.<span style="color: #00ede1; font-weight: bold;">Done</span><span style="color: #97b098;">()</span>:
+      conn, err = <span style="color: #008b8b;">nil</span>, ctx.<span style="color: #00ede1; font-weight: bold;">Err</span><span style="color: #97b098;">()</span>
+    <span style="color: #ffad29; font-weight: bold;">default</span>:
+    <span style="color: #b0b1a3;">}</span>
+
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      cc.<span style="color: #00ede1; font-weight: bold;">Close</span><span style="color: #97b098;">()</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}()</span>
+
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35774;&#32622;grpc&#30340;&#21508;&#31181;&#36873;&#39033;</span>
+  <span style="color: #ffad29; font-weight: bold;">for</span> _, opt := <span style="color: #ffad29; font-weight: bold;">range</span> opts <span style="color: #93a8c6;">{</span>
+    <span style="color: #00ede1; font-weight: bold;">opt</span><span style="color: #b0b1a3;">(</span>&amp;cc.dopts<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">Set defaults.</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.codec == <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#40664;&#35748;&#29992;protobuf&#32534;&#35299;&#30721;</span>
+    cc.dopts.codec = <span style="color: #34cae2;">protoCodec</span><span style="color: #b0b1a3;">{}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.bs == <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    cc.dopts.bs = DefaultBackoffConfig
+  <span style="color: #93a8c6;">}</span>
+  creds := cc.dopts.copts.TransportCredentials
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#39564;&#35777;&#20449;&#24687;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> creds != <span style="color: #008b8b;">nil</span> &amp;&amp; creds.<span style="color: #00ede1; font-weight: bold;">Info</span><span style="color: #93a8c6;">()</span>.ServerName != <span style="color: #e67128;">""</span> <span style="color: #93a8c6;">{</span>
+    cc.authority = creds.<span style="color: #00ede1; font-weight: bold;">Info</span><span style="color: #b0b1a3;">()</span>.ServerName
+  <span style="color: #93a8c6;">}</span> <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #93a8c6;">{</span>
+    colonPos := strings.<span style="color: #00ede1; font-weight: bold;">LastIndex</span><span style="color: #b0b1a3;">(</span>target, <span style="color: #e67128;">":"</span><span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> colonPos == -<span style="color: #008b8b;">1</span> <span style="color: #b0b1a3;">{</span>
+      colonPos = <span style="color: #23d7d7;">len</span><span style="color: #97b098;">(</span>target<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    cc.authority = target<span style="color: #b0b1a3;">[</span>:colonPos<span style="color: #b0b1a3;">]</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">var</span> ok bool
+  waitC := <span style="color: #23d7d7;">make</span><span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">chan</span> <span style="color: #34cae2;">error</span>, <span style="color: #008b8b;">1</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21551;&#21160;&#19968;&#20010;goroutine&#21551;&#21160;&#21517;&#23383;&#26381;&#21153;&#22120;(&#31867;&#20284;dns)</span>
+  <span style="color: #ffad29; font-weight: bold;">go</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">var</span> addrs <span style="color: #b0b1a3;">[]</span><span style="color: #34cae2;">Address</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.balancer == <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">Connect to target directly if balancer is nil.</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">&#22914;&#26524;&#27809;&#35774;&#32622;&#36127;&#36733;&#22343;&#34913;&#22120;&#65292;&#21017;&#30452;&#25509;&#36830;&#25509;</span>
+      addrs = <span style="color: #23d7d7;">append</span><span style="color: #97b098;">(</span>addrs, <span style="color: #34cae2;">Address</span><span style="color: #aebed8;">{</span>Addr: target<span style="color: #aebed8;">}</span><span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span> <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">var</span> credsClone credentials.TransportCredentials
+      <span style="color: #ffad29; font-weight: bold;">if</span> creds != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        credsClone = creds.<span style="color: #00ede1; font-weight: bold;">Clone</span><span style="color: #aebed8;">()</span>
+      <span style="color: #97b098;">}</span>
+      config := <span style="color: #34cae2;">BalancerConfig</span><span style="color: #97b098;">{</span>
+        <span style="color: #008b8b;">DialCreds</span>: credsClone,
+      <span style="color: #97b098;">}</span>
+      <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21551;&#21160;&#36127;&#36733;&#22343;&#34913;&#26381;&#21153;</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> err := cc.dopts.balancer.<span style="color: #00ede1; font-weight: bold;">Start</span><span style="color: #97b098;">(</span>target, config<span style="color: #97b098;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        waitC &lt;- err
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+      <span style="color: #97b098;">}</span>
+      ch := cc.dopts.balancer.<span style="color: #00ede1; font-weight: bold;">Notify</span><span style="color: #97b098;">()</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> ch == <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        <span style="color: #74af68;">// </span><span style="color: #74af68;">There is no name resolver installed.</span>
+        addrs = <span style="color: #23d7d7;">append</span><span style="color: #aebed8;">(</span>addrs, <span style="color: #34cae2;">Address</span><span style="color: #b0b0b3;">{</span>Addr: target<span style="color: #b0b0b3;">}</span><span style="color: #aebed8;">)</span>
+      <span style="color: #97b098;">}</span> <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #97b098;">{</span>
+        addrs, ok = &lt;-ch
+        <span style="color: #ffad29; font-weight: bold;">if</span> !ok || <span style="color: #23d7d7;">len</span><span style="color: #aebed8;">(</span>addrs<span style="color: #aebed8;">)</span> == <span style="color: #008b8b;">0</span> <span style="color: #aebed8;">{</span>
+          waitC &lt;- errNoAddr
+          <span style="color: #ffad29; font-weight: bold;">return</span>
+        <span style="color: #aebed8;">}</span>
+      <span style="color: #97b098;">}</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #ffad29; font-weight: bold;">for</span> _, a := <span style="color: #ffad29; font-weight: bold;">range</span> addrs <span style="color: #b0b1a3;">{</span>
+      <span style="color: #74af68;">//</span><span style="color: #74af68;">&#32473;&#27599;&#20010;&#22320;&#22336;&#19968;&#20010;conn&#65292;&#36830;&#25509;&#27744;</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> err := cc.<span style="color: #00ede1; font-weight: bold;">resetAddrConn</span><span style="color: #97b098;">(</span>a, <span style="color: #008b8b;">false</span>, <span style="color: #008b8b;">nil</span><span style="color: #97b098;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        waitC &lt;- err
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+      <span style="color: #97b098;">}</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #23d7d7;">close</span><span style="color: #b0b1a3;">(</span>waitC<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}()</span>
+  <span style="color: #ffad29; font-weight: bold;">var</span> timeoutCh &lt;-<span style="color: #ffad29; font-weight: bold;">chan</span> <span style="color: #34cae2;">time.Time</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.timeout &gt; <span style="color: #008b8b;">0</span> <span style="color: #93a8c6;">{</span>
+    timeoutCh = time.<span style="color: #00ede1; font-weight: bold;">After</span><span style="color: #b0b1a3;">(</span>cc.dopts.timeout<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">select</span> <span style="color: #93a8c6;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">case</span> &lt;-ctx.<span style="color: #00ede1; font-weight: bold;">Done</span><span style="color: #b0b1a3;">()</span>:
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, ctx.<span style="color: #00ede1; font-weight: bold;">Err</span><span style="color: #b0b1a3;">()</span>
+  <span style="color: #ffad29; font-weight: bold;">case</span> err := &lt;-waitC:
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, err
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">case</span> &lt;-timeoutCh:
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, ErrClientConnTimeout
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">If balancer is nil or balancer.Notify() is nil, ok will be false here.</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">The lbWatcher goroutine will not be created.</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> ok <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">go</span> cc.<span style="color: #00ede1; font-weight: bold;">lbWatcher</span><span style="color: #b0b1a3;">()</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> cc, <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+<p>
+通过dial这个函数，grpc已经建立了到服务端的连接，启动了自定义负载平衡（如果有的话）. pb.NewGreeterClient这行代码是通过protoc工具自动生成的，它包一个grpc连接包裹在一个struct内方便调用生成的客户端grpc调用代码。接下来grpc客户端调用SayHello向服务器发送rpc请求。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>c *<span style="color: #34cae2;">greeterClient</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">SayHello</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, in *<span style="color: #34cae2;">HelloRequest</span>, opts ...<span style="color: #34cae2;">grpc.CallOption</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>*<span style="color: #34cae2;">HelloReply</span>, <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  out := <span style="color: #23d7d7;">new</span><span style="color: #93a8c6;">(</span><span style="color: #34cae2;">HelloReply</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35843;&#29992;&#23454;&#38469;&#30340;&#21457;&#36865;&#35831;&#27714;&#20989;&#25968;</span>
+  err := grpc.<span style="color: #00ede1; font-weight: bold;">Invoke</span><span style="color: #93a8c6;">(</span>ctx, <span style="color: #e67128;">"/helloworld.Greeter/SayHello"</span>, in, out, c.cc, opts...<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, err
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> out, <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #74af68;">//</span><span style="color: #74af68;">&#26368;&#21518;&#20027;&#35201;&#26159;invoke&#20989;&#25968;</span>
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">invoke</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, method <span style="color: #34cae2;">string</span>, args, reply <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span>, cc *<span style="color: #34cae2;">ClientConn</span>, opts ...<span style="color: #34cae2;">CallOption</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>e <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  c := defaultCallInfo
+  <span style="color: #ffad29; font-weight: bold;">for</span> _, o := <span style="color: #ffad29; font-weight: bold;">range</span> opts <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35843;&#29992;&#20043;&#21069;&#30340;hook</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err := o.<span style="color: #00ede1; font-weight: bold;">before</span><span style="color: #b0b1a3;">(</span>&amp;c<span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #97b098;">(</span>err<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">for</span> _, o := <span style="color: #ffad29; font-weight: bold;">range</span> opts <span style="color: #b0b1a3;">{</span>
+      <span style="color: #74af68;">//</span><span style="color: #74af68;">&#25191;&#34892;&#23436;&#21518;&#30340;hook</span>
+      o.<span style="color: #00ede1; font-weight: bold;">after</span><span style="color: #97b098;">(</span>&amp;c<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}()</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">trace&#30456;&#20851;&#20195;&#30721;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> EnableTracing <span style="color: #93a8c6;">{</span>
+    c.traceInfo.tr = trace.<span style="color: #00ede1; font-weight: bold;">New</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"grpc.Sent."</span>+<span style="color: #00ede1; font-weight: bold;">methodFamily</span><span style="color: #97b098;">(</span>method<span style="color: #97b098;">)</span>, method<span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">defer</span> c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">Finish</span><span style="color: #b0b1a3;">()</span>
+    c.traceInfo.firstLine.client = <span style="color: #008b8b;">true</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> deadline, ok := ctx.<span style="color: #00ede1; font-weight: bold;">Deadline</span><span style="color: #b0b1a3;">()</span>; ok <span style="color: #b0b1a3;">{</span>
+      c.traceInfo.firstLine.deadline = deadline.<span style="color: #00ede1; font-weight: bold;">Sub</span><span style="color: #97b098;">(</span>time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #aebed8;">()</span><span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #b0b1a3;">(</span>&amp;c.traceInfo.firstLine, <span style="color: #008b8b;">false</span><span style="color: #b0b1a3;">)</span>
+    <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;">(dsymonds): Arrange for c.traceInfo.firstLine.remoteAddr to be set.</span>
+    <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">()</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> e != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #aebed8;">(</span>&amp;<span style="color: #34cae2;">fmtStringer</span><span style="color: #b0b0b3;">{</span><span style="color: #e67128;">"%v"</span>, <span style="color: #90a890;">[]</span><span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #90a890;">{}{</span>e<span style="color: #90a890;">}</span><span style="color: #b0b0b3;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #aebed8;">)</span>
+        c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">SetError</span><span style="color: #aebed8;">()</span>
+      <span style="color: #97b098;">}</span>
+    <span style="color: #b0b1a3;">}()</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#32479;&#35745;&#30456;&#20851;&#20195;&#30721;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    ctx = stats.<span style="color: #00ede1; font-weight: bold;">TagRPC</span><span style="color: #b0b1a3;">(</span>ctx, &amp;stats.<span style="color: #34cae2;">RPCTagInfo</span><span style="color: #97b098;">{</span>FullMethodName: method<span style="color: #97b098;">}</span><span style="color: #b0b1a3;">)</span>
+    begin := &amp;stats.<span style="color: #34cae2;">Begin</span><span style="color: #b0b1a3;">{</span>
+      <span style="color: #008b8b;">Client</span>:    <span style="color: #008b8b;">true</span>,
+      <span style="color: #008b8b;">BeginTime</span>: time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #97b098;">()</span>,
+      <span style="color: #008b8b;">FailFast</span>:  c.failFast,
+    <span style="color: #b0b1a3;">}</span>
+    stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #b0b1a3;">(</span>ctx, begin<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#32467;&#26463;&#21518;&#30340;&#32479;&#35745;&#30456;&#20851;&#20195;&#30721;</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #b0b1a3;">()</span> <span style="color: #b0b1a3;">{</span>
+      end := &amp;stats.<span style="color: #34cae2;">End</span><span style="color: #97b098;">{</span>
+        <span style="color: #008b8b;">Client</span>:  <span style="color: #008b8b;">true</span>,
+        <span style="color: #008b8b;">EndTime</span>: time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #aebed8;">()</span>,
+        <span style="color: #008b8b;">Error</span>:   e,
+      <span style="color: #97b098;">}</span>
+      stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #97b098;">(</span>ctx, end<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}()</span>
+  topts := &amp;transport.<span style="color: #34cae2;">Options</span><span style="color: #93a8c6;">{</span>
+    <span style="color: #008b8b;">Last</span>:  <span style="color: #008b8b;">true</span>,
+    <span style="color: #008b8b;">Delay</span>: <span style="color: #008b8b;">false</span>,
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">for</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">var</span> <span style="color: #b0b1a3;">(</span>
+      err    error
+      t      transport.ClientTransport
+      stream *transport.Stream
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">Record the put handler from Balancer.Get(...). It is called once the</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">RPC has completed or failed.</span>
+      put <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #97b098;">()</span>
+    <span style="color: #b0b1a3;">)</span>
+    <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;">(zhaoq): Need a formal spec of fail-fast.</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20256;&#36755;&#23618;&#30340;&#37197;&#32622;</span>
+    callHdr := &amp;transport.<span style="color: #34cae2;">CallHdr</span><span style="color: #b0b1a3;">{</span>
+      <span style="color: #008b8b;">Host</span>:   cc.authority,
+      <span style="color: #008b8b;">Method</span>: method,
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.cp != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      callHdr.SendCompress = cc.dopts.cp.<span style="color: #00ede1; font-weight: bold;">Type</span><span style="color: #97b098;">()</span>
+    <span style="color: #b0b1a3;">}</span>
+    gopts := <span style="color: #34cae2;">BalancerGetOptions</span><span style="color: #b0b1a3;">{</span>
+      <span style="color: #008b8b;">BlockingWait</span>: !c.failFast,
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#24471;&#21040;&#20256;&#36755;&#25104;&#36830;&#25509;&#65292;&#22312;http2&#20013;&#19968;&#20010;&#20256;&#36755;&#21333;&#20301;&#26159;&#19968;&#20010;&#27969;&#12290;</span>
+    t, put, err = cc.<span style="color: #00ede1; font-weight: bold;">getTransport</span><span style="color: #b0b1a3;">(</span>ctx, gopts<span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;">(zhaoq): Probably revisit the error handling.</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := err.<span style="color: #97b098;">(</span>*<span style="color: #34cae2;">rpcError</span><span style="color: #97b098;">)</span>; ok <span style="color: #97b098;">{</span>
+        <span style="color: #ffad29; font-weight: bold;">return</span> err
+      <span style="color: #97b098;">}</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> err == errConnClosing || err == errConnUnavailable <span style="color: #97b098;">{</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> c.failFast <span style="color: #aebed8;">{</span>
+          <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b0b3;">(</span>codes.Unavailable, <span style="color: #e67128;">"%v"</span>, err<span style="color: #b0b0b3;">)</span>
+        <span style="color: #aebed8;">}</span>
+        <span style="color: #ffad29; font-weight: bold;">continue</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">All the other errors are treated as Internal errors.</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #97b098;">(</span>codes.Internal, <span style="color: #e67128;">"%v"</span>, err<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> c.traceInfo.tr != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #97b098;">(</span>&amp;<span style="color: #34cae2;">payload</span><span style="color: #aebed8;">{</span>sent: <span style="color: #008b8b;">true</span>, msg: args<span style="color: #aebed8;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #74af68;">// </span><span style="color: #74af68;">&#21457;&#36865;&#35831;&#27714;</span>
+    stream, err = <span style="color: #00ede1; font-weight: bold;">sendRequest</span><span style="color: #b0b1a3;">(</span>ctx, cc.dopts.codec, cc.dopts.cp, callHdr, t, args, topts<span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> put != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        <span style="color: #00ede1; font-weight: bold;">put</span><span style="color: #aebed8;">()</span>
+        put = <span style="color: #008b8b;">nil</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">Retry a non-failfast RPC when</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">i) there is a connection error; or</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">ii) the server started to drain before this RPC was initiated.</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">&#22312;&#36825;&#20004;&#31181;&#24773;&#20917;&#19979;&#37325;&#35797;&#65292;1 &#38142;&#25509;&#38169;&#35823; 2 &#22312;rpc&#21021;&#22987;&#21270;&#20043;&#21069;&#26381;&#21153;&#31471;&#24050;&#32463;&#24320;&#22987;&#26381;&#21153;</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := err.<span style="color: #97b098;">(</span><span style="color: #34cae2;">transport.ConnectionError</span><span style="color: #97b098;">)</span>; ok || err == transport.ErrStreamDrain <span style="color: #97b098;">{</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> c.failFast <span style="color: #aebed8;">{</span>
+          <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #b0b0b3;">(</span>err<span style="color: #b0b0b3;">)</span>
+        <span style="color: #aebed8;">}</span>
+        <span style="color: #ffad29; font-weight: bold;">continue</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #97b098;">(</span>err<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#25910;&#28040;&#24687;</span>
+    err = <span style="color: #00ede1; font-weight: bold;">recvResponse</span><span style="color: #b0b1a3;">(</span>ctx, cc.dopts, t, &amp;c, stream, reply<span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> put != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
+        <span style="color: #00ede1; font-weight: bold;">put</span><span style="color: #aebed8;">()</span>
+        put = <span style="color: #008b8b;">nil</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := err.<span style="color: #97b098;">(</span><span style="color: #34cae2;">transport.ConnectionError</span><span style="color: #97b098;">)</span>; ok || err == transport.ErrStreamDrain <span style="color: #97b098;">{</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> c.failFast <span style="color: #aebed8;">{</span>
+          <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #b0b0b3;">(</span>err<span style="color: #b0b0b3;">)</span>
+        <span style="color: #aebed8;">}</span>
+        <span style="color: #ffad29; font-weight: bold;">continue</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #97b098;">(</span>err<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> c.traceInfo.tr != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      c.traceInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #97b098;">(</span>&amp;<span style="color: #34cae2;">payload</span><span style="color: #aebed8;">{</span>sent: <span style="color: #008b8b;">false</span>, msg: reply<span style="color: #aebed8;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20851;&#38381;&#19968;&#20010;http2&#27969;</span>
+    t.<span style="color: #00ede1; font-weight: bold;">CloseStream</span><span style="color: #b0b1a3;">(</span>stream, <span style="color: #008b8b;">nil</span><span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> put != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #00ede1; font-weight: bold;">put</span><span style="color: #97b098;">()</span>
+      put = <span style="color: #008b8b;">nil</span>
+    <span style="color: #b0b1a3;">}</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">Errorf&#20250;&#21028;&#26029;&#36820;&#22238;&#21313;&#20998;ok</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b1a3;">(</span>stream.<span style="color: #00ede1; font-weight: bold;">StatusCode</span><span style="color: #97b098;">()</span>, <span style="color: #e67128;">"%s"</span>, stream.<span style="color: #00ede1; font-weight: bold;">StatusDesc</span><span style="color: #97b098;">()</span><span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+<p>
+在这个函数最主要是两个函数，一个是sendRequest,一个是recvResponse,首先看看sendRequest函数：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">sendRequest</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, codec <span style="color: #34cae2;">Codec</span>, compressor <span style="color: #34cae2;">Compressor</span>, callHdr *<span style="color: #34cae2;">transport.CallHdr</span>, t <span style="color: #34cae2;">transport.ClientTransport</span>, args <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span>, opts *<span style="color: #34cae2;">transport.Options</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>_ *<span style="color: #34cae2;">transport.Stream</span>, err <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">&#21019;&#24314;&#19968;&#20010;http2&#27969;</span>
+  stream, err := t.<span style="color: #00ede1; font-weight: bold;">NewStream</span><span style="color: #93a8c6;">(</span>ctx, callHdr<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, err
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #74af68;">// </span><span style="color: #74af68;">If err is connection error, t will be closed, no need to close stream here.</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := err.<span style="color: #97b098;">(</span><span style="color: #34cae2;">transport.ConnectionError</span><span style="color: #97b098;">)</span>; !ok <span style="color: #97b098;">{</span>
+        t.<span style="color: #00ede1; font-weight: bold;">CloseStream</span><span style="color: #aebed8;">(</span>stream, err<span style="color: #aebed8;">)</span>
+      <span style="color: #97b098;">}</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}()</span>
+  <span style="color: #ffad29; font-weight: bold;">var</span> <span style="color: #93a8c6;">(</span>
+    cbuf       *bytes.Buffer
+    outPayload *stats.OutPayload
+  <span style="color: #93a8c6;">)</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21387;&#32553;&#19981;&#20026;&#31354;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> compressor != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    cbuf = <span style="color: #23d7d7;">new</span><span style="color: #b0b1a3;">(</span><span style="color: #34cae2;">bytes.Buffer</span><span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#32479;&#35745;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    outPayload = &amp;stats.<span style="color: #34cae2;">OutPayload</span><span style="color: #b0b1a3;">{</span>
+      <span style="color: #008b8b;">Client</span>: <span style="color: #008b8b;">true</span>,
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#32534;&#30721;&#24182;&#21387;&#32553;&#25968;&#25454;</span>
+  outBuf, err := <span style="color: #00ede1; font-weight: bold;">encode</span><span style="color: #93a8c6;">(</span>codec, args, compressor, cbuf, outPayload<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b1a3;">(</span>codes.Internal, <span style="color: #e67128;">"grpc: %v"</span>, err<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20889;&#20837;&#27969;</span>
+  err = t.<span style="color: #00ede1; font-weight: bold;">Write</span><span style="color: #93a8c6;">(</span>stream, outBuf, opts<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err == <span style="color: #008b8b;">nil</span> &amp;&amp; outPayload != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    outPayload.SentTime = time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #b0b1a3;">()</span>
+    stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #b0b1a3;">(</span>ctx, outPayload<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">t.NewStream(...) could lead to an early rejection of the RPC (e.g., the service/method</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">does not exist.) so that t.Write could get io.EOF from wait(...). Leave the following</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">recvResponse to get the final status.</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> &amp;&amp; err != io.EOF <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, err
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">Sent successfully.</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> stream, <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+<p>
+可以看到这个函数相当简单，做了两件事情，编码压缩数据并发送.再来看看recvResponse函数：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">recvResponse</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, dopts <span style="color: #34cae2;">dialOptions</span>, t <span style="color: #34cae2;">transport.ClientTransport</span>, c *<span style="color: #34cae2;">callInfo</span>, stream *<span style="color: #34cae2;">transport.Stream</span>, reply <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>err <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #74af68;">// </span><span style="color: #74af68;">Try to acquire header metadata from the server if there is any.</span>
+  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := err.<span style="color: #97b098;">(</span><span style="color: #34cae2;">transport.ConnectionError</span><span style="color: #97b098;">)</span>; !ok <span style="color: #97b098;">{</span>
+        t.<span style="color: #00ede1; font-weight: bold;">CloseStream</span><span style="color: #aebed8;">(</span>stream, err<span style="color: #aebed8;">)</span>
+      <span style="color: #97b098;">}</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}()</span>
+  c.headerMD, err = stream.<span style="color: #00ede1; font-weight: bold;">Header</span><span style="color: #93a8c6;">()</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span>
+  <span style="color: #93a8c6;">}</span>
+  p := &amp;<span style="color: #34cae2;">parser</span><span style="color: #93a8c6;">{</span>r: stream<span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">var</span> inPayload *stats.InPayload
+  <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
+    inPayload = &amp;stats.<span style="color: #34cae2;">InPayload</span><span style="color: #b0b1a3;">{</span>
+      <span style="color: #008b8b;">Client</span>: <span style="color: #008b8b;">true</span>,
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">for</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#19968;&#30452;&#35835;&#21040;&#27969;&#20851;&#38381;</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err = <span style="color: #00ede1; font-weight: bold;">recv</span><span style="color: #b0b1a3;">(</span>p, dopts.codec, stream, dopts.dc, reply, math.MaxInt32, inPayload<span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">if</span> err == io.EOF <span style="color: #97b098;">{</span>
+        <span style="color: #ffad29; font-weight: bold;">break</span>
+      <span style="color: #97b098;">}</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> inPayload != <span style="color: #008b8b;">nil</span> &amp;&amp; err == io.EOF &amp;&amp; stream.<span style="color: #00ede1; font-weight: bold;">StatusCode</span><span style="color: #93a8c6;">()</span> == codes.OK <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;"> in the current implementation, inTrailer may be handled before inPayload in some cases.</span>
+    <span style="color: #74af68;">// </span><span style="color: #74af68;">Fix the order if necessary.</span>
+    stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #b0b1a3;">(</span>ctx, inPayload<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  c.trailerMD = stream.<span style="color: #00ede1; font-weight: bold;">Trailer</span><span style="color: #93a8c6;">()</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">recv</span><span style="color: #8c8c8c;">(</span>p *<span style="color: #34cae2;">parser</span>, c <span style="color: #34cae2;">Codec</span>, s *<span style="color: #34cae2;">transport.Stream</span>, dc <span style="color: #34cae2;">Decompressor</span>, m <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span>, maxMsgSize <span style="color: #34cae2;">int</span>, inPayload *<span style="color: #34cae2;">stats.InPayload</span><span style="color: #8c8c8c;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#25509;&#21463;&#25968;&#25454;</span>
+  pf, d, err := p.<span style="color: #00ede1; font-weight: bold;">recvMsg</span><span style="color: #93a8c6;">(</span>maxMsgSize<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> err
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> inPayload != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    inPayload.WireLength = <span style="color: #23d7d7;">len</span><span style="color: #b0b1a3;">(</span>d<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err := <span style="color: #00ede1; font-weight: bold;">checkRecvPayload</span><span style="color: #93a8c6;">(</span>pf, s.<span style="color: #00ede1; font-weight: bold;">RecvCompress</span><span style="color: #b0b1a3;">()</span>, dc<span style="color: #93a8c6;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> err
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> pf == compressionMade <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35299;&#21387;</span>
+    d, err = dc.<span style="color: #00ede1; font-weight: bold;">Do</span><span style="color: #b0b1a3;">(</span>bytes.<span style="color: #00ede1; font-weight: bold;">NewReader</span><span style="color: #97b098;">(</span>d<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
+      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #97b098;">(</span>codes.Internal, <span style="color: #e67128;">"grpc: failed to decompress the received message %v"</span>, err<span style="color: #97b098;">)</span>
+    <span style="color: #b0b1a3;">}</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span><span style="color: #93a8c6;">(</span>d<span style="color: #93a8c6;">)</span> &gt; maxMsgSize <span style="color: #93a8c6;">{</span>
+    <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;">: Revisit the error code. Currently keep it consistent with java</span>
+    <span style="color: #74af68;">// </span><span style="color: #74af68;">implementation.</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b1a3;">(</span>codes.Internal, <span style="color: #e67128;">"grpc: received a message of %d bytes exceeding %d limit"</span>, <span style="color: #23d7d7;">len</span><span style="color: #97b098;">(</span>d<span style="color: #97b098;">)</span>, maxMsgSize<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#25968;&#25454;&#35299;&#30721;</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err := c.<span style="color: #00ede1; font-weight: bold;">Unmarshal</span><span style="color: #93a8c6;">(</span>d, m<span style="color: #93a8c6;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b1a3;">(</span>codes.Internal, <span style="color: #e67128;">"grpc: failed to unmarshal the received message %v"</span>, err<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> inPayload != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    inPayload.RecvTime = time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #b0b1a3;">()</span>
+    inPayload.Payload = m
+    <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;"> truncate large payload.</span>
+    inPayload.Data = d
+    inPayload.Length = <span style="color: #23d7d7;">len</span><span style="color: #b0b1a3;">(</span>d<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+<p>
+这里可以看到一个recvRespon可能会处理多个返回，但是确实在同一个for循环中处理的，有点奇怪。客户端代码大概就是这个流程。代码来说不算太复杂。（主要不钻进http2的实现,刚开始我就去看http2，一头雾水）
+其中还有重要的地方就是负载均衡，通过它我们可以根据算法自动选择要连接的ip跟地址，还有验证的使用，放到下一篇吧
+</p>
+</div>
+</div>
+<div id="outline-container-org494b7b7" class="outline-2">
+<h2 id="org494b7b7"><span class="section-number-2">4</span> 相关链接</h2>
+<div class="outline-text-2" id="text-4">
+<ol class="org-ol">
+<li><a href="https://github.com/grpc/grpc/blob/master/doc/load-balancing.md">https://github.com/grpc/grpc/blob/master/doc/load-balancing.md</a> 负载均衡</li>
+<li><a href="https://www.gitbook.com/book/ye11ow/http2-explained/details">https://www.gitbook.com/book/ye11ow/http2-explained/details</a> 介绍http2的书籍，写的非常好</li>
+<li><a href="http://www.grpc.io/docs/guides/concepts.html#metadata">http://www.grpc.io/docs/guides/concepts.html#metadata</a> metadata介绍,在源码的Documentation目录有metadata的详细介绍</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2017-01-02 Mon 16:25</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
