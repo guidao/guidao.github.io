@@ -71,9 +71,12 @@ pre {
     word-wrap: break-word;
 }
 
-pre.src {
-    word-wrap: break-word;
-    position: relative;
+pre.src{
+    white-space: pre-wrap;       
+    white-space: -moz-pre-wrap;  
+    white-space: -pre-wrap;      
+    white-space: -o-pre-wrap;    
+    word-wrap: break-word;       
 }
 
 
