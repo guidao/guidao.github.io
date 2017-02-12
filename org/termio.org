@@ -22,7 +22,7 @@
       cc_t        c_cc[NCCS]; /* control characters */
     };
   #+END_SRC
-  其中c_iglag控制输入属性(例如：映射CR到NL)，c_oflag控制输出属性(例如：扩展tab到空格),c_cflag控制行属性，c_lfag设置用户与设备接口属性(例如：本地回显，允许信号产生)
+  其中=c_iglag=控制输入属性(例如：映射CR到NL)，=c_oflag=控制输出属性(例如：扩展tab到空格),=c_cflag=控制行属性，=c_lfag= 设置用户与设备接口属性(例如：本地回显，允许信号产生)
   这个结构使用两个函数进行获取跟设置。函数声明如下:
   #+BEGIN_SRC c
     #include <termios.h>
