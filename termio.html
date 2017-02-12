@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-02-12 Sun 10:43 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>终端输入输出的三种模式</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">终端输入输出的三种模式</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org359e65d">1. 前言</a></li>
+<li><a href="#orga2b3c93">2. 终端IO的三种模式</a>
+<ul>
+<li><a href="#orgcc2ac2e">2.1. canonical 模式</a></li>
+<li><a href="#org52b1258">2.2. nocanonical 模式</a></li>
+<li><a href="#org85a7cbf">2.3. cbreak 模式</a></li>
+</ul>
+</li>
+<li><a href="#orgd55f47b">3. 终端控制结构</a></li>
+<li><a href="#org319547c">4. 纯go实现一个getchar（可以立即得到用户的输入而不需要按下enter键）</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org359e65d" class="outline-2">
+<h2 id="org359e65d"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+最近在做一个个人项目，需要实时的读取终端的输入（不需要按下enter键才读取）, 发现go并没有提供比较方便的接口,然后查找了一些资料介绍终端的IO，进行一些了解, 特别记录如下。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga2b3c93" class="outline-2">
+<h2 id="orga2b3c93"><span class="section-number-2">2</span> 终端IO的三种模式</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-orgcc2ac2e" class="outline-3">
+<h3 id="orgcc2ac2e"><span class="section-number-3">2.1</span> canonical 模式</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+这个模式也叫做cooked模式。在这种模式下，终端设置每次返回一行数据。所有的特殊字符都会被解释(例如: ^c, ^c)
+</p>
+</div>
+</div>
+<div id="outline-container-org52b1258" class="outline-3">
+<h3 id="org52b1258"><span class="section-number-3">2.2</span> nocanonical 模式</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+这种模式也叫做raw 模式。在这种模式下终端每次返回一个字符而不是先收集一行的数据再返回。特殊的字符也不会被特别对待，需要自己处理。终端的编辑器vi就处于这种模式下，可以完全控制输入输出字符。
+</p>
+</div>
+</div>
+<div id="outline-container-org85a7cbf" class="outline-3">
+<h3 id="org85a7cbf"><span class="section-number-3">2.3</span> cbreak 模式</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+这种模式跟raw模式有点相似，不过也会处理特殊字符。（我就需要在这个模式下)
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd55f47b" class="outline-2">
+<h2 id="orgd55f47b"><span class="section-number-2">3</span> 终端控制结构</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+终端设备的所有能控制的属性都通过下面这个结构控制. go语言此结构定义在syscall包中.
+</p>
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #ffad29; font-weight: bold;">struct</span> <span style="color: #34cae2;">termios</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #34cae2;">tcflag_t</span>    <span style="color: #dbdb95;">c_iflag</span>;    <span style="color: #74af68;">/* </span><span style="color: #74af68;">input flags </span><span style="color: #74af68;">*/</span>
+  <span style="color: #34cae2;">tcflag_t</span>    <span style="color: #dbdb95;">c_oflag</span>;    <span style="color: #74af68;">/* </span><span style="color: #74af68;">output flags </span><span style="color: #74af68;">*/</span>
+  <span style="color: #34cae2;">tcflag_t</span>    <span style="color: #dbdb95;">c_cflag</span>;    <span style="color: #74af68;">/* </span><span style="color: #74af68;">control flags </span><span style="color: #74af68;">*/</span>
+  <span style="color: #34cae2;">tcflag_t</span>    <span style="color: #dbdb95;">c_lflag</span>;    <span style="color: #74af68;">/* </span><span style="color: #74af68;">local flags </span><span style="color: #74af68;">*/</span>
+  <span style="color: #34cae2;">cc_t</span>        <span style="color: #dbdb95;">c_cc</span><span style="color: #93a8c6;">[</span>NCCS<span style="color: #93a8c6;">]</span>; <span style="color: #74af68;">/* </span><span style="color: #74af68;">control characters </span><span style="color: #74af68;">*/</span>
+<span style="color: #8c8c8c;">}</span>;
+</pre>
+</div>
+<p>
+其中c<sub>iglag控制输入属性</sub>(例如：映射CR到NL)，c<sub>oflag控制输出属性</sub>(例如：扩展tab到空格),c<sub>cflag控制行属性</sub>，c<sub>lfag设置用户与设备接口属性</sub>(例如：本地回显，允许信号产生)
+这个结构使用两个函数进行获取跟设置。函数声明如下:
+</p>
+<div class="org-src-container">
+<pre class="src src-c"><span style="color: #23d7d7;">#include</span> <span style="color: #8c8c8c;">&lt;</span><span style="color: #e67128;">termios.h</span><span style="color: #8c8c8c;">&gt;</span>
+<span style="color: #34cae2;">int</span> <span style="color: #00ede1; font-weight: bold;">tcgetattr</span><span style="color: #8c8c8c;">(</span><span style="color: #34cae2;">int</span> <span style="color: #dbdb95;">filedes</span>, <span style="color: #ffad29; font-weight: bold;">struct</span> <span style="color: #34cae2;">termios</span> *<span style="color: #dbdb95;">termptr</span><span style="color: #8c8c8c;">)</span>;
+<span style="color: #34cae2;">int</span> <span style="color: #00ede1; font-weight: bold;">tcsetattr</span><span style="color: #8c8c8c;">(</span><span style="color: #34cae2;">int</span> <span style="color: #dbdb95;">filedes</span>, <span style="color: #34cae2;">int</span> <span style="color: #dbdb95;">opt</span>, <span style="color: #ffad29; font-weight: bold;">const</span> <span style="color: #ffad29; font-weight: bold;">struct</span> <span style="color: #34cae2;">termios</span> *<span style="color: #dbdb95;">termptr</span><span style="color: #8c8c8c;">)</span>;
+<span style="color: #74af68;">//</span><span style="color: #74af68;">Both return: 0 if OK, -1 on error</span>
+</pre>
+</div>
+<p>
+filedes就是文件描述符, 通常是通过open设备文件"/dev/tty"获得. tcsetattr函数中的opt参数可以取以下值:
+</p>
+<ul class="org-ul">
+<li>TCSANOW 使设置立即生效</li>
+<li>TCSADRAIN 在输出缓存区输出到屏幕后再生效</li>
+<li>TCSAFLUSH 在输出缓存区输出到屏幕后再生效，并且丢弃所有输入缓存中未执行的数据。</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org319547c" class="outline-2">
+<h2 id="org319547c"><span class="section-number-2">4</span> 纯go实现一个getchar（可以立即得到用户的输入而不需要按下enter键）</h2>
+<div class="outline-text-2" id="text-4">
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">package</span> main
+
+<span style="color: #ffad29; font-weight: bold;">import</span> <span style="color: #8c8c8c;">(</span>
+  <span style="color: #e67128;">"fmt"</span>
+  <span style="color: #e67128;">"os"</span>
+  <span style="color: #e67128;">"syscall"</span>
+  <span style="color: #e67128;">"unsafe"</span>
+<span style="color: #8c8c8c;">)</span>
+
+<span style="color: #74af68;">//</span><span style="color: #74af68;">&#36890;&#36807;&#31995;&#32479;&#35843;&#29992;&#35774;&#32622;&#23646;&#24615;</span>
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">ioctl</span><span style="color: #8c8c8c;">(</span>fd, request, argp <span style="color: #34cae2;">uintptr</span><span style="color: #8c8c8c;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> _, _, e := syscall.<span style="color: #00ede1; font-weight: bold;">Syscall6</span><span style="color: #93a8c6;">(</span>syscall.SYS_IOCTL, fd, request, argp, <span style="color: #008b8b;">0</span>, <span style="color: #008b8b;">0</span>, <span style="color: #008b8b;">0</span><span style="color: #93a8c6;">)</span>; e != <span style="color: #008b8b;">0</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> e
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #74af68;">//</span><span style="color: #74af68;">&#33719;&#21462;&#35774;&#22791;&#23646;&#24615;</span>
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">Tcgetattr</span><span style="color: #8c8c8c;">(</span>fd <span style="color: #34cae2;">uintptr</span>, argp *<span style="color: #34cae2;">syscall.Termios</span><span style="color: #8c8c8c;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">ioctl</span><span style="color: #93a8c6;">(</span>fd, syscall.TIOCGETA, <span style="color: #00ede1; font-weight: bold;">uintptr</span><span style="color: #b0b1a3;">(</span>unsafe.<span style="color: #00ede1; font-weight: bold;">Pointer</span><span style="color: #97b098;">(</span>argp<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #74af68;">//</span><span style="color: #74af68;">&#35774;&#32622;&#32456;&#31471;</span>
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">Tcsetattr</span><span style="color: #8c8c8c;">(</span>fd, opt <span style="color: #34cae2;">uintptr</span>, argp *<span style="color: #34cae2;">syscall.Termios</span><span style="color: #8c8c8c;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">ioctl</span><span style="color: #93a8c6;">(</span>fd, opt, <span style="color: #00ede1; font-weight: bold;">uintptr</span><span style="color: #b0b1a3;">(</span>unsafe.<span style="color: #00ede1; font-weight: bold;">Pointer</span><span style="color: #97b098;">(</span>argp<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">main</span><span style="color: #8c8c8c;">()</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">var</span> term syscall.Termios
+  <span style="color: #ffad29; font-weight: bold;">var</span> origin syscall.Termios
+  fd, err := os.<span style="color: #00ede1; font-weight: bold;">Open</span><span style="color: #93a8c6;">(</span><span style="color: #e67128;">"/dev/tty"</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #00ede1; font-weight: bold;">must</span><span style="color: #93a8c6;">(</span>err<span style="color: #93a8c6;">)</span>
+  err = <span style="color: #00ede1; font-weight: bold;">Tcgetattr</span><span style="color: #93a8c6;">(</span>fd.<span style="color: #00ede1; font-weight: bold;">Fd</span><span style="color: #b0b1a3;">()</span>, &amp;term<span style="color: #93a8c6;">)</span>
+  origin = term
+  <span style="color: #00ede1; font-weight: bold;">must</span><span style="color: #93a8c6;">(</span>err<span style="color: #93a8c6;">)</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#35774;&#32622;&#20026;nobuffer</span>
+  term.Lflag &amp;^= syscall.ICANON
+  term.Cc<span style="color: #93a8c6;">[</span>syscall.VMIN<span style="color: #93a8c6;">]</span> = <span style="color: #008b8b;">1</span>
+  term.Cc<span style="color: #93a8c6;">[</span>syscall.VTIME<span style="color: #93a8c6;">]</span> = <span style="color: #008b8b;">0</span>
+  <span style="color: #00ede1; font-weight: bold;">Tcsetattr</span><span style="color: #93a8c6;">(</span>fd.<span style="color: #00ede1; font-weight: bold;">Fd</span><span style="color: #b0b1a3;">()</span>, syscall.TIOCSETA, &amp;term<span style="color: #93a8c6;">)</span>
+  c, err := <span style="color: #00ede1; font-weight: bold;">ReadChar</span><span style="color: #93a8c6;">(</span>fd.<span style="color: #00ede1; font-weight: bold;">Fd</span><span style="color: #b0b1a3;">()</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #00ede1; font-weight: bold;">must</span><span style="color: #93a8c6;">(</span>err<span style="color: #93a8c6;">)</span>
+  fmt.<span style="color: #00ede1; font-weight: bold;">Println</span><span style="color: #93a8c6;">(</span><span style="color: #e67128;">" read:"</span>, <span style="color: #00ede1; font-weight: bold;">string</span><span style="color: #b0b1a3;">(</span>c<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
+  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#24674;&#22797;&#21407;&#26469;&#30340;&#35774;&#32622;</span>
+  <span style="color: #00ede1; font-weight: bold;">Tcsetattr</span><span style="color: #93a8c6;">(</span>fd.<span style="color: #00ede1; font-weight: bold;">Fd</span><span style="color: #b0b1a3;">()</span>, syscall.TIOCSETA, &amp;origin<span style="color: #93a8c6;">)</span>
+<span style="color: #8c8c8c;">}</span>
+
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">ReadChar</span><span style="color: #8c8c8c;">(</span>fd <span style="color: #34cae2;">uintptr</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span><span style="color: #93a8c6;">[]</span><span style="color: #34cae2;">byte</span>, <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  b := <span style="color: #23d7d7;">make</span><span style="color: #93a8c6;">(</span><span style="color: #b0b1a3;">[]</span><span style="color: #34cae2;">byte</span>, <span style="color: #008b8b;">4</span><span style="color: #93a8c6;">)</span>
+  n, e := syscall.<span style="color: #00ede1; font-weight: bold;">Read</span><span style="color: #93a8c6;">(</span><span style="color: #00ede1; font-weight: bold;">int</span><span style="color: #b0b1a3;">(</span>fd<span style="color: #b0b1a3;">)</span>, b<span style="color: #93a8c6;">)</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> e != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>, e
+  <span style="color: #93a8c6;">}</span>
+  <span style="color: #ffad29; font-weight: bold;">return</span> b<span style="color: #93a8c6;">[</span>:n<span style="color: #93a8c6;">]</span>, <span style="color: #008b8b;">nil</span>
+<span style="color: #8c8c8c;">}</span>
+<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">must</span><span style="color: #8c8c8c;">(</span>err <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
+  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
+    <span style="color: #23d7d7;">panic</span><span style="color: #b0b1a3;">(</span>err<span style="color: #b0b1a3;">)</span>
+  <span style="color: #93a8c6;">}</span>
+<span style="color: #8c8c8c;">}</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2017-02-12 Sun 10:43</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

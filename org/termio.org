@@ -1,0 +1,103 @@
+#+TITLE:终端输入输出的三种模式
+
+* 前言
+最近在做一个个人项目，需要实时的读取终端的输入（不需要按下enter键才读取）, 发现go并没有提供比较方便的接口,然后查找了一些资料介绍终端的IO，进行一些了解, 特别记录如下。
+
+* 终端IO的三种模式
+** canonical 模式
+   这个模式也叫做cooked模式。在这种模式下，终端设置每次返回一行数据。所有的特殊字符都会被解释(例如: ^c, ^c)
+** nocanonical 模式
+   这种模式也叫做raw 模式。在这种模式下终端每次返回一个字符而不是先收集一行的数据再返回。特殊的字符也不会被特别对待，需要自己处理。终端的编辑器vi就处于这种模式下，可以完全控制输入输出字符。
+** cbreak 模式
+   这种模式跟raw模式有点相似，不过也会处理特殊字符。（我就需要在这个模式下)
+
+* 终端控制结构
+  终端设备的所有能控制的属性都通过下面这个结构控制. go语言此结构定义在syscall包中.
+  #+BEGIN_SRC c
+    struct termios {
+      tcflag_t    c_iflag;    /* input flags */
+      tcflag_t    c_oflag;    /* output flags */
+      tcflag_t    c_cflag;    /* control flags */
+      tcflag_t    c_lflag;    /* local flags */
+      cc_t        c_cc[NCCS]; /* control characters */
+    };
+  #+END_SRC
+  其中c_iglag控制输入属性(例如：映射CR到NL)，c_oflag控制输出属性(例如：扩展tab到空格),c_cflag控制行属性，c_lfag设置用户与设备接口属性(例如：本地回显，允许信号产生)
+  这个结构使用两个函数进行获取跟设置。函数声明如下:
+  #+BEGIN_SRC c
+    #include <termios.h>
+    int tcgetattr(int filedes, struct termios *termptr);
+    int tcsetattr(int filedes, int opt, const struct termios *termptr);
+    //Both return: 0 if OK, -1 on error
+  #+END_SRC
+  filedes就是文件描述符, 通常是通过open设备文件"/dev/tty"获得. tcsetattr函数中的opt参数可以取以下值:
+  - TCSANOW 使设置立即生效
+  - TCSADRAIN 在输出缓存区输出到屏幕后再生效
+  - TCSAFLUSH 在输出缓存区输出到屏幕后再生效，并且丢弃所有输入缓存中未执行的数据。
+
+
+* 纯go实现一个getchar（可以立即得到用户的输入而不需要按下enter键）
+#+BEGIN_SRC go
+  package main
+
+  import (
+	  "fmt"
+	  "os"
+	  "syscall"
+	  "unsafe"
+  )
+
+  //通过系统调用设置属性
+  func ioctl(fd, request, argp uintptr) error {
+	  if _, _, e := syscall.Syscall6(syscall.SYS_IOCTL, fd, request, argp, 0, 0, 0); e != 0 {
+		  return e
+	  }
+	  return nil
+  }
+
+  //获取设备属性
+  func Tcgetattr(fd uintptr, argp *syscall.Termios) error {
+	  return ioctl(fd, syscall.TIOCGETA, uintptr(unsafe.Pointer(argp)))
+  }
+
+  //设置终端
+  func Tcsetattr(fd, opt uintptr, argp *syscall.Termios) error {
+	  return ioctl(fd, opt, uintptr(unsafe.Pointer(argp)))
+  }
+
+  func main() {
+	  var term syscall.Termios
+	  var origin syscall.Termios
+	  fd, err := os.Open("/dev/tty")
+	  must(err)
+	  err = Tcgetattr(fd.Fd(), &term)
+	  origin = term
+	  must(err)
+	  //设置为nobuffer
+	  term.Lflag &^= syscall.ICANON
+	  term.Cc[syscall.VMIN] = 1
+	  term.Cc[syscall.VTIME] = 0
+	  Tcsetattr(fd.Fd(), syscall.TIOCSETA, &term)
+	  c, err := ReadChar(fd.Fd())
+	  must(err)
+	  fmt.Println(" read:", string(c))
+	  //恢复原来的设置
+	  Tcsetattr(fd.Fd(), syscall.TIOCSETA, &origin)
+  }
+
+  func ReadChar(fd uintptr) ([]byte, error) {
+	  b := make([]byte, 4)
+	  n, e := syscall.Read(int(fd), b)
+	  if e != nil {
+		  return nil, e
+	  }
+	  return b[:n], nil
+  }
+  func must(err error) {
+	  if err != nil {
+		  panic(err)
+	  }
+  }
+
+#+END_SRC
+
