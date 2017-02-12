@@ -102,3 +102,5 @@
 
 #+END_SRC
 
+* 参考资料
+  - http://www.lafn.org/~dave/linux/terminalIO.html
