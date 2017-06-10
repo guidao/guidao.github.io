@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-06-10 Sat 13:17 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>groupcache源码阅读</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">groupcache源码阅读</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org7dbe2e4">1. 前言</a></li>
+<li><a href="#org80bbd9d">2. lru.cache结构</a></li>
+<li><a href="#org86e0567">3. cache结构</a></li>
+<li><a href="#org7146199">4. group结构</a></li>
+<li><a href="#orgfa48ad7">5. 分布式结构</a></li>
+<li><a href="#org99cf417">6. 总结</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org7dbe2e4" class="outline-2">
+<h2 id="org7dbe2e4"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+groupcache是golang写的一个缓存库，因为是内存缓存，所以效率比较高。目前公司会用到，而且源码比较简单，所以饿着肚子通读了它的源码。
+groupcache大概可以分为三层结构（自己分的，大雾），每层提供基本的功能，下层为上层提供服务。
+第一层是lru包下的cache结构，这层提供了基本的cache功能，提供最近最少使用淘汰缓存数据。
+第二层是groupcache.go文件中的cache结构，它是对lru.cache的分装，并提供安全并发功能，合一些基本的统计数据。
+第三层是groupcache.go中的group结构, 它提供了简单的分布式缓存支持，flight缓存调用(对于并发的多次读取，只请求一次get，每个并发返回相同的数据)。
+</p>
+</div>
+</div>
+<div id="outline-container-org80bbd9d" class="outline-2">
+<h2 id="org80bbd9d"><span class="section-number-2">2</span> lru.cache结构</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+lru下的cache结构，数据存放在一个双向链表中，并提供一个map映射到key跟列表的元素，链表主要提供lru算法。map主要提供快速查找key。如下图所示, list是标准库中的container/list
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">Cache is an LRU cache. It is not safe for concurrent access.</span>
+<span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">Cache</span> <span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">MaxEntries is the maximum number of cache entries before</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">an item is evicted. Zero means no limit.</span>
+  MaxEntries int
+
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">OnEvicted optionally specificies a callback function to be</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">executed when an entry is purged from the cache.</span>
+  OnEvicted <span style="color: #4f97d7; font-weight: bold;">func</span><span style="color: #bc6ec5;">(</span>key <span style="color: #ce537a; font-weight: bold;">Key</span>, value <span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #2d9574;">{}</span><span style="color: #bc6ec5;">)</span>
+
+  ll    *list.List
+  cache <span style="color: #4f97d7; font-weight: bold;">map</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #2d9574;">{}</span><span style="color: #bc6ec5;">]</span>*<span style="color: #ce537a; font-weight: bold;">list.Element</span>
+<span style="color: #4f97d7;">}</span>
+
+
+<span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">Add adds a value to the cache.</span>
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>c *<span style="color: #ce537a; font-weight: bold;">Cache</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">Key</span>, value <span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #bc6ec5;">{}</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c.cache == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    c.cache = <span style="color: #4f97d7;">make</span><span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">map</span><span style="color: #67b11d;">[</span><span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #b1951d;">{}</span><span style="color: #67b11d;">]</span>*<span style="color: #ce537a; font-weight: bold;">list.Element</span><span style="color: #2d9574;">)</span>
+    c.ll = list.<span style="color: #bc6ec5; font-weight: bold;">New</span><span style="color: #2d9574;">()</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> ee, ok := c.cache<span style="color: #bc6ec5;">[</span>key<span style="color: #bc6ec5;">]</span>; ok <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#25343;&#21040;key&#30340;&#25968;&#25454;&#65292;&#26159;&#28909;&#28857;&#25968;&#25454;&#65292;&#25918;&#22312;&#38142;&#34920;&#26368;&#21069;&#38754;,&#24182;&#26356;&#26032;&#20540;</span>
+    c.ll.<span style="color: #bc6ec5; font-weight: bold;">MoveToFront</span><span style="color: #2d9574;">(</span>ee<span style="color: #2d9574;">)</span>
+    ee.Value.<span style="color: #2d9574;">(</span>*<span style="color: #ce537a; font-weight: bold;">entry</span><span style="color: #2d9574;">)</span>.value = value
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#27809;&#26377;&#21017;&#23384;&#25918;&#22312;list&#20013;&#65292;&#24182;&#23545;map&#24314;&#31435;&#32034;&#24341;</span>
+  ele := c.ll.<span style="color: #bc6ec5; font-weight: bold;">PushFront</span><span style="color: #bc6ec5;">(</span>&amp;<span style="color: #ce537a; font-weight: bold;">entry</span><span style="color: #2d9574;">{</span>key, value<span style="color: #2d9574;">}</span><span style="color: #bc6ec5;">)</span>
+  c.cache<span style="color: #bc6ec5;">[</span>key<span style="color: #bc6ec5;">]</span> = ele
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c.MaxEntries != <span style="color: #a45bad;">0</span> &amp;&amp; c.ll.<span style="color: #bc6ec5; font-weight: bold;">Len</span><span style="color: #bc6ec5;">()</span> &gt; c.MaxEntries <span style="color: #bc6ec5;">{</span>
+    c.<span style="color: #bc6ec5; font-weight: bold;">RemoveOldest</span><span style="color: #2d9574;">()</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+
+<span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">Get looks up a key's value from the cache.</span>
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>c *<span style="color: #ce537a; font-weight: bold;">Cache</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">Get</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">Key</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span>value <span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #bc6ec5;">{}</span>, ok <span style="color: #ce537a; font-weight: bold;">bool</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c.cache == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> ele, hit := c.cache<span style="color: #bc6ec5;">[</span>key<span style="color: #bc6ec5;">]</span>; hit <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#33021;&#25343;&#21040;&#65292;&#21017;&#26159;&#28909;&#28857;&#25968;&#25454;&#65292;&#31227;&#21160;&#21040;&#26368;&#21069;&#38754;&#12290;</span>
+    c.ll.<span style="color: #bc6ec5; font-weight: bold;">MoveToFront</span><span style="color: #2d9574;">(</span>ele<span style="color: #2d9574;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> ele.Value.<span style="color: #2d9574;">(</span>*<span style="color: #ce537a; font-weight: bold;">entry</span><span style="color: #2d9574;">)</span>.value, <span style="color: #a45bad;">true</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">return</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+其他的一些操作都非常简单，不一一列出.
+</p>
+</div>
+</div>
+<div id="outline-container-org86e0567" class="outline-2">
+<h2 id="org86e0567"><span class="section-number-2">3</span> cache结构</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+groupcache中的cache主要是加了并发安全，并添加一些统计数据, 一些操作都是直接调用lru.cache
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">cache</span> <span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7;">{</span>
+  mu         sync.RWMutex
+  nbytes     int64 <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">of all keys and values</span>
+  lru        *lru.Cache
+  nhit, nget int64
+  nevict     int64 <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">number of evictions</span>
+<span style="color: #4f97d7;">}</span>
+
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>c *<span style="color: #ce537a; font-weight: bold;">cache</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">add</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">string</span>, value <span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  c.mu.<span style="color: #bc6ec5; font-weight: bold;">Lock</span><span style="color: #bc6ec5;">()</span>
+  <span style="color: #4f97d7; font-weight: bold;">defer</span> c.mu.<span style="color: #bc6ec5; font-weight: bold;">Unlock</span><span style="color: #bc6ec5;">()</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c.lru == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    c.lru = &amp;lru.<span style="color: #ce537a; font-weight: bold;">Cache</span><span style="color: #2d9574;">{</span>
+      <span style="color: #a45bad;">OnEvicted</span>: <span style="color: #4f97d7; font-weight: bold;">func</span><span style="color: #67b11d;">(</span>key <span style="color: #ce537a; font-weight: bold;">lru.Key</span>, value <span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #b1951d;">{}</span><span style="color: #67b11d;">)</span> <span style="color: #67b11d;">{</span>
+        val := value.<span style="color: #b1951d;">(</span><span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #b1951d;">)</span>
+        c.nbytes -= <span style="color: #bc6ec5; font-weight: bold;">int64</span><span style="color: #b1951d;">(</span><span style="color: #4f97d7;">len</span><span style="color: #4f97d7;">(</span>key.<span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">string</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span><span style="color: #b1951d;">)</span> + <span style="color: #bc6ec5; font-weight: bold;">int64</span><span style="color: #b1951d;">(</span>val.<span style="color: #bc6ec5; font-weight: bold;">Len</span><span style="color: #4f97d7;">()</span><span style="color: #b1951d;">)</span>
+        c.nevict++
+      <span style="color: #67b11d;">}</span>,
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+  c.lru.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #bc6ec5;">(</span>key, value<span style="color: #bc6ec5;">)</span>
+  c.nbytes += <span style="color: #bc6ec5; font-weight: bold;">int64</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7;">len</span><span style="color: #2d9574;">(</span>key<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span> + <span style="color: #bc6ec5; font-weight: bold;">int64</span><span style="color: #bc6ec5;">(</span>value.<span style="color: #bc6ec5; font-weight: bold;">Len</span><span style="color: #2d9574;">()</span><span style="color: #bc6ec5;">)</span>
+<span style="color: #4f97d7;">}</span>
+
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>c *<span style="color: #ce537a; font-weight: bold;">cache</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">get</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">string</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span>value <span style="color: #ce537a; font-weight: bold;">ByteView</span>, ok <span style="color: #ce537a; font-weight: bold;">bool</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  c.mu.<span style="color: #bc6ec5; font-weight: bold;">Lock</span><span style="color: #bc6ec5;">()</span>
+  <span style="color: #4f97d7; font-weight: bold;">defer</span> c.mu.<span style="color: #bc6ec5; font-weight: bold;">Unlock</span><span style="color: #bc6ec5;">()</span>
+  c.nget++
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c.lru == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  vi, ok := c.lru.<span style="color: #bc6ec5; font-weight: bold;">Get</span><span style="color: #bc6ec5;">(</span>key<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> !ok <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  c.nhit++
+  <span style="color: #4f97d7; font-weight: bold;">return</span> vi.<span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #bc6ec5;">)</span>, <span style="color: #a45bad;">true</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7146199" class="outline-2">
+<h2 id="org7146199"><span class="section-number-2">4</span> group结构</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+group结构如下:
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">Group</span> <span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">group&#30340;&#21517;&#23383;&#65292;&#24517;&#39035;&#21807;&#19968;</span>
+  name       string
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">getter&#26041;&#27861;&#65292;&#29992;&#20110;&#20174;&#32531;&#23384;&#22833;&#25928;&#21518;&#20174;&#25968;&#25454;&#24211;&#25110;&#20854;&#20182;&#22320;&#26041;&#33719;&#21462;&#25968;&#25454;.</span>
+  getter     Getter
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20998;&#24067;&#24335;&#25903;&#25345;</span>
+  peersOnce  sync.Once
+  peers      PeerPicker
+  cacheBytes int64 <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">limit for sum of mainCache and hotCache size</span>
+
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20004;&#20010;&#32531;&#23384;</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">mainCache is a cache of the keys for which this process</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">(amongst its peers) is authoritative. That is, this cache</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">contains keys which consistent hash on to this process's</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">peer number.</span>
+  mainCache cache
+
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">hotCache contains keys/values for which this peer is not</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">authoritative (otherwise they would be in mainCache), but</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">are popular enough to warrant mirroring in this process to</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">avoid going over the network to fetch from a peer.  Having</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">a hotCache avoids network hotspotting, where a peer's</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">network card could become the bottleneck on a popular key.</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">This cache is used sparingly to maximize the total number</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">of key/value pairs that can be stored globally.</span>
+  hotCache cache
+
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">loadGroup ensures that each key is only fetched once</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">(either locally or remotely), regardless of the number of</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">concurrent callers.</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">&#22312;&#32531;&#23384;&#21629;&#20013;&#22833;&#36133;&#30340;&#26102;&#20505;&#20943;&#23569;&#35843;&#29992;</span>
+  loadGroup flightGroup
+
+  _ int32 <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">force Stats to be 8-byte aligned on 32-bit platforms</span>
+
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">Stats are statistics on the group.</span>
+  Stats Stats
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+先说flightGroup结构比较简单，这个结构主要是在缓存失效的时候，减少对底层的访问。比如一个缓存数据失效了，这个时候同时会有很多人调用接口，缓存都没有命中，就会对数据库发起很多次调用，其实这个时候只要调用一次就行了，其他的都是相同的数据。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>g *<span style="color: #ce537a; font-weight: bold;">Group</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">Do</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">string</span>, fn <span style="color: #4f97d7; font-weight: bold;">func</span><span style="color: #bc6ec5;">()</span> <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #2d9574;">{}</span>, <span style="color: #ce537a; font-weight: bold;">error</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #bc6ec5;">{}</span>, <span style="color: #ce537a; font-weight: bold;">error</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  g.mu.<span style="color: #bc6ec5; font-weight: bold;">Lock</span><span style="color: #bc6ec5;">()</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> g.m == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    g.m = <span style="color: #4f97d7;">make</span><span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">map</span><span style="color: #67b11d;">[</span><span style="color: #ce537a; font-weight: bold;">string</span><span style="color: #67b11d;">]</span>*<span style="color: #ce537a; font-weight: bold;">call</span><span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#23545;&#20110;&#21516;&#19968;&#20010;key&#30340;&#35843;&#29992;&#31561;&#24453;&#20854;&#20182;goroutine&#35843;&#29992;&#23436;&#25104;</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> c, ok := g.m<span style="color: #bc6ec5;">[</span>key<span style="color: #bc6ec5;">]</span>; ok <span style="color: #bc6ec5;">{</span>
+    g.mu.<span style="color: #bc6ec5; font-weight: bold;">Unlock</span><span style="color: #2d9574;">()</span>
+    c.wg.<span style="color: #bc6ec5; font-weight: bold;">Wait</span><span style="color: #2d9574;">()</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#30452;&#25509;&#36820;&#22238;&#25968;&#25454;</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> c.val, c.err
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#21516;&#20010;key&#30340;&#35843;&#29992;&#25918;&#22312;map&#20013;</span>
+  c := <span style="color: #4f97d7;">new</span><span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">call</span><span style="color: #bc6ec5;">)</span>
+  c.wg.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #bc6ec5;">(</span><span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span>
+  g.m<span style="color: #bc6ec5;">[</span>key<span style="color: #bc6ec5;">]</span> = c
+  g.mu.<span style="color: #bc6ec5; font-weight: bold;">Unlock</span><span style="color: #bc6ec5;">()</span>
+
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#33719;&#21462;&#25968;&#25454;</span>
+  c.val, c.err = <span style="color: #bc6ec5; font-weight: bold;">fn</span><span style="color: #bc6ec5;">()</span>
+  c.wg.<span style="color: #bc6ec5; font-weight: bold;">Done</span><span style="color: #bc6ec5;">()</span>
+
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#21024;&#38500;&#38480;&#21046;</span>
+  g.mu.<span style="color: #bc6ec5; font-weight: bold;">Lock</span><span style="color: #bc6ec5;">()</span>
+  <span style="color: #4f97d7;">delete</span><span style="color: #bc6ec5;">(</span>g.m, key<span style="color: #bc6ec5;">)</span>
+  g.mu.<span style="color: #bc6ec5; font-weight: bold;">Unlock</span><span style="color: #bc6ec5;">()</span>
+
+  <span style="color: #4f97d7; font-weight: bold;">return</span> c.val, c.err
+<span style="color: #4f97d7;">}</span>
+
+</pre>
+</div>
+<p>
+来看看group的get方法是怎么使用的
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>g *<span style="color: #ce537a; font-weight: bold;">Group</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">Get</span><span style="color: #4f97d7;">(</span>ctx <span style="color: #ce537a; font-weight: bold;">Context</span>, key <span style="color: #ce537a; font-weight: bold;">string</span>, dest <span style="color: #ce537a; font-weight: bold;">Sink</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">error</span> <span style="color: #4f97d7;">{</span>
+  g.peersOnce.<span style="color: #bc6ec5; font-weight: bold;">Do</span><span style="color: #bc6ec5;">(</span>g.initPeers<span style="color: #bc6ec5;">)</span>
+  g.Stats.Gets.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #bc6ec5;">(</span><span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> dest == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> errors.<span style="color: #bc6ec5; font-weight: bold;">New</span><span style="color: #2d9574;">(</span><span style="color: #2d9574;">"groupcache: nil dest Sink"</span><span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22312;&#32531;&#23384;&#20013;&#26597;&#30475;key</span>
+  value, cacheHit := g.<span style="color: #bc6ec5; font-weight: bold;">lookupCache</span><span style="color: #bc6ec5;">(</span>key<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> cacheHit <span style="color: #bc6ec5;">{</span>
+    g.Stats.CacheHits.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #2d9574;">(</span><span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #bc6ec5; font-weight: bold;">setSinkView</span><span style="color: #2d9574;">(</span>dest, value<span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">Optimization to avoid double unmarshalling or copying: keep</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">track of whether the dest was already populated. One caller</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">(if local) will set this; the losers will not. The common</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">case will likely be one caller.</span>
+  destPopulated := <span style="color: #a45bad;">false</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#27809;&#26377;&#22312;&#32531;&#23384;&#20013;&#25214;&#21040;&#25968;&#25454;&#65292;&#23601;&#20174;getter&#26041;&#27861;&#20013;load&#36827;&#26469;</span>
+  value, destPopulated, err := g.<span style="color: #bc6ec5; font-weight: bold;">load</span><span style="color: #bc6ec5;">(</span>ctx, key, dest<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> err != <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> err
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> destPopulated <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">nil</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #bc6ec5; font-weight: bold;">setSinkView</span><span style="color: #bc6ec5;">(</span>dest, value<span style="color: #bc6ec5;">)</span>
+<span style="color: #4f97d7;">}</span>
+
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>g *<span style="color: #ce537a; font-weight: bold;">Group</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">lookupCache</span><span style="color: #4f97d7;">(</span>key <span style="color: #ce537a; font-weight: bold;">string</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span>value <span style="color: #ce537a; font-weight: bold;">ByteView</span>, ok <span style="color: #ce537a; font-weight: bold;">bool</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#36825;&#20010;&#26041;&#27861;&#27604;&#36739;&#31616;&#21333;&#65292;&#20174;&#26159;&#20174;maincache&#21644;hotcache&#20013;&#35835;&#21462;&#25968;&#25454;</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> g.cacheBytes &lt;= <span style="color: #a45bad;">0</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  value, ok = g.mainCache.<span style="color: #bc6ec5; font-weight: bold;">get</span><span style="color: #bc6ec5;">(</span>key<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> ok <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span>
+  <span style="color: #bc6ec5;">}</span>
+  value, ok = g.hotCache.<span style="color: #bc6ec5; font-weight: bold;">get</span><span style="color: #bc6ec5;">(</span>key<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">return</span>
+<span style="color: #4f97d7;">}</span>
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>g *<span style="color: #ce537a; font-weight: bold;">Group</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">load</span><span style="color: #4f97d7;">(</span>ctx <span style="color: #ce537a; font-weight: bold;">Context</span>, key <span style="color: #ce537a; font-weight: bold;">string</span>, dest <span style="color: #ce537a; font-weight: bold;">Sink</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span>value <span style="color: #ce537a; font-weight: bold;">ByteView</span>, destPopulated <span style="color: #ce537a; font-weight: bold;">bool</span>, err <span style="color: #ce537a; font-weight: bold;">error</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  g.Stats.Loads.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #bc6ec5;">(</span><span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">loadGroup&#20943;&#23569;&#23545;&#24213;&#23618;&#30340;&#35843;&#29992;&#65292;&#19978;&#38754;&#24050;&#32463;&#35828;&#20102;</span>
+  viewi, err := g.loadGroup.<span style="color: #bc6ec5; font-weight: bold;">Do</span><span style="color: #bc6ec5;">(</span>key, <span style="color: #4f97d7; font-weight: bold;">func</span><span style="color: #2d9574;">()</span> <span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">interface</span><span style="color: #67b11d;">{}</span>, <span style="color: #ce537a; font-weight: bold;">error</span><span style="color: #2d9574;">)</span> <span style="color: #2d9574;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">if</span> value, cacheHit := g.<span style="color: #bc6ec5; font-weight: bold;">lookupCache</span><span style="color: #67b11d;">(</span>key<span style="color: #67b11d;">)</span>; cacheHit <span style="color: #67b11d;">{</span>
+      g.Stats.CacheHits.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #b1951d;">(</span><span style="color: #a45bad;">1</span><span style="color: #b1951d;">)</span>
+      <span style="color: #4f97d7; font-weight: bold;">return</span> value, <span style="color: #a45bad;">nil</span>
+    <span style="color: #67b11d;">}</span>
+    g.Stats.LoadsDeduped.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #67b11d;">(</span><span style="color: #a45bad;">1</span><span style="color: #67b11d;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">var</span> value ByteView
+    <span style="color: #4f97d7; font-weight: bold;">var</span> err error
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#33021;&#20174;&#36828;&#31243;&#33719;&#21462;&#65292;&#23601;&#20174;&#20998;&#24067;&#24335;&#30340;&#20854;&#20182;&#26426;&#23376;&#33719;&#21462;&#23601;&#20174;&#20854;&#20182;&#26426;&#23376;&#33719;&#21462;&#65292;&#22240;&#20026;&#20854;&#20182;&#26426;&#22120;&#20063;&#26159;&#32531;&#23384;&#25968;&#25454;&#27604;&#25968;&#25454;&#24211;&#24555;</span>
+    <span style="color: #4f97d7; font-weight: bold;">if</span> peer, ok := g.peers.<span style="color: #bc6ec5; font-weight: bold;">PickPeer</span><span style="color: #67b11d;">(</span>key<span style="color: #67b11d;">)</span>; ok <span style="color: #67b11d;">{</span>
+      value, err = g.<span style="color: #bc6ec5; font-weight: bold;">getFromPeer</span><span style="color: #b1951d;">(</span>ctx, peer, key<span style="color: #b1951d;">)</span>
+      <span style="color: #4f97d7; font-weight: bold;">if</span> err == <span style="color: #a45bad;">nil</span> <span style="color: #b1951d;">{</span>
+        g.Stats.PeerLoads.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">return</span> value, <span style="color: #a45bad;">nil</span>
+      <span style="color: #b1951d;">}</span>
+      g.Stats.PeerErrors.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #b1951d;">(</span><span style="color: #a45bad;">1</span><span style="color: #b1951d;">)</span>
+      <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #2aa1ae; background-color: #292e34;">(bradfitz): log the peer's error? keep</span>
+      <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">log of the past few for /groupcachez?  It's</span>
+      <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">probably boring (normal task movement), so not</span>
+      <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">worth logging I imagine.</span>
+    <span style="color: #67b11d;">}</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35843;&#29992;getter&#26041;&#27861;&#65292;&#33719;&#21462;&#25968;&#25454;(&#20174;&#25968;&#25454;&#24211;&#65292;&#25110;&#32773;&#20854;&#20182;&#22320;&#26041;)</span>
+    value, err = g.<span style="color: #bc6ec5; font-weight: bold;">getLocally</span><span style="color: #67b11d;">(</span>ctx, key, dest<span style="color: #67b11d;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">if</span> err != <span style="color: #a45bad;">nil</span> <span style="color: #67b11d;">{</span>
+      g.Stats.LocalLoadErrs.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #b1951d;">(</span><span style="color: #a45bad;">1</span><span style="color: #b1951d;">)</span>
+      <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">nil</span>, err
+    <span style="color: #67b11d;">}</span>
+    g.Stats.LocalLoads.<span style="color: #bc6ec5; font-weight: bold;">Add</span><span style="color: #67b11d;">(</span><span style="color: #a45bad;">1</span><span style="color: #67b11d;">)</span>
+    destPopulated = <span style="color: #a45bad;">true</span> <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">only one caller of load gets this return value</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#25226;&#25968;&#25454;&#23384;&#25918;&#22312;cache&#20013;</span>
+    g.<span style="color: #bc6ec5; font-weight: bold;">populateCache</span><span style="color: #67b11d;">(</span>key, value, &amp;g.mainCache<span style="color: #67b11d;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> value, <span style="color: #a45bad;">nil</span>
+  <span style="color: #2d9574;">}</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> err == <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    value = viewi.<span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">return</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgfa48ad7" class="outline-2">
+<h2 id="orgfa48ad7"><span class="section-number-2">5</span> 分布式结构</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+上面提到了从分布式机子获取缓存使用的是getFromPeer方法,下面是源码
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#27599;&#19968;&#20010;&#20998;&#24067;&#24335;&#30340;&#26381;&#21153;&#37117;&#38656;&#35201;&#23454;&#29616;&#19968;&#20010;Get&#26041;&#27861;&#65292;&#25509;&#21475;&#25551;&#36848;&#25991;&#20214;&#22312;proto&#25991;&#20214;&#20013;</span>
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #4f97d7;">(</span>g *<span style="color: #ce537a; font-weight: bold;">Group</span><span style="color: #4f97d7;">)</span> <span style="color: #bc6ec5; font-weight: bold;">getFromPeer</span><span style="color: #4f97d7;">(</span>ctx <span style="color: #ce537a; font-weight: bold;">Context</span>, peer <span style="color: #ce537a; font-weight: bold;">ProtoGetter</span>, key <span style="color: #ce537a; font-weight: bold;">string</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">ByteView</span>, <span style="color: #ce537a; font-weight: bold;">error</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
+  req := &amp;pb.<span style="color: #ce537a; font-weight: bold;">GetRequest</span><span style="color: #bc6ec5;">{</span>
+    <span style="color: #a45bad;">Group</span>: &amp;g.name,
+    <span style="color: #a45bad;">Key</span>:   &amp;key,
+  <span style="color: #bc6ec5;">}</span>
+  res := &amp;pb.<span style="color: #ce537a; font-weight: bold;">GetResponse</span><span style="color: #bc6ec5;">{}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20174;&#36828;&#31471;&#24471;&#21040;&#25968;&#25454;</span>
+  err := peer.<span style="color: #bc6ec5; font-weight: bold;">Get</span><span style="color: #bc6ec5;">(</span>ctx, req, res<span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> err != <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #2d9574;">{}</span>, err
+  <span style="color: #bc6ec5;">}</span>
+  value := <span style="color: #ce537a; font-weight: bold;">ByteView</span><span style="color: #bc6ec5;">{</span>b: res.Value<span style="color: #bc6ec5;">}</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #2aa1ae; background-color: #292e34;">(bradfitz): use res.MinuteQps or something smart to</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">conditionally populate hotCache.  For now just do it some</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">// </span><span style="color: #2aa1ae; background-color: #292e34;">percentage of the time.</span>
+  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#21704;&#21704;&#65292;&#36825;&#37324;&#38543;&#26426;&#25918;&#22312;hotCache&#20013;,&#26377;&#24847;&#24605;</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> rand.<span style="color: #bc6ec5; font-weight: bold;">Intn</span><span style="color: #bc6ec5;">(</span><span style="color: #a45bad;">10</span><span style="color: #bc6ec5;">)</span> == <span style="color: #a45bad;">0</span> <span style="color: #bc6ec5;">{</span>
+    g.<span style="color: #bc6ec5; font-weight: bold;">populateCache</span><span style="color: #2d9574;">(</span>key, value, &amp;g.hotCache<span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">return</span> value, <span style="color: #a45bad;">nil</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+然后groupcache实现了一个Get接口，源码在http.go中, 有兴趣的可以看看。这里就不加了。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org99cf417" class="outline-2">
+<h2 id="org99cf417"><span class="section-number-2">6</span> 总结</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+所以现在可以看到一次groupcache的读取过程如下:
+</p>
+<ol class="org-ol">
+<li>从mainCache中读取</li>
+<li>从hotCache中读取</li>
+<li>从分布式集群中的其他机器读取</li>
+<li>从底层(数据库或其他地方)读取</li>
+</ol>
+
+<p>
+不过groupcache只支持get方法，你不能自己控制cache过期。这点不大方便，因为我们总希望实时获取数据。
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2017-06-10 Sat 13:17</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
