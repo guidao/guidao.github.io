@@ -4,7 +4,8 @@
 #+OPTIONS: AUTHOR:nil 
 #+OPTIONS: TIMESTAMP:nil
 #+HTML: <h1 align="center">个人blog</h1>
-
+* 2017年10月
+- [[file:elixir_script.org][使用elixir作为日常脚本]]
 * 2017年6月
 - [[file:groupcache.org][groupcache源码阅读]]
 * 2017年5月

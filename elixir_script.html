@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-10-14 Sat 22:18 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用elixir作为日常脚本</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">使用elixir作为日常脚本</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgab2eaa0">1. 前言</a>
+<ul>
+<li><a href="#org130cb07">1.1. python</a></li>
+<li><a href="#org96dbe99">1.2. ruby</a></li>
+<li><a href="#orgb44ab87">1.3. nodejs</a></li>
+<li><a href="#org9d4e1d6">1.4. elixir</a></li>
+</ul>
+</li>
+<li><a href="#org91d8fd0">2. go vs elixir</a></li>
+<li><a href="#orga364788">3. 搭建elixir脚本环境</a></li>
+<li><a href="#org222b4ee">4. 使用</a></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orgab2eaa0" class="outline-2">
+<h2 id="orgab2eaa0"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+脚本语言在日常中使用频率非常高。使用python，ruby甚至nodejs的人都有很多。但是都不是我的菜。我放弃他们作为我的脚本语言原因如下:
+</p>
+</div>
+<div id="outline-container-org130cb07" class="outline-3">
+<h3 id="org130cb07"><span class="section-number-3">1.1</span> python</h3>
+<div class="outline-text-3" id="text-1-1">
+<ol class="org-ol">
+<li>对于python，对函数式编程支持不够强力，而在日常操作中，处理文本数据非常多，大多都是处理数组，列表，对于python来说就得写很多for xx in yy。而没有函数式语言中常见的filter,map,foreach,flodr,flod等。这使得我们不能快速的进行验证我们的思维，而必须要分一部分时间去输入一些额外的字符。</li>
+<li>自动补全不友好，python由于是动态语言，对于补全功能非常弱，虽然使用pycharm来说有一丢丢改善。但是大多数写脚本的时候，都是打开一个终端进行操作，这无疑带来了思维上的不流畅行。</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org96dbe99" class="outline-3">
+<h3 id="org96dbe99"><span class="section-number-3">1.2</span> ruby</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+曾经有一段时间，我非常喜欢ruby，当时我觉得找到了日常脚本的真爱。ruby中有很多值得让人兴奋的点。比如使用 ``操作符可以直接执行shell命令。这相当于你可以把shell命令嵌入到ruby脚本中，让人几乎不能发现。比如ruby的函数调用可以不使用括号，这对脚本来说大大减少了输入，让思维更流畅。而且ruby支持block，使得语言表达起来更有力。比如ervery thing is object，即使是数字也是对象类型，这使得链式调用大行其道，使用起来非常方便。
+</p>
+<div class="org-src-container">
+<pre class="src src-ruby"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">&#19968;&#20010;block&#30340;&#20363;&#23376;</span>
+<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span>..<span style="color: #a45bad;">5</span><span style="color: #4f97d7;">)</span>.each <span style="color: #4f97d7; font-weight: bold;">do</span> |i|
+   <span style="color: #4f97d7;">puts</span> <span style="color: #2d9574;">"&#23616;&#37096;&#21464;&#37327;&#30340;&#20540;&#20026; </span><span style="color: #7590db;">#{i}</span><span style="color: #2d9574;">"</span>
+<span style="color: #4f97d7; font-weight: bold;">end</span>
+</pre>
+</div>
+<p>
+但是ruby的缺点也十分明显，补全根本不能忍。ruby中使用的hack技能太多，追踪问题非常不方便（但是对于写脚本没啥大问题）。但是补全的痛点是我写一个脚本得翻大半天文档才能找到相应的函数。
+</p>
+</div>
+</div>
+<div id="outline-container-orgb44ab87" class="outline-3">
+<h3 id="orgb44ab87"><span class="section-number-3">1.3</span> nodejs</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+对js语言不感冒，所以没有尝试过
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9d4e1d6" class="outline-3">
+<h3 id="org9d4e1d6"><span class="section-number-3">1.4</span> elixir</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都在写erlang。而elixir是erlang vm上的一门语言，所以对于elixir的底层也有一定了解。而且elixir的语法跟ruby很相似，吸引了很多ruby的开发者，这使得elixir的表达能力也非常的强，而elixir也是一门函数式语言，所以对于处理一些文本很是方便。唯一的弱点也在补全，不过补全也比ruby好多了，自带的iex shell也足够好，标准库的例子也足够丰富。
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org91d8fd0" class="outline-2">
+<h2 id="org91d8fd0"><span class="section-number-2">2</span> go vs elixir</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+虽然我工作开发使用的是go，go也足够简单，易懂。但是由于易懂，所以几乎没有什么语法糖。写起脚本来很是啰嗦。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">package</span> main
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> <span style="color: #4f97d7;">(</span>
+  <span style="color: #2d9574;">"fmt"</span>
+  <span style="color: #2d9574;">"io/ioutil"</span>
+  <span style="color: #2d9574;">"strings"</span>
+<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #bc6ec5; font-weight: bold;">main</span><span style="color: #4f97d7;">()</span> <span style="color: #4f97d7;">{</span>
+  s, err := ioutil.<span style="color: #bc6ec5; font-weight: bold;">ReadFile</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">"./wftest.csv"</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">if</span> err != <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7;">panic</span><span style="color: #2d9574;">(</span>err<span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+  lines := strings.<span style="color: #bc6ec5; font-weight: bold;">Split</span><span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">string</span><span style="color: #2d9574;">(</span>s<span style="color: #2d9574;">)</span>, <span style="color: #2d9574;">"\n"</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #4f97d7; font-weight: bold;">for</span> _, line := <span style="color: #4f97d7; font-weight: bold;">range</span> lines <span style="color: #bc6ec5;">{</span>
+    fileds := strings.<span style="color: #bc6ec5; font-weight: bold;">Split</span><span style="color: #2d9574;">(</span>line, <span style="color: #2d9574;">","</span><span style="color: #2d9574;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">var</span> newfileds <span style="color: #2d9574;">[]</span><span style="color: #ce537a; font-weight: bold;">string</span>
+    <span style="color: #4f97d7; font-weight: bold;">for</span> _, f := <span style="color: #4f97d7; font-weight: bold;">range</span> fileds <span style="color: #2d9574;">{</span>
+      newfileds = <span style="color: #4f97d7;">append</span><span style="color: #67b11d;">(</span>newfileds, strings.<span style="color: #bc6ec5; font-weight: bold;">TrimSpace</span><span style="color: #b1951d;">(</span>f<span style="color: #b1951d;">)</span><span style="color: #67b11d;">)</span>
+    <span style="color: #2d9574;">}</span>
+    fmt.<span style="color: #bc6ec5; font-weight: bold;">Println</span><span style="color: #2d9574;">(</span>strings.<span style="color: #bc6ec5; font-weight: bold;">Join</span><span style="color: #67b11d;">(</span>newfileds, <span style="color: #2d9574;">","</span><span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-elixir"><span style="color: #7590db;">file</span> = <span style="color: #ce537a; font-weight: bold;">File</span>.read! <span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">List</span>.first <span style="color: #ce537a; font-weight: bold;">System</span>.argv<span style="color: #4f97d7;">)</span>
+<span style="color: #7590db;">lines</span> = <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #4f97d7;">(</span>file, <span style="color: #2d9574;">"\n"</span><span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">for</span> line &lt;- lines <span style="color: #4f97d7; font-weight: bold;">do</span>
+  <span style="color: #7590db;">fields</span> = <span style="color: #ce537a; font-weight: bold;">String</span>.split line, <span style="color: #2d9574;">","</span>
+  <span style="color: #7590db;">newfd</span> = <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #4f97d7;">(</span>fields, <span style="color: #4f97d7; font-weight: bold;">fn</span> x -&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.trim x <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #4f97d7;">)</span>
+  <span style="color: #7590db;">s</span> = <span style="color: #ce537a; font-weight: bold;">Enum</span>.join<span style="color: #4f97d7;">(</span>newfd, <span style="color: #2d9574;">","</span><span style="color: #4f97d7;">)</span>
+  <span style="color: #ce537a; font-weight: bold;">IO</span>.puts s
+<span style="color: #4f97d7; font-weight: bold;">end</span>
+</pre>
+</div>
+<p>
+从上面可以看出elixir对于go来说可以省下不少输入，而且同样简单易懂。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga364788" class="outline-2">
+<h2 id="orga364788"><span class="section-number-2">3</span> 搭建elixir脚本环境</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+由于elixir不能全局安装第三方库，所以对于脚本来说不能使用第三方库简直是个灾难，-0- 难道解析个json都要从头造轮子吗？很奇怪的一点就是erlang支持了code path的功能，elixir竟然不支持。所以就得手动适配了。
+在erlang中添加一个代码搜索路径，可以通过code:add<sub>patha函数来实现</sub>。所以我们要做的就是把elixir的第三方库添加到erlang的代码搜索路径。这样当在脚本中使用第三方包的时候就能搜索到相应的模块了。
+步骤:
+</p>
+<ol class="org-ol">
+<li>使用mix new script建立一个名为script的elixir项目作为第三方依赖</li>
+<li>在mix.exs中添加的依赖，并执行mix deps.get获取所有依赖。</li>
+<li>执行mix运行下项目,这个会编译依赖生成<sub>build目录下的第三方库的beam目录</sub></li>
+<li>需要把beam文件所在的目录加入到code path中，erlang在home目录下有个.erlang文件，在erlang启动时会执行其中的代码，所以需要把下面的代码添加到.erlang文件中</li>
+</ol>
+<div class="org-src-container">
+<pre class="src src-erlang"><span style="color: #4f97d7;">{</span>ok, <span style="color: #7590db;">Dirs</span><span style="color: #4f97d7;">}</span> = <span style="color: #ce537a; font-weight: bold;">file</span>:<span style="color: #ce537a; font-weight: bold;">list_dir</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"/code/elixir/script/_build/dev/lib"</span><span style="color: #4f97d7;">)</span>.
+<span style="color: #ce537a; font-weight: bold;">lists</span>:<span style="color: #ce537a; font-weight: bold;">foreach</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">fun</span><span style="color: #bc6ec5;">(</span><span style="color: #7590db;">A</span><span style="color: #bc6ec5;">)</span> -&gt;<span style="color: #ce537a; font-weight: bold;">code</span>:<span style="color: #ce537a; font-weight: bold;">add_patha</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">"/code/elixir/script/_build/dev/lib/"</span>++ <span style="color: #7590db;">A</span> ++ <span style="color: #2d9574;">"/ebin"</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">end</span>, <span style="color: #7590db;">Dirs</span><span style="color: #4f97d7;">)</span>.
+</pre>
+</div>
+<p>
+5.你可以在任意一个目录开启一个iex shell试试，都可以获取相应的第三方模块数据, 但是注意写正常的程序也会添加到code path
+</p>
+</div>
+</div>
+
+<div id="outline-container-org222b4ee" class="outline-2">
+<h2 id="org222b4ee"><span class="section-number-2">4</span> 使用</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+比如我们可以使用第三方http client抓取下百度首页, 创建一个文件client.exs,输入下面代码, 然后chmod +x client.exs，然后执行./client.exs就可能看到效果了
+</p>
+<div class="org-src-container">
+<pre class="src src-elixir"><span style="color: #2aa1ae; background-color: #292e34;">#</span><span style="color: #2aa1ae; background-color: #292e34;">!/usr/bin/env elixir</span>
+<span style="color: #ce537a; font-weight: bold;">HTTPoison</span>.start
+<span style="color: #7590db;">body</span> = <span style="color: #ce537a; font-weight: bold;">HTTPoison</span>.get!<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"http://www.baidu.com"</span><span style="color: #4f97d7;">)</span>.body
+<span style="color: #ce537a; font-weight: bold;">IO</span>.puts body
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2017-10-14 Sat 22:18</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

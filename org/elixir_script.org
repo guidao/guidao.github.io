@@ -1,0 +1,85 @@
+#+TITLE: 使用elixir作为日常脚本
+
+
+* 前言
+脚本语言在日常中使用频率非常高。使用python，ruby甚至nodejs的人都有很多。但是都不是我的菜。我放弃他们作为我的脚本语言原因如下:
+** python
+   1. 对于python，对函数式编程支持不够强力，而在日常操作中，处理文本数据非常多，大多都是处理数组，列表，对于python来说就得写很多for xx in yy。而没有函数式语言中常见的filter,map,foreach,flodr,flod等。这使得我们不能快速的进行验证我们的思维，而必须要分一部分时间去输入一些额外的字符。
+   2. 自动补全不友好，python由于是动态语言，对于补全功能非常弱，虽然使用pycharm来说有一丢丢改善。但是大多数写脚本的时候，都是打开一个终端进行操作，这无疑带来了思维上的不流畅行。
+** ruby
+   曾经有一段时间，我非常喜欢ruby，当时我觉得找到了日常脚本的真爱。ruby中有很多值得让人兴奋的点。比如使用 ``操作符可以直接执行shell命令。这相当于你可以把shell命令嵌入到ruby脚本中，让人几乎不能发现。比如ruby的函数调用可以不使用括号，这对脚本来说大大减少了输入，让思维更流畅。而且ruby支持block，使得语言表达起来更有力。比如ervery thing is object，即使是数字也是对象类型，这使得链式调用大行其道，使用起来非常方便。
+   #+BEGIN_SRC ruby
+   # 一个block的例子
+   (0..5).each do |i|
+      puts "局部变量的值为 #{i}"
+   end
+   #+END_SRC
+   但是ruby的缺点也十分明显，补全根本不能忍。ruby中使用的hack技能太多，追踪问题非常不方便（但是对于写脚本没啥大问题）。但是补全的痛点是我写一个脚本得翻大半天文档才能找到相应的函数。
+** nodejs
+   对js语言不感冒，所以没有尝试过
+
+** elixir
+   elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都在写erlang。而elixir是erlang vm上的一门语言，所以对于elixir的底层也有一定了解。而且elixir的语法跟ruby很相似，吸引了很多ruby的开发者，这使得elixir的表达能力也非常的强，而elixir也是一门函数式语言，所以对于处理一些文本很是方便。唯一的弱点也在补全，不过补全也比ruby好多了，自带的iex shell也足够好，标准库的例子也足够丰富。
+
+
+* go vs elixir
+  虽然我工作开发使用的是go，go也足够简单，易懂。但是由于易懂，所以几乎没有什么语法糖。写起脚本来很是啰嗦。
+  #+BEGIN_SRC go
+    package main
+
+    import (
+      "fmt"
+      "io/ioutil"
+      "strings"
+    )
+    func main() {
+      s, err := ioutil.ReadFile("./wftest.csv")
+      if err != nil {
+        panic(err)
+      }
+      lines := strings.Split(string(s), "\n")
+      for _, line := range lines {
+        fileds := strings.Split(line, ",")
+        var newfileds []string
+        for _, f := range fileds {
+          newfileds = append(newfileds, strings.TrimSpace(f))
+        }
+        fmt.Println(strings.Join(newfileds, ","))
+      }
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC elixir
+  file = File.read! (List.first System.argv)
+  lines = String.split(file, "\n")
+  for line <- lines do
+    fields = String.split line, ","
+    newfd = Enum.map(fields, fn x -> String.trim x end)
+    s = Enum.join(newfd, ",")
+    IO.puts s
+  end
+  #+END_SRC
+  从上面可以看出elixir对于go来说可以省下不少输入，而且同样简单易懂。
+
+* 搭建elixir脚本环境
+  由于elixir不能全局安装第三方库，所以对于脚本来说不能使用第三方库简直是个灾难，-0- 难道解析个json都要从头造轮子吗？很奇怪的一点就是erlang支持了code path的功能，elixir竟然不支持。所以就得手动适配了。
+  在erlang中添加一个代码搜索路径，可以通过code:add_patha函数来实现。所以我们要做的就是把elixir的第三方库添加到erlang的代码搜索路径。这样当在脚本中使用第三方包的时候就能搜索到相应的模块了。
+  步骤:
+  1. 使用mix new script建立一个名为script的elixir项目作为第三方依赖
+  2. 在mix.exs中添加的依赖，并执行mix deps.get获取所有依赖。
+  3. 执行mix运行下项目,这个会编译依赖生成_build目录下的第三方库的beam目录
+  4. 需要把beam文件所在的目录加入到code path中，erlang在home目录下有个.erlang文件，在erlang启动时会执行其中的代码，所以需要把下面的代码添加到.erlang文件中
+  #+BEGIN_SRC erlang
+  {ok, Dirs} = file:list_dir("/code/elixir/script/_build/dev/lib").
+  lists:foreach(fun(A) ->code:add_patha("/code/elixir/script/_build/dev/lib/"++ A ++ "/ebin") end, Dirs).
+  #+END_SRC
+  5.你可以在任意一个目录开启一个iex shell试试，都可以获取相应的第三方模块数据, 但是注意写正常的程序也会添加到code path
+
+* 使用
+  比如我们可以使用第三方http client抓取下百度首页, 创建一个文件client.exs,输入下面代码, 然后chmod +x client.exs，然后执行./client.exs就可能看到效果了
+  #+BEGIN_SRC elixir
+  #!/usr/bin/env elixir
+  HTTPoison.start
+  body = HTTPoison.get!("http://www.baidu.com").body
+  IO.puts body
+  #+END_SRC
