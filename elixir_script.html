@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-10-14 Sat 22:18 -->
+<!-- 2017-10-15 Sun 11:56 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>使用elixir作为日常脚本</title>
@@ -351,6 +351,18 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 </pre>
 </div>
 <p>
+还可以写得更简洁, |&gt;是管道操作符，可以把第一个参数往下传
+</p>
+<div class="org-src-container">
+<pre class="src src-elixir"><span style="color: #ce537a; font-weight: bold;">File</span>.read!<span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">List</span>.first <span style="color: #ce537a; font-weight: bold;">System</span>.argv<span style="color: #4f97d7;">)</span>
+|&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"\n"</span><span style="color: #4f97d7;">)</span>
+|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">fn</span> x-&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #bc6ec5;">(</span>x, <span style="color: #2d9574;">","</span><span style="color: #bc6ec5;">)</span>
+|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">fn</span> y -&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.trim y <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #bc6ec5;">)</span>
+|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.join<span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">","</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #4f97d7;">)</span>
+|&gt; <span style="color: #ce537a; font-weight: bold;">IO</span>.puts
+</pre>
+</div>
+<p>
 从上面可以看出elixir对于go来说可以省下不少输入，而且同样简单易懂。
 </p>
 </div>
@@ -398,7 +410,7 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2017-10-14 Sat 22:18</p>
+<p class="date">Created: 2017-10-15 Sun 11:56</p>
 <p class="validation"></p>
 </div>
 </body>

@@ -59,6 +59,15 @@
     IO.puts s
   end
   #+END_SRC
+  还可以写得更简洁, |>是管道操作符，可以把第一个参数往下传
+  #+BEGIN_SRC elixir
+  File.read!(List.first System.argv)
+  |> String.split("\n")
+  |> Enum.map(fn x-> String.split(x, ",")
+  |> Enum.map(fn y -> String.trim y end)
+  |> Enum.join(",") end)
+  |> IO.puts
+  #+END_SRC
   从上面可以看出elixir对于go来说可以省下不少输入，而且同样简单易懂。
 
 * 搭建elixir脚本环境
