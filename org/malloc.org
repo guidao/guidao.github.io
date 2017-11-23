@@ -1,0 +1,221 @@
+#+TITLE: golang内存分配分析
+
+
+* 前言
+  资源管理感觉一直是一个难点，而其中的大头又是内存管理。写c跟写c++的时候的内存泄露简直是个灾难。所以之后的很多语言都自带gc。但是gc也只能管理内存资源，其他的如数据库连接，文件描述符等还是需要程序员自己管理，go里面使用defer，提供一丢丢的好处，但是这个方案依旧十分粗糙，不过新出来的rust语言对这个做的比较好。在变量的生命周期失效的时候会回收变量所拥有的资源。内存管理分为内存分配跟内存回收两大类，这篇是看go内存分配的源码笔记。
+* mspan结构
+mspan是一个对系统内存的一个封装。结构如下:
+  #+BEGIN_SRC go
+  type mspan struct {
+	next *mspan     // next span in list, or nil if none
+	prev *mspan     // previous span in list, or nil if none
+	list *mSpanList // For debugging. TODO: Remove.
+	startAddr     uintptr   // address of first byte of span aka s.base()
+	npages        uintptr   // number of pages in span
+	stackfreelist gclinkptr // list of free stacks, avoids overloading freelist
+	freeindex uintptr
+	nelems uintptr // number of object in the span.
+	allocCache uint64
+	allocBits  *uint8
+	gcmarkBits *uint8
+	sweepgen    uint32
+	divMul      uint16     // for divide by elemsize - divMagic.mul
+	baseMask    uint16     // if non-0, elemsize is a power of 2, & this will get object allocation base
+	allocCount  uint16     // capacity - number of objects in freelist
+	sizeclass   uint8      // size class
+	incache     bool       // being used by an mcache
+	state       mSpanState // mspaninuse etc
+	needzero    uint8      // needs to be zeroed before allocation
+	divShift    uint8      // for divide by elemsize - divMagic.shift
+	divShift2   uint8      // for divide by elemsize - divMagic.shift2
+	elemsize    uintptr    // computed from sizeclass or from npages
+	unusedsince int64      // first time spotted by gc in mspanfree state
+	npreleased  uintptr    // number of pages released to the os
+	limit       uintptr    // end of data in span
+	speciallock mutex      // guards specials list
+	specials    *special   // linked list of special records sorted by offset.
+  }
+  #+END_SRC
+mspan这个结构体本身是从fixalloc(mheap.spanalloc)中分配的，而其中包裹的内存是mheap分配的。其中startAddr就是其包裹内存的起始地址.
+每次mspan被分配都会调用mheap.go中的recordspan函数，这个函数主要是把分配的mspan记录到mheap.allspans中  
+mspan有4种状态:
+  1. _MSpanDead 未使用未清理
+	2. _MSpanInUse 在堆中使用
+	3. _MSpanStack 在栈中使用
+	4. _MSpanFree 未使用
+
+* fixalloc
+  fixalloc是一个固定大小的分配器。主要用来分配一些对内存的包装的结构,比如:mspan,mcache..等等,虽然启动分配的实际使用内存是由其他内存分配器分配的。
+  主要分配思路为: 开始的时候一次性分配一大块内存，每次请求分配一小块，释放时放在list链表中，由于size是不变的，所以不会出现内存碎片。
+  #+BEGIN_SRC go
+  type fixalloc struct {
+	size   uintptr
+  //初始化函数和参数
+	first  func(arg, p unsafe.Pointer) // called first time p is returned
+	arg    unsafe.Pointer
+	list   *mlink //一个通用的链表
+	chunk  unsafe.Pointer //一大块内存
+	nchunk uint32
+	inuse  uintptr // in-use bytes now 记录在使用中的bytes
+	stat   *uint64
+	zero   bool // zero allocations
+  }
+  #+END_SRC
+  
+  #+BEGIN_SRC go
+    func (f *fixalloc) alloc() unsafe.Pointer {
+      if f.size == 0 {
+        print("runtime: use of FixAlloc_Alloc before FixAlloc_Init\n")
+        throw("runtime: internal error")
+      }
+
+      if f.list != nil {
+        //如果list不为空，直接拿
+        v := unsafe.Pointer(f.list)
+        f.list = f.list.next
+        f.inuse += f.size
+        if f.zero {
+          memclrNoHeapPointers(v, f.size)
+        }
+        return v
+      }
+      //如果块为空，则从系统分配中调用系统内存分配
+      if uintptr(f.nchunk) < f.size {
+        f.chunk = persistentalloc(_FixAllocChunk, 0, f.stat)
+        f.nchunk = _FixAllocChunk
+      }
+
+      //从chunk中分配一个固定大小的size，当释放的时候，会回归到list中
+      v := f.chunk
+      if f.first != nil {
+        f.first(f.arg, v)
+      }
+      f.chunk = add(f.chunk, f.size)
+      f.nchunk -= uint32(f.size)
+      f.inuse += f.size
+      return v
+    }
+//释放时直接放回list中
+func (f *fixalloc) free(p unsafe.Pointer) {
+	f.inuse -= f.size
+	v := (*mlink)(p)
+	v.next = f.list
+	f.list = v
+}
+  #+END_SRC
+
+* mcache
+  mcache是每一个p一个mcache，所以不会有多个核并发访问，所以不用加锁，分配释放速度非常快。主要用于小对象的分配
+  分配思路:
+  1. 如果size小于maxTinySize(16byte),这从mcache中的tiny中分配数据。如果tiny不够用，则分配一个新的tiny块(tiny分配器重要是把小对象放在一起)
+  2. 如果size小于maxSmallSize大于maxTinySize, 则从mcache中的alloc中分配
+  #+BEGIN_SRC go
+    type mcache struct {
+      next_sample int32   // trigger heap sample after allocating this many bytes
+      local_scan  uintptr // bytes of scannable heap allocated
+      tiny             uintptr //小对象的分配, 也是一大块内存空间
+      tinyoffset       uintptr
+      local_tinyallocs uintptr // number of tiny allocs not counted in other stats
+      alloc [_NumSizeClasses]*mspan // spans to allocate from 主要的分配地址
+      stackcache [_NumStackOrders]stackfreelist
+      local_nlookup    uintptr                  // number of pointer lookups
+      local_largefree  uintptr                  // bytes freed for large objects (>maxsmallsize)
+      local_nlargefree uintptr                  // number of frees for large objects (>maxsmallsize)
+      local_nsmallfree [_NumSizeClasses]uintptr // number of frees for small objects (<=maxsmallsize)
+    }
+  #+END_SRC
+
+  mcache通过nextFree函数进行填充mcache
+  #+BEGIN_SRC go
+  func (c *mcache) nextFree(sizeclass uint8) (v gclinkptr, s *mspan, shouldhelpgc bool) {
+	s = c.alloc[sizeclass]
+	shouldhelpgc = false
+	freeIndex := s.nextFreeIndex()
+	if freeIndex == s.nelems {
+		// The span is full.
+		if uintptr(s.allocCount) != s.nelems {
+			println("runtime: s.allocCount=", s.allocCount, "s.nelems=", s.nelems)
+			throw("s.allocCount != s.nelems && freeIndex == s.nelems")
+		}
+    //调用refill填充mcache
+		systemstack(func() {
+			c.refill(int32(sizeclass))
+		})
+		shouldhelpgc = true
+		s = c.alloc[sizeclass]
+
+		freeIndex = s.nextFreeIndex()
+	}
+
+	if freeIndex >= s.nelems {
+		throw("freeIndex is not valid")
+	}
+
+	v = gclinkptr(freeIndex*s.elemsize + s.base())
+	s.allocCount++
+	if uintptr(s.allocCount) > s.nelems {
+		println("s.allocCount=", s.allocCount, "s.nelems=", s.nelems)
+		throw("s.allocCount > s.nelems")
+	}
+	return
+}
+  #+END_SRC
+refill函数会从mheap中的central中拿取相应大小的空间,每一个大小的central都维护了一个mcentral，首先从mcentral的nonempty中找到一个空闲对象。如果没有的话就从empty对象中找到一个空闲对象。如果都没有，就调用grow函数,它会通过mheap的alloc函数直接分配
+* mcentral
+在mcache refill的时候会调用mcentral分配器分配内存,
+主要分配思路如下
+1. 从nonempty找到一个可以使用的mspan,清理下然后返回
+2. 从empty找到一个mspan，直接返回
+3. 如果都没有，调用grow扩展内存
+grow函数:
+1. 使用mheap.进行分配mspan
+2. 分配处理的mspan会插入到empty列表
+* mheap
+分配span过程:
+1. 从mheap.free中分配(free是一个数组链)
+2. 如果没有从mheap.freelarge中分配(freelarge是一个链)
+3. 如果freelarge没有会调用h.grow使用h.sysAlloc进行系统调用(会调用sysReverve函数,linux下使用mmap)
+4. h.grow申请了一次内存，会使用再释放，这是为了让这次分配的内存与以前的合并
+5. h.spans记录了此spans是谁使用
+large分配:
+1. large使用的是freelarge字段，这是一个mSpanList,使用bestfit算法找到满足要求的最小地址最低的内存块.
+* 分配一个对象流程
+#+BEGIN_SRC go
+package main
+
+import (
+        "fmt"
+)
+
+type TTT struct {
+        Name string
+        Age  int64
+}
+
+func main() {
+        a := new(TTT)
+        a.Name = "dddddd"
+        fmt.Println(a)
+}
+#+END_SRC
+使用`go build -gcflags '-N -l' malloc.go` 禁止编译器优化，然后使用`go tool objdump -s "main.main" ./malloc`查看main.main函数的代码,可以看到以下汇编指令:
+#+BEGIN_SRC asm
+        malloc.go:13    0x1087101       488d05f86f0100          LEAQ 0x16ff8(IP), AX
+        malloc.go:13    0x1087108       48890424                MOVQ AX, 0(SP)
+        malloc.go:13    0x108710c       e8bf6cf8ff              CALL runtime.newobject(SB)
+        malloc.go:13    0x1087111       488b442408              MOVQ 0x8(SP), AX
+#+END_SRC
+从这里可以看到分配对象调用了runtime包中国的newobject函数, 以下go源码中也说明了这点newobject正是new内建指令对应的操作
+#+BEGIN_SRC go
+// implementation of new builtin
+// compiler (both frontend and SSA backend) knows the signature
+// of this function
+func newobject(typ *_type) unsafe.Pointer {
+	return mallocgc(typ.size, typ, true)
+}
+#+END_SRC
+mallocgc实现中，小对象从每个p结构的cache中分配(就是mcache)，大对象直接从堆中分配。mallocgc步骤如下:
+1. 如果size小于maxTinySize(16byte),这从mcache中的tiny中分配数据。如果tiny不够用，则分配一个新的tiny块(tiny分配器重要是把小对象放在一起)
+2. 如果size小于maxSmallSize大于maxTinySize, 则从mcache中的alloc中分配
+3. 如果size大于maxSmallSize则调用largeAlloc函数进行分配
+4. largeAlloc会从mheap中分配

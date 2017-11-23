@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-11-23 Thu 11:10 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>golang内存分配分析</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">golang内存分配分析</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgddeafaa">1. 前言</a></li>
+<li><a href="#orgf7e9cb9">2. mspan结构</a></li>
+<li><a href="#org2095ec9">3. fixalloc</a></li>
+<li><a href="#orge664cec">4. mcache</a></li>
+<li><a href="#org3a4b717">5. mcentral</a></li>
+<li><a href="#orgb43d383">6. mheap</a></li>
+<li><a href="#orgb6027cb">7. 分配一个对象流程</a></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orgddeafaa" class="outline-2">
+<h2 id="orgddeafaa"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+资源管理感觉一直是一个难点，而其中的大头又是内存管理。写c跟写c++的时候的内存泄露简直是个灾难。所以之后的很多语言都自带gc。但是gc也只能管理内存资源，其他的如数据库连接，文件描述符等还是需要程序员自己管理，go里面使用defer，提供一丢丢的好处，但是这个方案依旧十分粗糙，不过新出来的rust语言对这个做的比较好。在变量的生命周期失效的时候会回收变量所拥有的资源。内存管理分为内存分配跟内存回收两大类，这篇是看go内存分配的源码笔记。
+</p>
+</div>
+</div>
+<div id="outline-container-orgf7e9cb9" class="outline-2">
+<h2 id="orgf7e9cb9"><span class="section-number-2">2</span> mspan结构</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+mspan是一个对系统内存的一个封装。结构如下:
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #E1BEE7;">type</span> <span style="color: #FFCC80;">mspan</span> <span style="color: #E1BEE7;">struct</span> <span style="color: #9575CD;">{</span>
+next *mspan     <span style="color: #757575;">// </span><span style="color: #757575;">next span in list, or nil if none</span>
+prev *mspan     <span style="color: #757575;">// </span><span style="color: #757575;">previous span in list, or nil if none</span>
+list *mSpanList <span style="color: #757575;">// </span><span style="color: #757575;">For debugging. </span><span style="color: #cc9393;">TODO</span><span style="color: #757575;">: Remove.</span>
+startAddr     uintptr   <span style="color: #757575;">// </span><span style="color: #757575;">address of first byte of span aka s.base()</span>
+npages        uintptr   <span style="color: #757575;">// </span><span style="color: #757575;">number of pages in span</span>
+stackfreelist gclinkptr <span style="color: #757575;">// </span><span style="color: #757575;">list of free stacks, avoids overloading freelist</span>
+freeindex uintptr
+nelems uintptr <span style="color: #757575;">// </span><span style="color: #757575;">number of object in the span.</span>
+allocCache uint64
+allocBits  *uint8
+gcmarkBits *uint8
+sweepgen    uint32
+divMul      uint16     <span style="color: #757575;">// </span><span style="color: #757575;">for divide by elemsize - divMagic.mul</span>
+baseMask    uint16     <span style="color: #757575;">// </span><span style="color: #757575;">if non-0, elemsize is a power of 2, &amp; this will get object allocation base</span>
+allocCount  uint16     <span style="color: #757575;">// </span><span style="color: #757575;">capacity - number of objects in freelist</span>
+sizeclass   uint8      <span style="color: #757575;">// </span><span style="color: #757575;">size class</span>
+incache     bool       <span style="color: #757575;">// </span><span style="color: #757575;">being used by an mcache</span>
+state       mSpanState <span style="color: #757575;">// </span><span style="color: #757575;">mspaninuse etc</span>
+needzero    uint8      <span style="color: #757575;">// </span><span style="color: #757575;">needs to be zeroed before allocation</span>
+divShift    uint8      <span style="color: #757575;">// </span><span style="color: #757575;">for divide by elemsize - divMagic.shift</span>
+divShift2   uint8      <span style="color: #757575;">// </span><span style="color: #757575;">for divide by elemsize - divMagic.shift2</span>
+elemsize    uintptr    <span style="color: #757575;">// </span><span style="color: #757575;">computed from sizeclass or from npages</span>
+unusedsince int64      <span style="color: #757575;">// </span><span style="color: #757575;">first time spotted by gc in mspanfree state</span>
+npreleased  uintptr    <span style="color: #757575;">// </span><span style="color: #757575;">number of pages released to the os</span>
+limit       uintptr    <span style="color: #757575;">// </span><span style="color: #757575;">end of data in span</span>
+speciallock mutex      <span style="color: #757575;">// </span><span style="color: #757575;">guards specials list</span>
+specials    *special   <span style="color: #757575;">// </span><span style="color: #757575;">linked list of special records sorted by offset.</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+<p>
+mspan这个结构体本身是从fixalloc(mheap.spanalloc)中分配的，而其中包裹的内存是mheap分配的。其中startAddr就是其包裹内存的起始地址.
+每次mspan被分配都会调用mheap.go中的recordspan函数，这个函数主要是把分配的mspan记录到mheap.allspans中  
+mspan有4种状态:
+</p>
+<ol class="org-ol">
+<li>_MSpanDead 未使用未清理</li>
+<li>_MSpanInUse 在堆中使用</li>
+<li>_MSpanStack 在栈中使用</li>
+<li>_MSpanFree 未使用</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org2095ec9" class="outline-2">
+<h2 id="org2095ec9"><span class="section-number-2">3</span> fixalloc</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+fixalloc是一个固定大小的分配器。主要用来分配一些对内存的包装的结构,比如:mspan,mcache..等等,虽然启动分配的实际使用内存是由其他内存分配器分配的。
+主要分配思路为: 开始的时候一次性分配一大块内存，每次请求分配一小块，释放时放在list链表中，由于size是不变的，所以不会出现内存碎片。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #E1BEE7;">type</span> <span style="color: #FFCC80;">fixalloc</span> <span style="color: #E1BEE7;">struct</span> <span style="color: #9575CD;">{</span>
+size   uintptr
+<span style="color: #757575;">//</span><span style="color: #757575;">&#21021;&#22987;&#21270;&#20989;&#25968;&#21644;&#21442;&#25968;</span>
+first  <span style="color: #E1BEE7;">func</span><span style="color: #7986CB;">(</span>arg, p <span style="color: #FFCC80;">unsafe.Pointer</span><span style="color: #7986CB;">)</span> <span style="color: #757575;">// </span><span style="color: #757575;">called first time p is returned</span>
+arg    unsafe.Pointer
+list   *mlink <span style="color: #757575;">//</span><span style="color: #757575;">&#19968;&#20010;&#36890;&#29992;&#30340;&#38142;&#34920;</span>
+chunk  unsafe.Pointer <span style="color: #757575;">//</span><span style="color: #757575;">&#19968;&#22823;&#22359;&#20869;&#23384;</span>
+nchunk uint32
+inuse  uintptr <span style="color: #757575;">// </span><span style="color: #757575;">in-use bytes now &#35760;&#24405;&#22312;&#20351;&#29992;&#20013;&#30340;bytes</span>
+stat   *uint64
+zero   bool <span style="color: #757575;">// </span><span style="color: #757575;">zero allocations</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-go">    <span style="color: #E1BEE7;">func</span> <span style="color: #9575CD;">(</span>f *<span style="color: #FFCC80;">fixalloc</span><span style="color: #9575CD;">)</span> <span style="color: #64B5F6;">alloc</span><span style="color: #9575CD;">()</span> <span style="color: #FFCC80;">unsafe.Pointer</span> <span style="color: #9575CD;">{</span>
+      <span style="color: #E1BEE7;">if</span> f.size == <span style="color: #C5CAE9;">0</span> <span style="color: #7986CB;">{</span>
+        <span style="color: #80DEEA;">print</span><span style="color: #26C6DA;">(</span><span style="color: #C5E1A5;">"runtime: use of FixAlloc_Alloc before FixAlloc_Init\n"</span><span style="color: #26C6DA;">)</span>
+        <span style="color: #64B5F6;">throw</span><span style="color: #26C6DA;">(</span><span style="color: #C5E1A5;">"runtime: internal error"</span><span style="color: #26C6DA;">)</span>
+      <span style="color: #7986CB;">}</span>
+
+      <span style="color: #E1BEE7;">if</span> f.list != <span style="color: #C5CAE9;">nil</span> <span style="color: #7986CB;">{</span>
+        <span style="color: #757575;">//</span><span style="color: #757575;">&#22914;&#26524;list&#19981;&#20026;&#31354;&#65292;&#30452;&#25509;&#25343;</span>
+        v := unsafe.<span style="color: #64B5F6;">Pointer</span><span style="color: #26C6DA;">(</span>f.list<span style="color: #26C6DA;">)</span>
+        f.list = f.list.next
+        f.inuse += f.size
+        <span style="color: #E1BEE7;">if</span> f.zero <span style="color: #26C6DA;">{</span>
+          <span style="color: #64B5F6;">memclrNoHeapPointers</span><span style="color: #42A5F5;">(</span>v, f.size<span style="color: #42A5F5;">)</span>
+        <span style="color: #26C6DA;">}</span>
+        <span style="color: #E1BEE7;">return</span> v
+      <span style="color: #7986CB;">}</span>
+      <span style="color: #757575;">//</span><span style="color: #757575;">&#22914;&#26524;&#22359;&#20026;&#31354;&#65292;&#21017;&#20174;&#31995;&#32479;&#20998;&#37197;&#20013;&#35843;&#29992;&#31995;&#32479;&#20869;&#23384;&#20998;&#37197;</span>
+      <span style="color: #E1BEE7;">if</span> <span style="color: #64B5F6;">uintptr</span><span style="color: #7986CB;">(</span>f.nchunk<span style="color: #7986CB;">)</span> &lt; f.size <span style="color: #7986CB;">{</span>
+        f.chunk = <span style="color: #64B5F6;">persistentalloc</span><span style="color: #26C6DA;">(</span>_FixAllocChunk, <span style="color: #C5CAE9;">0</span>, f.stat<span style="color: #26C6DA;">)</span>
+        f.nchunk = _FixAllocChunk
+      <span style="color: #7986CB;">}</span>
+
+      <span style="color: #757575;">//</span><span style="color: #757575;">&#20174;chunk&#20013;&#20998;&#37197;&#19968;&#20010;&#22266;&#23450;&#22823;&#23567;&#30340;size&#65292;&#24403;&#37322;&#25918;&#30340;&#26102;&#20505;&#65292;&#20250;&#22238;&#24402;&#21040;list&#20013;</span>
+      v := f.chunk
+      <span style="color: #E1BEE7;">if</span> f.first != <span style="color: #C5CAE9;">nil</span> <span style="color: #7986CB;">{</span>
+        f.<span style="color: #64B5F6;">first</span><span style="color: #26C6DA;">(</span>f.arg, v<span style="color: #26C6DA;">)</span>
+      <span style="color: #7986CB;">}</span>
+      f.chunk = <span style="color: #64B5F6;">add</span><span style="color: #7986CB;">(</span>f.chunk, f.size<span style="color: #7986CB;">)</span>
+      f.nchunk -= <span style="color: #64B5F6;">uint32</span><span style="color: #7986CB;">(</span>f.size<span style="color: #7986CB;">)</span>
+      f.inuse += f.size
+      <span style="color: #E1BEE7;">return</span> v
+    <span style="color: #9575CD;">}</span>
+<span style="color: #757575;">//</span><span style="color: #757575;">&#37322;&#25918;&#26102;&#30452;&#25509;&#25918;&#22238;list&#20013;</span>
+<span style="color: #E1BEE7;">func</span> <span style="color: #9575CD;">(</span>f *<span style="color: #FFCC80;">fixalloc</span><span style="color: #9575CD;">)</span> <span style="color: #64B5F6;">free</span><span style="color: #9575CD;">(</span>p <span style="color: #FFCC80;">unsafe.Pointer</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">{</span>
+  f.inuse -= f.size
+  v := <span style="color: #7986CB;">(</span>*mlink<span style="color: #7986CB;">)(</span>p<span style="color: #7986CB;">)</span>
+  v.next = f.list
+  f.list = v
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge664cec" class="outline-2">
+<h2 id="orge664cec"><span class="section-number-2">4</span> mcache</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+mcache是每一个p一个mcache，所以不会有多个核并发访问，所以不用加锁，分配释放速度非常快。主要用于小对象的分配
+分配思路:
+</p>
+<ol class="org-ol">
+<li>如果size小于maxTinySize(16byte),这从mcache中的tiny中分配数据。如果tiny不够用，则分配一个新的tiny块(tiny分配器重要是把小对象放在一起)</li>
+<li>如果size小于maxSmallSize大于maxTinySize, 则从mcache中的alloc中分配</li>
+</ol>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #E1BEE7;">type</span> <span style="color: #FFCC80;">mcache</span> <span style="color: #E1BEE7;">struct</span> <span style="color: #9575CD;">{</span>
+  next_sample int32   <span style="color: #757575;">// </span><span style="color: #757575;">trigger heap sample after allocating this many bytes</span>
+  local_scan  uintptr <span style="color: #757575;">// </span><span style="color: #757575;">bytes of scannable heap allocated</span>
+  tiny             uintptr <span style="color: #757575;">//</span><span style="color: #757575;">&#23567;&#23545;&#35937;&#30340;&#20998;&#37197;, &#20063;&#26159;&#19968;&#22823;&#22359;&#20869;&#23384;&#31354;&#38388;</span>
+  tinyoffset       uintptr
+  local_tinyallocs uintptr <span style="color: #757575;">// </span><span style="color: #757575;">number of tiny allocs not counted in other stats</span>
+  alloc <span style="color: #7986CB;">[</span>_NumSizeClasses<span style="color: #7986CB;">]</span>*mspan <span style="color: #757575;">// </span><span style="color: #757575;">spans to allocate from &#20027;&#35201;&#30340;&#20998;&#37197;&#22320;&#22336;</span>
+  stackcache <span style="color: #7986CB;">[</span>_NumStackOrders<span style="color: #7986CB;">]</span>stackfreelist
+  local_nlookup    uintptr                  <span style="color: #757575;">// </span><span style="color: #757575;">number of pointer lookups</span>
+  local_largefree  uintptr                  <span style="color: #757575;">// </span><span style="color: #757575;">bytes freed for large objects (&gt;maxsmallsize)</span>
+  local_nlargefree uintptr                  <span style="color: #757575;">// </span><span style="color: #757575;">number of frees for large objects (&gt;maxsmallsize)</span>
+  local_nsmallfree <span style="color: #7986CB;">[</span>_NumSizeClasses<span style="color: #7986CB;">]</span>uintptr <span style="color: #757575;">// </span><span style="color: #757575;">number of frees for small objects (&lt;=maxsmallsize)</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+
+<p>
+mcache通过nextFree函数进行填充mcache
+</p>
+<div class="org-src-container">
+<pre class="src src-go">  <span style="color: #E1BEE7;">func</span> <span style="color: #9575CD;">(</span>c *<span style="color: #FFCC80;">mcache</span><span style="color: #9575CD;">)</span> <span style="color: #64B5F6;">nextFree</span><span style="color: #9575CD;">(</span>sizeclass <span style="color: #FFCC80;">uint8</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">(</span>v <span style="color: #FFCC80;">gclinkptr</span>, s *<span style="color: #FFCC80;">mspan</span>, shouldhelpgc <span style="color: #FFCC80;">bool</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">{</span>
+  s = c.alloc<span style="color: #7986CB;">[</span>sizeclass<span style="color: #7986CB;">]</span>
+  shouldhelpgc = <span style="color: #C5CAE9;">false</span>
+  freeIndex := s.<span style="color: #64B5F6;">nextFreeIndex</span><span style="color: #7986CB;">()</span>
+  <span style="color: #E1BEE7;">if</span> freeIndex == s.nelems <span style="color: #7986CB;">{</span>
+    <span style="color: #757575;">// </span><span style="color: #757575;">The span is full.</span>
+    <span style="color: #E1BEE7;">if</span> <span style="color: #64B5F6;">uintptr</span><span style="color: #26C6DA;">(</span>s.allocCount<span style="color: #26C6DA;">)</span> != s.nelems <span style="color: #26C6DA;">{</span>
+      <span style="color: #80DEEA;">println</span><span style="color: #42A5F5;">(</span><span style="color: #C5E1A5;">"runtime: s.allocCount="</span>, s.allocCount, <span style="color: #C5E1A5;">"s.nelems="</span>, s.nelems<span style="color: #42A5F5;">)</span>
+      <span style="color: #64B5F6;">throw</span><span style="color: #42A5F5;">(</span><span style="color: #C5E1A5;">"s.allocCount != s.nelems &amp;&amp; freeIndex == s.nelems"</span><span style="color: #42A5F5;">)</span>
+    <span style="color: #26C6DA;">}</span>
+    <span style="color: #757575;">//</span><span style="color: #757575;">&#35843;&#29992;refill&#22635;&#20805;mcache</span>
+    <span style="color: #64B5F6;">systemstack</span><span style="color: #26C6DA;">(</span><span style="color: #E1BEE7;">func</span><span style="color: #42A5F5;">()</span> <span style="color: #42A5F5;">{</span>
+      c.<span style="color: #64B5F6;">refill</span><span style="color: #4DB6AC;">(</span><span style="color: #64B5F6;">int32</span><span style="color: #FF80AB;">(</span>sizeclass<span style="color: #FF80AB;">)</span><span style="color: #4DB6AC;">)</span>
+    <span style="color: #42A5F5;">}</span><span style="color: #26C6DA;">)</span>
+    shouldhelpgc = <span style="color: #C5CAE9;">true</span>
+    s = c.alloc<span style="color: #26C6DA;">[</span>sizeclass<span style="color: #26C6DA;">]</span>
+
+    freeIndex = s.<span style="color: #64B5F6;">nextFreeIndex</span><span style="color: #26C6DA;">()</span>
+  <span style="color: #7986CB;">}</span>
+
+  <span style="color: #E1BEE7;">if</span> freeIndex &gt;= s.nelems <span style="color: #7986CB;">{</span>
+    <span style="color: #64B5F6;">throw</span><span style="color: #26C6DA;">(</span><span style="color: #C5E1A5;">"freeIndex is not valid"</span><span style="color: #26C6DA;">)</span>
+  <span style="color: #7986CB;">}</span>
+
+  v = <span style="color: #64B5F6;">gclinkptr</span><span style="color: #7986CB;">(</span>freeIndex*s.elemsize + s.<span style="color: #64B5F6;">base</span><span style="color: #26C6DA;">()</span><span style="color: #7986CB;">)</span>
+  s.allocCount++
+  <span style="color: #E1BEE7;">if</span> <span style="color: #64B5F6;">uintptr</span><span style="color: #7986CB;">(</span>s.allocCount<span style="color: #7986CB;">)</span> &gt; s.nelems <span style="color: #7986CB;">{</span>
+    <span style="color: #80DEEA;">println</span><span style="color: #26C6DA;">(</span><span style="color: #C5E1A5;">"s.allocCount="</span>, s.allocCount, <span style="color: #C5E1A5;">"s.nelems="</span>, s.nelems<span style="color: #26C6DA;">)</span>
+    <span style="color: #64B5F6;">throw</span><span style="color: #26C6DA;">(</span><span style="color: #C5E1A5;">"s.allocCount &gt; s.nelems"</span><span style="color: #26C6DA;">)</span>
+  <span style="color: #7986CB;">}</span>
+  <span style="color: #E1BEE7;">return</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+<p>
+refill函数会从mheap中的central中拿取相应大小的空间,每一个大小的central都维护了一个mcentral，首先从mcentral的nonempty中找到一个空闲对象。如果没有的话就从empty对象中找到一个空闲对象。如果都没有，就调用grow函数,它会通过mheap的alloc函数直接分配
+</p>
+</div>
+</div>
+<div id="outline-container-org3a4b717" class="outline-2">
+<h2 id="org3a4b717"><span class="section-number-2">5</span> mcentral</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+在mcache refill的时候会调用mcentral分配器分配内存,
+主要分配思路如下
+</p>
+<ol class="org-ol">
+<li>从nonempty找到一个可以使用的mspan,清理下然后返回</li>
+<li>从empty找到一个mspan，直接返回</li>
+<li>如果都没有，调用grow扩展内存</li>
+</ol>
+<p>
+grow函数:
+</p>
+<ol class="org-ol">
+<li>使用mheap.进行分配mspan</li>
+<li>分配处理的mspan会插入到empty列表</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgb43d383" class="outline-2">
+<h2 id="orgb43d383"><span class="section-number-2">6</span> mheap</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+分配span过程:
+</p>
+<ol class="org-ol">
+<li>从mheap.free中分配(free是一个数组链)</li>
+<li>如果没有从mheap.freelarge中分配(freelarge是一个链)</li>
+<li>如果freelarge没有会调用h.grow使用h.sysAlloc进行系统调用(会调用sysReverve函数,linux下使用mmap)</li>
+<li>h.grow申请了一次内存，会使用再释放，这是为了让这次分配的内存与以前的合并</li>
+<li>h.spans记录了此spans是谁使用</li>
+</ol>
+<p>
+large分配:
+</p>
+<ol class="org-ol">
+<li>large使用的是freelarge字段，这是一个mSpanList,使用bestfit算法找到满足要求的最小地址最低的内存块.</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgb6027cb" class="outline-2">
+<h2 id="orgb6027cb"><span class="section-number-2">7</span> 分配一个对象流程</h2>
+<div class="outline-text-2" id="text-7">
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #E1BEE7;">package</span> main
+
+<span style="color: #E1BEE7;">import</span> <span style="color: #9575CD;">(</span>
+        <span style="color: #C5E1A5;">"fmt"</span>
+<span style="color: #9575CD;">)</span>
+
+<span style="color: #E1BEE7;">type</span> <span style="color: #FFCC80;">TTT</span> <span style="color: #E1BEE7;">struct</span> <span style="color: #9575CD;">{</span>
+        Name string
+        Age  int64
+<span style="color: #9575CD;">}</span>
+
+<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">main</span><span style="color: #9575CD;">()</span> <span style="color: #9575CD;">{</span>
+        a := <span style="color: #80DEEA;">new</span><span style="color: #7986CB;">(</span><span style="color: #FFCC80;">TTT</span><span style="color: #7986CB;">)</span>
+        a.Name = <span style="color: #C5E1A5;">"dddddd"</span>
+        fmt.<span style="color: #64B5F6;">Println</span><span style="color: #7986CB;">(</span>a<span style="color: #7986CB;">)</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+<p>
+使用`go build -gcflags '-N -l' malloc.go` 禁止编译器优化，然后使用`go tool objdump -s "main.main" ./malloc`查看main.main函数的代码,可以看到以下汇编指令:
+</p>
+<div class="org-src-container">
+<pre class="src src-asm"><span style="color: #64B5F6;">malloc</span>.go:13    0x1087101       488d05f86f0100          LEAQ 0x16ff8<span style="color: #9575CD;">(</span>IP<span style="color: #9575CD;">)</span>, AX
+<span style="color: #64B5F6;">malloc</span>.go:13    0x1087108       48890424                MOVQ AX, 0<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
+<span style="color: #64B5F6;">malloc</span>.go:13    0x108710c       e8bf6cf8ff              CALL runtime.newobject<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
+<span style="color: #64B5F6;">malloc</span>.go:13    0x1087111       488b442408              MOVQ 0x8<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, AX
+</pre>
+</div>
+<p>
+从这里可以看到分配对象调用了runtime包中国的newobject函数, 以下go源码中也说明了这点newobject正是new内建指令对应的操作
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #757575;">// </span><span style="color: #757575;">implementation of new builtin</span>
+<span style="color: #757575;">// </span><span style="color: #757575;">compiler (both frontend and SSA backend) knows the signature</span>
+<span style="color: #757575;">// </span><span style="color: #757575;">of this function</span>
+<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">newobject</span><span style="color: #9575CD;">(</span>typ *<span style="color: #FFCC80;">_type</span><span style="color: #9575CD;">)</span> <span style="color: #FFCC80;">unsafe.Pointer</span> <span style="color: #9575CD;">{</span>
+  <span style="color: #E1BEE7;">return</span> <span style="color: #64B5F6;">mallocgc</span><span style="color: #7986CB;">(</span>typ.size, typ, <span style="color: #C5CAE9;">true</span><span style="color: #7986CB;">)</span>
+<span style="color: #9575CD;">}</span>
+</pre>
+</div>
+<p>
+mallocgc实现中，小对象从每个p结构的cache中分配(就是mcache)，大对象直接从堆中分配。mallocgc步骤如下:
+</p>
+<ol class="org-ol">
+<li>如果size小于maxTinySize(16byte),这从mcache中的tiny中分配数据。如果tiny不够用，则分配一个新的tiny块(tiny分配器重要是把小对象放在一起)</li>
+<li>如果size小于maxSmallSize大于maxTinySize, 则从mcache中的alloc中分配</li>
+<li>如果size大于maxSmallSize则调用largeAlloc函数进行分配</li>
+<li>largeAlloc会从mheap中分配</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2017-11-23 Thu 11:10</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
