@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-07 Sat 16:37 -->
+<!-- 2018-07-07 Sat 16:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>golang汇编基础知识</title>
@@ -246,7 +246,6 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#orge8396b9">1.3.1. 第一个例子</a></li>
 <li><a href="#org75aa03b">1.3.2. 第二个例子</a></li>
-<li><a href="#org41a1198">1.3.3. slice的操作</a></li>
 </ul>
 </li>
 <li><a href="#org2794517">1.4. 参考资料</a></li>
@@ -273,12 +272,17 @@ golang的汇编基于plan9汇编,是一个中间汇编方式。这样可以忽�
 <div class="outline-text-3" id="text-1-2">
 <p>
 各种伪计数器:
-FP: Frame pointer: arguments and locals.(指向当前栈帧)
-PC: Program counter: jumps and branches.(指向指令地址)
-SB: Static base pointer: global symbols.(指向全局符号表)
-SP: Stack pointer: top of stack.(指向当前栈顶部)
+</p>
+<ul class="org-ul">
+<li>FP: Frame pointer: arguments and locals.(指向当前栈帧)</li>
+<li>PC: Program counter: jumps and branches.(指向指令地址)</li>
+<li>SB: Static base pointer: global symbols.(指向全局符号表)</li>
+<li>SP: Stack pointer: top of stack.(指向当前栈顶部)</li>
+</ul>
+
+<p>
 注意: 栈是向下整长
-golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值小于参数跟返回值
+golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值小于参数跟返回值。
 </p>
 </div>
 </div>
@@ -290,14 +294,14 @@ golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值
 <h4 id="orge8396b9"><span class="section-number-4">1.3.1</span> 第一个例子</h4>
 <div class="outline-text-4" id="text-1-3-1">
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #E1BEE7;">package</span> main
-<span style="color: #757575;">//</span><span style="color: #757575;">go:noinline</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">add</span><span style="color: #9575CD;">(</span>a, b <span style="color: #FFCC80;">int32</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">(</span><span style="color: #FFCC80;">int32</span>, <span style="color: #FFCC80;">bool</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">{</span>
-  <span style="color: #E1BEE7;">return</span> a + b, <span style="color: #C5CAE9;">true</span>
-<span style="color: #9575CD;">}</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">main</span><span style="color: #9575CD;">()</span> <span style="color: #9575CD;">{</span>
-  <span style="color: #64B5F6;">add</span><span style="color: #7986CB;">(</span><span style="color: #C5CAE9;">10</span>, <span style="color: #C5CAE9;">32</span><span style="color: #7986CB;">)</span>
-<span style="color: #9575CD;">}</span>
+<pre class="src src-go"><span style="color: #fb4933;">package</span> main
+<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
+<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">add</span><span style="color: #458588;">(</span>a, b <span style="color: #d3869b;">int32</span><span style="color: #458588;">)</span> <span style="color: #458588;">(</span><span style="color: #d3869b;">int32</span>, <span style="color: #d3869b;">bool</span><span style="color: #458588;">)</span> <span style="color: #458588;">{</span>
+  <span style="color: #fb4933;">return</span> a + b, <span style="color: #d3869b;">true</span>
+<span style="color: #458588;">}</span>
+<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">main</span><span style="color: #458588;">()</span> <span style="color: #458588;">{</span>
+  <span style="color: #fabd2f;">add</span><span style="color: #b16286;">(</span><span style="color: #d3869b;">10</span>, <span style="color: #d3869b;">32</span><span style="color: #b16286;">)</span>
+<span style="color: #458588;">}</span>
 </pre>
 </div>
 
@@ -305,18 +309,18 @@ golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值
 如上的这段代码会被编译为以下汇编:
 </p>
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #C5E1A5;">""</span>.add STEXT nosplit size=20 args=0x10 locals=0x0
-        <span style="color: #E1BEE7;">0x0000</span> 00000 <span style="color: #9575CD;">(</span>call.go:4<span style="color: #9575CD;">)</span>        TEXT    <span style="color: #C5E1A5;">""</span>.add<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>, NOSPLIT, $0-16
-        <span style="color: #E1BEE7;">0x0000</span> 00000 <span style="color: #9575CD;">(</span>call.go:4<span style="color: #9575CD;">)</span>        FUNCDATA        $0, gclocals&#183;f207267fbf96a0178e8758c6e3e0ce28<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-        <span style="color: #E1BEE7;">0x0000</span> 00000 <span style="color: #9575CD;">(</span>call.go:4<span style="color: #9575CD;">)</span>        FUNCDATA        $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-        <span style="color: #E1BEE7;">0x0000</span> 00000 <span style="color: #9575CD;">(</span>call.go:4<span style="color: #9575CD;">)</span>        MOVL    <span style="color: #C5E1A5;">""</span>.b+12<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, AX
-        <span style="color: #E1BEE7;">0x0004</span> 00004 <span style="color: #9575CD;">(</span>call.go:4<span style="color: #9575CD;">)</span>        MOVL    <span style="color: #C5E1A5;">""</span>.a+8<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, CX
-        <span style="color: #E1BEE7;">0x0008</span> 00008 <span style="color: #9575CD;">(</span>call.go:5<span style="color: #9575CD;">)</span>        ADDL    CX, AX
-        <span style="color: #E1BEE7;">0x000a</span> 00010 <span style="color: #9575CD;">(</span>call.go:5<span style="color: #9575CD;">)</span>        MOVL    AX, <span style="color: #C5E1A5;">""</span>.~r2+16<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
-        <span style="color: #E1BEE7;">0x000e</span> 00014 <span style="color: #9575CD;">(</span>call.go:5<span style="color: #9575CD;">)</span>        MOVB    $1, <span style="color: #C5E1A5;">""</span>.~r3+20<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
-        <span style="color: #E1BEE7;">0x0013</span> 00019 <span style="color: #9575CD;">(</span>call.go:5<span style="color: #9575CD;">)</span>        RET
-        <span style="color: #E1BEE7;">0x0000</span> 8b 44 24 0c 8b 4c 24 08 01 c8 89 44 24 10 c6 44  .D$..L$....D$..D
-        <span style="color: #E1BEE7;">0x0010</span> 24 14 01 c3                                      $...
+<pre class="src src-asm"><span style="color: #b8bb26;">""</span>.add STEXT nosplit size=20 args=0x10 locals=0x0
+        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        TEXT    <span style="color: #b8bb26;">""</span>.add<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>, NOSPLIT, $0-16
+        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        FUNCDATA        $0, gclocals&#183;f207267fbf96a0178e8758c6e3e0ce28<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        FUNCDATA        $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        MOVL    <span style="color: #b8bb26;">""</span>.b+12<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, AX
+        <span style="color: #fb4933;">0x0004</span> 00004 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        MOVL    <span style="color: #b8bb26;">""</span>.a+8<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, CX
+        <span style="color: #fb4933;">0x0008</span> 00008 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        ADDL    CX, AX
+        <span style="color: #fb4933;">0x000a</span> 00010 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        MOVL    AX, <span style="color: #b8bb26;">""</span>.~r2+16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
+        <span style="color: #fb4933;">0x000e</span> 00014 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        MOVB    $1, <span style="color: #b8bb26;">""</span>.~r3+20<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
+        <span style="color: #fb4933;">0x0013</span> 00019 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        RET
+        <span style="color: #fb4933;">0x0000</span> 8b 44 24 0c 8b 4c 24 08 01 c8 89 44 24 10 c6 44  .D$..L$....D$..D
+        <span style="color: #fb4933;">0x0010</span> 24 14 01 c3                                      $...
 </pre>
 </div>
 <p>
@@ -330,49 +334,49 @@ SP 指向当前栈顶部 .a+8(SP) 之前的.a表示助记符，没有特别含�
 <h4 id="org75aa03b"><span class="section-number-4">1.3.2</span> 第二个例子</h4>
 <div class="outline-text-4" id="text-1-3-2">
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #E1BEE7;">package</span> main
+<pre class="src src-go"><span style="color: #fb4933;">package</span> main
 
-<span style="color: #757575;">//</span><span style="color: #757575;">go:noinline</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">add</span><span style="color: #9575CD;">(</span>a, b <span style="color: #FFCC80;">int32</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">(</span><span style="color: #FFCC80;">int32</span>, <span style="color: #FFCC80;">bool</span><span style="color: #9575CD;">)</span> <span style="color: #9575CD;">{</span>
-  <span style="color: #E1BEE7;">return</span> a + b, <span style="color: #C5CAE9;">true</span>
-<span style="color: #9575CD;">}</span>
-<span style="color: #757575;">//</span><span style="color: #757575;">go:noinline</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">callAdd</span><span style="color: #9575CD;">()</span> <span style="color: #FFCC80;">int32</span> <span style="color: #9575CD;">{</span>
-  a, _ := <span style="color: #64B5F6;">add</span><span style="color: #7986CB;">(</span><span style="color: #C5CAE9;">10</span>, <span style="color: #C5CAE9;">20</span><span style="color: #7986CB;">)</span>
-  <span style="color: #E1BEE7;">return</span> a
-<span style="color: #9575CD;">}</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">main</span><span style="color: #9575CD;">()</span> <span style="color: #9575CD;">{</span>
-  <span style="color: #64B5F6;">callAdd</span><span style="color: #7986CB;">()</span>
-<span style="color: #9575CD;">}</span>
+<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
+<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">add</span><span style="color: #458588;">(</span>a, b <span style="color: #d3869b;">int32</span><span style="color: #458588;">)</span> <span style="color: #458588;">(</span><span style="color: #d3869b;">int32</span>, <span style="color: #d3869b;">bool</span><span style="color: #458588;">)</span> <span style="color: #458588;">{</span>
+  <span style="color: #fb4933;">return</span> a + b, <span style="color: #d3869b;">true</span>
+<span style="color: #458588;">}</span>
+<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
+<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">callAdd</span><span style="color: #458588;">()</span> <span style="color: #d3869b;">int32</span> <span style="color: #458588;">{</span>
+  a, _ := <span style="color: #fabd2f;">add</span><span style="color: #b16286;">(</span><span style="color: #d3869b;">10</span>, <span style="color: #d3869b;">20</span><span style="color: #b16286;">)</span>
+  <span style="color: #fb4933;">return</span> a
+<span style="color: #458588;">}</span>
+<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">main</span><span style="color: #458588;">()</span> <span style="color: #458588;">{</span>
+  <span style="color: #fabd2f;">callAdd</span><span style="color: #b16286;">()</span>
+<span style="color: #458588;">}</span>
 </pre>
 </div>
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #C5E1A5;">""</span>.callAdd STEXT size=73 args=0x8 locals=0x18
-<span style="color: #64B5F6;">0x0000</span> <span style="color: #E1BEE7;">00000</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  TEXT  <span style="color: #C5E1A5;">""</span>.callAdd<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>, $24-8
-<span style="color: #757575;">; </span><span style="color: #757575;">&#36825;&#19977;&#34892;&#20195;&#30721;&#26816;&#26597;&#26159;&#21542;&#38656;&#35201;&#25193;&#23637;&#26632;, &#38656;&#35201;&#30340;&#35805;&#65292;&#36339;&#21040;0x0042</span>
-<span style="color: #64B5F6;">0x0000</span> <span style="color: #E1BEE7;">00000</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  MOVQ  <span style="color: #9575CD;">(</span>TLS<span style="color: #9575CD;">)</span>, CX
-<span style="color: #64B5F6;">0x0009</span> <span style="color: #E1BEE7;">00009</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  CMPQ  SP, 16<span style="color: #9575CD;">(</span>CX<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x000d</span> <span style="color: #E1BEE7;">00013</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  JLS 66
+<pre class="src src-asm"><span style="color: #b8bb26;">""</span>.callAdd STEXT size=73 args=0x8 locals=0x18
+<span style="color: #fabd2f;">0x0000</span> <span style="color: #fb4933;">00000</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  TEXT  <span style="color: #b8bb26;">""</span>.callAdd<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>, $24-8
+<span style="color: #7c6f64;">; </span><span style="color: #7c6f64;">&#36825;&#19977;&#34892;&#20195;&#30721;&#26816;&#26597;&#26159;&#21542;&#38656;&#35201;&#25193;&#23637;&#26632;, &#38656;&#35201;&#30340;&#35805;&#65292;&#36339;&#21040;0x0042</span>
+<span style="color: #fabd2f;">0x0000</span> <span style="color: #fb4933;">00000</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  MOVQ  <span style="color: #458588;">(</span>TLS<span style="color: #458588;">)</span>, CX
+<span style="color: #fabd2f;">0x0009</span> <span style="color: #fb4933;">00009</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  CMPQ  SP, 16<span style="color: #458588;">(</span>CX<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x000d</span> <span style="color: #fb4933;">00013</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  JLS 66
 
-<span style="color: #64B5F6;">0x000f</span> <span style="color: #E1BEE7;">00015</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  SUBQ  $24, SP
-<span style="color: #64B5F6;">0x0013</span> <span style="color: #E1BEE7;">00019</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  MOVQ  BP, 16<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x0018</span> <span style="color: #E1BEE7;">00024</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  LEAQ  16<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, BP
-<span style="color: #64B5F6;">0x001d</span> <span style="color: #E1BEE7;">00029</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  FUNCDATA  $0, gclocals&#183;2a5305abe05176240e61b8620e19a815<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x001d</span> <span style="color: #E1BEE7;">00029</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  FUNCDATA  $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x001d</span> <span style="color: #E1BEE7;">00029</span> <span style="color: #9575CD;">(</span>call.go:10<span style="color: #9575CD;">)</span> MOVQ  $85899345930, AX
-<span style="color: #64B5F6;">0x0027</span> <span style="color: #E1BEE7;">00039</span> <span style="color: #9575CD;">(</span>call.go:10<span style="color: #9575CD;">)</span> MOVQ  AX, <span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x002b</span> <span style="color: #E1BEE7;">00043</span> <span style="color: #9575CD;">(</span>call.go:10<span style="color: #9575CD;">)</span> PCDATA  $0, $0
-<span style="color: #64B5F6;">0x002b</span> <span style="color: #E1BEE7;">00043</span> <span style="color: #9575CD;">(</span>call.go:10<span style="color: #9575CD;">)</span> CALL  <span style="color: #C5E1A5;">""</span>.add<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x0030</span> <span style="color: #E1BEE7;">00048</span> <span style="color: #9575CD;">(</span>call.go:10<span style="color: #9575CD;">)</span> MOVL  8<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, AX
-<span style="color: #64B5F6;">0x0034</span> <span style="color: #E1BEE7;">00052</span> <span style="color: #9575CD;">(</span>call.go:11<span style="color: #9575CD;">)</span> MOVL  AX, <span style="color: #C5E1A5;">""</span>.~r0+32<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x0038</span> <span style="color: #E1BEE7;">00056</span> <span style="color: #9575CD;">(</span>call.go:11<span style="color: #9575CD;">)</span> MOVQ  16<span style="color: #9575CD;">(</span>SP<span style="color: #9575CD;">)</span>, BP
-<span style="color: #64B5F6;">0x003d</span> <span style="color: #E1BEE7;">00061</span> <span style="color: #9575CD;">(</span>call.go:11<span style="color: #9575CD;">)</span> ADDQ  $24, SP
-<span style="color: #64B5F6;">0x0041</span> <span style="color: #E1BEE7;">00065</span> <span style="color: #9575CD;">(</span>call.go:11<span style="color: #9575CD;">)</span> RET
-<span style="color: #757575;">; </span><span style="color: #757575;">&#25193;&#23637;&#26632;, &#25193;&#23637;&#23436;&#20102;&#21518;&#36339;&#21040;&#26368;&#24320;&#22987;</span>
-<span style="color: #64B5F6;">0x0042</span> <span style="color: #E1BEE7;">00066</span> <span style="color: #9575CD;">(</span>call.go:11<span style="color: #9575CD;">)</span> NOP
-<span style="color: #64B5F6;">0x0042</span> <span style="color: #E1BEE7;">00066</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  PCDATA  $0, $-1
-<span style="color: #64B5F6;">0x0042</span> <span style="color: #E1BEE7;">00066</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  CALL  runtime.morestack_noctxt<span style="color: #9575CD;">(</span>SB<span style="color: #9575CD;">)</span>
-<span style="color: #64B5F6;">0x0047</span> <span style="color: #E1BEE7;">00071</span> <span style="color: #9575CD;">(</span>call.go:9<span style="color: #9575CD;">)</span>  JMP 0
+<span style="color: #fabd2f;">0x000f</span> <span style="color: #fb4933;">00015</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  SUBQ  $24, SP
+<span style="color: #fabd2f;">0x0013</span> <span style="color: #fb4933;">00019</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  MOVQ  BP, 16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x0018</span> <span style="color: #fb4933;">00024</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  LEAQ  16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, BP
+<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  FUNCDATA  $0, gclocals&#183;2a5305abe05176240e61b8620e19a815<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  FUNCDATA  $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVQ  $85899345930, AX
+<span style="color: #fabd2f;">0x0027</span> <span style="color: #fb4933;">00039</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVQ  AX, <span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x002b</span> <span style="color: #fb4933;">00043</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> PCDATA  $0, $0
+<span style="color: #fabd2f;">0x002b</span> <span style="color: #fb4933;">00043</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> CALL  <span style="color: #b8bb26;">""</span>.add<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x0030</span> <span style="color: #fb4933;">00048</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVL  8<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, AX
+<span style="color: #fabd2f;">0x0034</span> <span style="color: #fb4933;">00052</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> MOVL  AX, <span style="color: #b8bb26;">""</span>.~r0+32<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x0038</span> <span style="color: #fb4933;">00056</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> MOVQ  16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, BP
+<span style="color: #fabd2f;">0x003d</span> <span style="color: #fb4933;">00061</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> ADDQ  $24, SP
+<span style="color: #fabd2f;">0x0041</span> <span style="color: #fb4933;">00065</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> RET
+<span style="color: #7c6f64;">; </span><span style="color: #7c6f64;">&#25193;&#23637;&#26632;, &#25193;&#23637;&#23436;&#20102;&#21518;&#36339;&#21040;&#26368;&#24320;&#22987;</span>
+<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> NOP
+<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  PCDATA  $0, $-1
+<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  CALL  runtime.morestack_noctxt<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
+<span style="color: #fabd2f;">0x0047</span> <span style="color: #fb4933;">00071</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  JMP 0
 </pre>
 </div>
 <p>
@@ -386,9 +390,6 @@ SP 指向当前栈顶部 .a+8(SP) 之前的.a表示助记符，没有特别含�
 RET指令加载返回地址，跳到返回地址。
 </p>
 </div>
-</div>
-<div id="outline-container-org41a1198" class="outline-4">
-<h4 id="org41a1198"><span class="section-number-4">1.3.3</span> slice的操作</h4>
 </div>
 </div>
 <div id="outline-container-org2794517" class="outline-3">
@@ -406,7 +407,7 @@ RET指令加载返回地址，跳到返回地址。
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-07 Sat 16:37</p>
+<p class="date">Created: 2018-07-07 Sat 16:42</p>
 <p class="validation"></p>
 </div>
 </body>
