@@ -1,0 +1,103 @@
+* golang汇编基础知识
+** 前言  
+   golang的汇编基于plan9汇编,是一个中间汇编方式。这样可以忽略底层不同架构之间的一些差别。汇编主要了解各种寄存器的使用跟寻址方式。根据汇编我们能够一探golang的底层实现。比如内存如何分配，栈如何扩张。接口如何转变。
+** 寄存器
+    各种伪计数器:
+    FP: Frame pointer: arguments and locals.(指向当前栈帧)
+    PC: Program counter: jumps and branches.(指向指令地址)
+    SB: Static base pointer: global symbols.(指向全局符号表)
+    SP: Stack pointer: top of stack.(指向当前栈顶部)
+    注意: 栈是向下整长
+    golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值小于参数跟返回值
+** 跟例子学汇编
+*** 第一个例子   
+   #+BEGIN_SRC go
+     package main
+     //go:noinline
+     func add(a, b int32) (int32, bool) {
+       return a + b, true
+     }
+     func main() {
+       add(10, 32)
+     }
+   #+END_SRC
+   
+   如上的这段代码会被编译为以下汇编:
+   #+BEGIN_SRC asm
+     "".add STEXT nosplit size=20 args=0x10 locals=0x0
+             0x0000 00000 (call.go:4)        TEXT    "".add(SB), NOSPLIT, $0-16
+             0x0000 00000 (call.go:4)        FUNCDATA        $0, gclocals·f207267fbf96a0178e8758c6e3e0ce28(SB)
+             0x0000 00000 (call.go:4)        FUNCDATA        $1, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)
+             0x0000 00000 (call.go:4)        MOVL    "".b+12(SP), AX
+             0x0004 00004 (call.go:4)        MOVL    "".a+8(SP), CX
+             0x0008 00008 (call.go:5)        ADDL    CX, AX
+             0x000a 00010 (call.go:5)        MOVL    AX, "".~r2+16(SP)
+             0x000e 00014 (call.go:5)        MOVB    $1, "".~r3+20(SP)
+             0x0013 00019 (call.go:5)        RET
+             0x0000 8b 44 24 0c 8b 4c 24 08 01 c8 89 44 24 10 c6 44  .D$..L$....D$..D
+             0x0010 24 14 01 c3                                      $...
+   #+END_SRC
+   =TEXT    "".add(SB), NOSPLIT, $0-16= 这行代码声明了一个add函数，NOSPLIT告诉编译器不要插入分裂栈检查点。这里可以不用检查栈的大小是因为这里add函数的栈大小为0. $0 表示栈大小为0, $16 表示参数大小为16个字节。
+   =FUNCDATA= 跟垃圾回收有关，暂时不用理会
+   SP 指向当前栈顶部 .a+8(SP) 之前的.a表示助记符，没有特别含义。8(SP)表示地址SP+8 这里是第一参数a, 因为当前栈为0且SP+0存储了函数返回地址。同理12(SP) 表示第二个参数b。16(SP)表示第一个返回值，20(SP)表示第二个返回值。
+*** 第二个例子   
+    #+BEGIN_SRC go
+      package main
+
+      //go:noinline
+      func add(a, b int32) (int32, bool) {
+        return a + b, true
+      }
+      //go:noinline
+      func callAdd() int32 {
+        a, _ := add(10, 20)
+        return a
+      }
+      func main() {
+        callAdd()
+      }
+    #+END_SRC
+    #+BEGIN_SRC asm
+      "".callAdd STEXT size=73 args=0x8 locals=0x18
+      0x0000 00000 (call.go:9)	TEXT	"".callAdd(SB), $24-8
+      ; 这三行代码检查是否需要扩展栈, 需要的话，跳到0x0042
+      0x0000 00000 (call.go:9)	MOVQ	(TLS), CX
+      0x0009 00009 (call.go:9)	CMPQ	SP, 16(CX)
+      0x000d 00013 (call.go:9)	JLS	66
+
+      0x000f 00015 (call.go:9)	SUBQ	$24, SP
+      0x0013 00019 (call.go:9)	MOVQ	BP, 16(SP)
+      0x0018 00024 (call.go:9)	LEAQ	16(SP), BP
+      0x001d 00029 (call.go:9)	FUNCDATA	$0, gclocals·2a5305abe05176240e61b8620e19a815(SB)
+      0x001d 00029 (call.go:9)	FUNCDATA	$1, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)
+      0x001d 00029 (call.go:10)	MOVQ	$85899345930, AX
+      0x0027 00039 (call.go:10)	MOVQ	AX, (SP)
+      0x002b 00043 (call.go:10)	PCDATA	$0, $0
+      0x002b 00043 (call.go:10)	CALL	"".add(SB)
+      0x0030 00048 (call.go:10)	MOVL	8(SP), AX
+      0x0034 00052 (call.go:11)	MOVL	AX, "".~r0+32(SP)
+      0x0038 00056 (call.go:11)	MOVQ	16(SP), BP
+      0x003d 00061 (call.go:11)	ADDQ	$24, SP
+      0x0041 00065 (call.go:11)	RET
+      ; 扩展栈, 扩展完了后跳到最开始
+      0x0042 00066 (call.go:11)	NOP
+      0x0042 00066 (call.go:9)	PCDATA	$0, $-1
+      0x0042 00066 (call.go:9)	CALL	runtime.morestack_noctxt(SB)
+      0x0047 00071 (call.go:9)	JMP	0
+    #+END_SRC
+    现在我们添加一层函数调用，看看生成后的样子, 主要关注callAdd函数。在这个例子中我们看到这里的栈大小是24byte(2个参数2个返回值(bool 对齐到4字节, 4 * 4 = 16 byte)，再加上一个8byte的bp)，参数是8byte(对齐到8byte)。
+    我们从0x000f说起，前面那段代码主要用于分裂栈检查。
+    0x000f 把栈减了24个字节。增大了栈空间。(向下增长)
+    0x0013-0x0018保存老的bp设置新的bp。这里的bp是真实的寄存器，这几行代码属于惯用法。在汇编中可以用bp来引用参数跟本地变量。
+    0x001d 是10跟20合起来的(八字节)二进制表示。本来需要两次move，现在只需要一次move，也算个小优化了吧。
+    接下来就是调用add方法，移动返回值。虽然我们没有使用add的第二个返回值，但是我们也要为他分配内存。
+    0x0038恢复BP寄存器，0x003d缩减栈空间.
+    RET指令加载返回地址，跳到返回地址。
+*** slice的操作
+** 参考资料
+   - https://lrita.github.io/2017/12/12/golang-asm/
+   - https://lrita.github.io/images/posts/go/GoFunctionsInAssembly.pdf
+   - https://github.com/go-internals-cn/go-internals
+   - https://golang.org/doc/asm
+   - https://9p.io/sys/doc/asm.html
+   
