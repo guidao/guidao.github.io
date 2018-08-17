@@ -1,14 +1,17 @@
+#+TITLE: golang汇编基础知识
+
 * golang汇编基础知识
 ** 前言  
    golang的汇编基于plan9汇编,是一个中间汇编方式。这样可以忽略底层不同架构之间的一些差别。汇编主要了解各种寄存器的使用跟寻址方式。根据汇编我们能够一探golang的底层实现。比如内存如何分配，栈如何扩张。接口如何转变。
 ** 寄存器
     各种伪计数器:
-    FP: Frame pointer: arguments and locals.(指向当前栈帧)
-    PC: Program counter: jumps and branches.(指向指令地址)
-    SB: Static base pointer: global symbols.(指向全局符号表)
-    SP: Stack pointer: top of stack.(指向当前栈顶部)
+    - FP: Frame pointer: arguments and locals.(指向当前栈帧)
+    - PC: Program counter: jumps and branches.(指向指令地址)
+    - SB: Static base pointer: global symbols.(指向全局符号表)
+    - SP: Stack pointer: top of stack.(指向当前栈顶部)
+
     注意: 栈是向下整长
-    golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值小于参数跟返回值
+    golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值小于参数跟返回值。
 ** 跟例子学汇编
 *** 第一个例子   
    #+BEGIN_SRC go
@@ -93,7 +96,6 @@
     接下来就是调用add方法，移动返回值。虽然我们没有使用add的第二个返回值，但是我们也要为他分配内存。
     0x0038恢复BP寄存器，0x003d缩减栈空间.
     RET指令加载返回地址，跳到返回地址。
-*** slice的操作
 ** 参考资料
    - https://lrita.github.io/2017/12/12/golang-asm/
    - https://lrita.github.io/images/posts/go/GoFunctionsInAssembly.pdf

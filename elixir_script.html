@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-10-15 Sun 11:56 -->
+<!-- 2018-07-07 Sat 16:37 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>使用elixir作为日常脚本</title>
@@ -67,6 +67,7 @@
   pre.src-fortran:before { content: 'Fortran'; }
   pre.src-gnuplot:before { content: 'gnuplot'; }
   pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
   pre.src-java:before { content: 'Java'; }
   pre.src-js:before { content: 'Javascript'; }
   pre.src-latex:before { content: 'LaTeX'; }
@@ -184,7 +185,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -276,10 +277,10 @@ for the JavaScript code in this tag.
 曾经有一段时间，我非常喜欢ruby，当时我觉得找到了日常脚本的真爱。ruby中有很多值得让人兴奋的点。比如使用 ``操作符可以直接执行shell命令。这相当于你可以把shell命令嵌入到ruby脚本中，让人几乎不能发现。比如ruby的函数调用可以不使用括号，这对脚本来说大大减少了输入，让思维更流畅。而且ruby支持block，使得语言表达起来更有力。比如ervery thing is object，即使是数字也是对象类型，这使得链式调用大行其道，使用起来非常方便。
 </p>
 <div class="org-src-container">
-<pre class="src src-ruby"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">&#19968;&#20010;block&#30340;&#20363;&#23376;</span>
-<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span>..<span style="color: #a45bad;">5</span><span style="color: #4f97d7;">)</span>.each <span style="color: #4f97d7; font-weight: bold;">do</span> |i|
-   <span style="color: #4f97d7;">puts</span> <span style="color: #2d9574;">"&#23616;&#37096;&#21464;&#37327;&#30340;&#20540;&#20026; </span><span style="color: #7590db;">#{i}</span><span style="color: #2d9574;">"</span>
-<span style="color: #4f97d7; font-weight: bold;">end</span>
+<pre class="src src-ruby"><span style="color: #757575;"># </span><span style="color: #757575;">&#19968;&#20010;block&#30340;&#20363;&#23376;</span>
+<span style="color: #9575CD;">(</span><span style="color: #C5CAE9;">0</span>..<span style="color: #C5CAE9;">5</span><span style="color: #9575CD;">)</span>.each <span style="color: #E1BEE7;">do</span> |i|
+   <span style="color: #80DEEA;">puts</span> <span style="color: #C5E1A5;">"&#23616;&#37096;&#21464;&#37327;&#30340;&#20540;&#20026; </span><span style="color: #80CBC4;">#{i}</span><span style="color: #C5E1A5;">"</span>
+<span style="color: #E1BEE7;">end</span>
 </pre>
 </div>
 <p>
@@ -314,52 +315,52 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 虽然我工作开发使用的是go，go也足够简单，易懂。但是由于易懂，所以几乎没有什么语法糖。写起脚本来很是啰嗦。
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #4f97d7; font-weight: bold;">package</span> main
+<pre class="src src-go"><span style="color: #E1BEE7;">package</span> main
 
-<span style="color: #4f97d7; font-weight: bold;">import</span> <span style="color: #4f97d7;">(</span>
-  <span style="color: #2d9574;">"fmt"</span>
-  <span style="color: #2d9574;">"io/ioutil"</span>
-  <span style="color: #2d9574;">"strings"</span>
-<span style="color: #4f97d7;">)</span>
-<span style="color: #4f97d7; font-weight: bold;">func</span> <span style="color: #bc6ec5; font-weight: bold;">main</span><span style="color: #4f97d7;">()</span> <span style="color: #4f97d7;">{</span>
-  s, err := ioutil.<span style="color: #bc6ec5; font-weight: bold;">ReadFile</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">"./wftest.csv"</span><span style="color: #bc6ec5;">)</span>
-  <span style="color: #4f97d7; font-weight: bold;">if</span> err != <span style="color: #a45bad;">nil</span> <span style="color: #bc6ec5;">{</span>
-    <span style="color: #4f97d7;">panic</span><span style="color: #2d9574;">(</span>err<span style="color: #2d9574;">)</span>
-  <span style="color: #bc6ec5;">}</span>
-  lines := strings.<span style="color: #bc6ec5; font-weight: bold;">Split</span><span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">string</span><span style="color: #2d9574;">(</span>s<span style="color: #2d9574;">)</span>, <span style="color: #2d9574;">"\n"</span><span style="color: #bc6ec5;">)</span>
-  <span style="color: #4f97d7; font-weight: bold;">for</span> _, line := <span style="color: #4f97d7; font-weight: bold;">range</span> lines <span style="color: #bc6ec5;">{</span>
-    fileds := strings.<span style="color: #bc6ec5; font-weight: bold;">Split</span><span style="color: #2d9574;">(</span>line, <span style="color: #2d9574;">","</span><span style="color: #2d9574;">)</span>
-    <span style="color: #4f97d7; font-weight: bold;">var</span> newfileds <span style="color: #2d9574;">[]</span><span style="color: #ce537a; font-weight: bold;">string</span>
-    <span style="color: #4f97d7; font-weight: bold;">for</span> _, f := <span style="color: #4f97d7; font-weight: bold;">range</span> fileds <span style="color: #2d9574;">{</span>
-      newfileds = <span style="color: #4f97d7;">append</span><span style="color: #67b11d;">(</span>newfileds, strings.<span style="color: #bc6ec5; font-weight: bold;">TrimSpace</span><span style="color: #b1951d;">(</span>f<span style="color: #b1951d;">)</span><span style="color: #67b11d;">)</span>
-    <span style="color: #2d9574;">}</span>
-    fmt.<span style="color: #bc6ec5; font-weight: bold;">Println</span><span style="color: #2d9574;">(</span>strings.<span style="color: #bc6ec5; font-weight: bold;">Join</span><span style="color: #67b11d;">(</span>newfileds, <span style="color: #2d9574;">","</span><span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span>
-  <span style="color: #bc6ec5;">}</span>
-<span style="color: #4f97d7;">}</span>
+<span style="color: #E1BEE7;">import</span> <span style="color: #9575CD;">(</span>
+  <span style="color: #C5E1A5;">"fmt"</span>
+  <span style="color: #C5E1A5;">"io/ioutil"</span>
+  <span style="color: #C5E1A5;">"strings"</span>
+<span style="color: #9575CD;">)</span>
+<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">main</span><span style="color: #9575CD;">()</span> <span style="color: #9575CD;">{</span>
+  s, err := ioutil.<span style="color: #64B5F6;">ReadFile</span><span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">"./wftest.csv"</span><span style="color: #7986CB;">)</span>
+  <span style="color: #E1BEE7;">if</span> err != <span style="color: #C5CAE9;">nil</span> <span style="color: #7986CB;">{</span>
+    <span style="color: #80DEEA;">panic</span><span style="color: #26C6DA;">(</span>err<span style="color: #26C6DA;">)</span>
+  <span style="color: #7986CB;">}</span>
+  lines := strings.<span style="color: #64B5F6;">Split</span><span style="color: #7986CB;">(</span><span style="color: #64B5F6;">string</span><span style="color: #26C6DA;">(</span>s<span style="color: #26C6DA;">)</span>, <span style="color: #C5E1A5;">"\n"</span><span style="color: #7986CB;">)</span>
+  <span style="color: #E1BEE7;">for</span> _, line := <span style="color: #E1BEE7;">range</span> lines <span style="color: #7986CB;">{</span>
+    fileds := strings.<span style="color: #64B5F6;">Split</span><span style="color: #26C6DA;">(</span>line, <span style="color: #C5E1A5;">","</span><span style="color: #26C6DA;">)</span>
+    <span style="color: #E1BEE7;">var</span> newfileds <span style="color: #26C6DA;">[]</span><span style="color: #FFCC80;">string</span>
+    <span style="color: #E1BEE7;">for</span> _, f := <span style="color: #E1BEE7;">range</span> fileds <span style="color: #26C6DA;">{</span>
+      newfileds = <span style="color: #80DEEA;">append</span><span style="color: #42A5F5;">(</span>newfileds, strings.<span style="color: #64B5F6;">TrimSpace</span><span style="color: #4DB6AC;">(</span>f<span style="color: #4DB6AC;">)</span><span style="color: #42A5F5;">)</span>
+    <span style="color: #26C6DA;">}</span>
+    fmt.<span style="color: #64B5F6;">Println</span><span style="color: #26C6DA;">(</span>strings.<span style="color: #64B5F6;">Join</span><span style="color: #42A5F5;">(</span>newfileds, <span style="color: #C5E1A5;">","</span><span style="color: #42A5F5;">)</span><span style="color: #26C6DA;">)</span>
+  <span style="color: #7986CB;">}</span>
+<span style="color: #9575CD;">}</span>
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #7590db;">file</span> = <span style="color: #ce537a; font-weight: bold;">File</span>.read! <span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">List</span>.first <span style="color: #ce537a; font-weight: bold;">System</span>.argv<span style="color: #4f97d7;">)</span>
-<span style="color: #7590db;">lines</span> = <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #4f97d7;">(</span>file, <span style="color: #2d9574;">"\n"</span><span style="color: #4f97d7;">)</span>
-<span style="color: #4f97d7; font-weight: bold;">for</span> line &lt;- lines <span style="color: #4f97d7; font-weight: bold;">do</span>
-  <span style="color: #7590db;">fields</span> = <span style="color: #ce537a; font-weight: bold;">String</span>.split line, <span style="color: #2d9574;">","</span>
-  <span style="color: #7590db;">newfd</span> = <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #4f97d7;">(</span>fields, <span style="color: #4f97d7; font-weight: bold;">fn</span> x -&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.trim x <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #4f97d7;">)</span>
-  <span style="color: #7590db;">s</span> = <span style="color: #ce537a; font-weight: bold;">Enum</span>.join<span style="color: #4f97d7;">(</span>newfd, <span style="color: #2d9574;">","</span><span style="color: #4f97d7;">)</span>
-  <span style="color: #ce537a; font-weight: bold;">IO</span>.puts s
-<span style="color: #4f97d7; font-weight: bold;">end</span>
+<pre class="src src-elixir"><span style="color: #80CBC4;">file</span> = <span style="color: #FFCC80;">File</span>.read! <span style="color: #9575CD;">(</span><span style="color: #FFCC80;">List</span>.first <span style="color: #FFCC80;">System</span>.argv<span style="color: #9575CD;">)</span>
+<span style="color: #80CBC4;">lines</span> = <span style="color: #FFCC80;">String</span>.split<span style="color: #9575CD;">(</span>file, <span style="color: #C5E1A5;">"\n"</span><span style="color: #9575CD;">)</span>
+<span style="color: #E1BEE7;">for</span> line &lt;- lines <span style="color: #E1BEE7;">do</span>
+  <span style="color: #80CBC4;">fields</span> = <span style="color: #FFCC80;">String</span>.split line, <span style="color: #C5E1A5;">","</span>
+  <span style="color: #80CBC4;">newfd</span> = <span style="color: #FFCC80;">Enum</span>.map<span style="color: #9575CD;">(</span>fields, <span style="color: #E1BEE7;">fn</span> x -&gt; <span style="color: #FFCC80;">String</span>.trim x <span style="color: #E1BEE7;">end</span><span style="color: #9575CD;">)</span>
+  <span style="color: #80CBC4;">s</span> = <span style="color: #FFCC80;">Enum</span>.join<span style="color: #9575CD;">(</span>newfd, <span style="color: #C5E1A5;">","</span><span style="color: #9575CD;">)</span>
+  <span style="color: #FFCC80;">IO</span>.puts s
+<span style="color: #E1BEE7;">end</span>
 </pre>
 </div>
 <p>
 还可以写得更简洁, |&gt;是管道操作符，可以把第一个参数往下传
 </p>
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #ce537a; font-weight: bold;">File</span>.read!<span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">List</span>.first <span style="color: #ce537a; font-weight: bold;">System</span>.argv<span style="color: #4f97d7;">)</span>
-|&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"\n"</span><span style="color: #4f97d7;">)</span>
-|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">fn</span> x-&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.split<span style="color: #bc6ec5;">(</span>x, <span style="color: #2d9574;">","</span><span style="color: #bc6ec5;">)</span>
-|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.map<span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">fn</span> y -&gt; <span style="color: #ce537a; font-weight: bold;">String</span>.trim y <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #bc6ec5;">)</span>
-|&gt; <span style="color: #ce537a; font-weight: bold;">Enum</span>.join<span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">","</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">end</span><span style="color: #4f97d7;">)</span>
-|&gt; <span style="color: #ce537a; font-weight: bold;">IO</span>.puts
+<pre class="src src-elixir"><span style="color: #FFCC80;">File</span>.read!<span style="color: #9575CD;">(</span><span style="color: #FFCC80;">List</span>.first <span style="color: #FFCC80;">System</span>.argv<span style="color: #9575CD;">)</span>
+|&gt; <span style="color: #FFCC80;">String</span>.split<span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"\n"</span><span style="color: #9575CD;">)</span>
+|&gt; <span style="color: #FFCC80;">Enum</span>.map<span style="color: #9575CD;">(</span><span style="color: #E1BEE7;">fn</span> x-&gt; <span style="color: #FFCC80;">String</span>.split<span style="color: #7986CB;">(</span>x, <span style="color: #C5E1A5;">","</span><span style="color: #7986CB;">)</span>
+|&gt; <span style="color: #FFCC80;">Enum</span>.map<span style="color: #7986CB;">(</span><span style="color: #E1BEE7;">fn</span> y -&gt; <span style="color: #FFCC80;">String</span>.trim y <span style="color: #E1BEE7;">end</span><span style="color: #7986CB;">)</span>
+|&gt; <span style="color: #FFCC80;">Enum</span>.join<span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">","</span><span style="color: #7986CB;">)</span> <span style="color: #E1BEE7;">end</span><span style="color: #9575CD;">)</span>
+|&gt; <span style="color: #FFCC80;">IO</span>.puts
 </pre>
 </div>
 <p>
@@ -383,8 +384,8 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 <li>需要把beam文件所在的目录加入到code path中，erlang在home目录下有个.erlang文件，在erlang启动时会执行其中的代码，所以需要把下面的代码添加到.erlang文件中</li>
 </ol>
 <div class="org-src-container">
-<pre class="src src-erlang"><span style="color: #4f97d7;">{</span>ok, <span style="color: #7590db;">Dirs</span><span style="color: #4f97d7;">}</span> = <span style="color: #ce537a; font-weight: bold;">file</span>:<span style="color: #ce537a; font-weight: bold;">list_dir</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"/code/elixir/script/_build/dev/lib"</span><span style="color: #4f97d7;">)</span>.
-<span style="color: #ce537a; font-weight: bold;">lists</span>:<span style="color: #ce537a; font-weight: bold;">foreach</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">fun</span><span style="color: #bc6ec5;">(</span><span style="color: #7590db;">A</span><span style="color: #bc6ec5;">)</span> -&gt;<span style="color: #ce537a; font-weight: bold;">code</span>:<span style="color: #ce537a; font-weight: bold;">add_patha</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">"/code/elixir/script/_build/dev/lib/"</span>++ <span style="color: #7590db;">A</span> ++ <span style="color: #2d9574;">"/ebin"</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">end</span>, <span style="color: #7590db;">Dirs</span><span style="color: #4f97d7;">)</span>.
+<pre class="src src-erlang"><span style="color: #9575CD;">{</span>ok, <span style="color: #80CBC4;">Dirs</span><span style="color: #9575CD;">}</span> = <span style="color: #FFCC80;">file</span>:<span style="color: #FFCC80;">list_dir</span><span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"/code/elixir/script/_build/dev/lib"</span><span style="color: #9575CD;">)</span>.
+<span style="color: #FFCC80;">lists</span>:<span style="color: #FFCC80;">foreach</span><span style="color: #9575CD;">(</span><span style="color: #E1BEE7;">fun</span><span style="color: #7986CB;">(</span><span style="color: #80CBC4;">A</span><span style="color: #7986CB;">)</span> -&gt;<span style="color: #FFCC80;">code</span>:<span style="color: #FFCC80;">add_patha</span><span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">"/code/elixir/script/_build/dev/lib/"</span>++ <span style="color: #80CBC4;">A</span> ++ <span style="color: #C5E1A5;">"/ebin"</span><span style="color: #7986CB;">)</span> <span style="color: #E1BEE7;">end</span>, <span style="color: #80CBC4;">Dirs</span><span style="color: #9575CD;">)</span>.
 </pre>
 </div>
 <p>
@@ -400,17 +401,17 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 比如我们可以使用第三方http client抓取下百度首页, 创建一个文件client.exs,输入下面代码, 然后chmod +x client.exs，然后执行./client.exs就可能看到效果了
 </p>
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #2aa1ae; background-color: #292e34;">#</span><span style="color: #2aa1ae; background-color: #292e34;">!/usr/bin/env elixir</span>
-<span style="color: #ce537a; font-weight: bold;">HTTPoison</span>.start
-<span style="color: #7590db;">body</span> = <span style="color: #ce537a; font-weight: bold;">HTTPoison</span>.get!<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"http://www.baidu.com"</span><span style="color: #4f97d7;">)</span>.body
-<span style="color: #ce537a; font-weight: bold;">IO</span>.puts body
+<pre class="src src-elixir"><span style="color: #757575;">#</span><span style="color: #757575;">!/usr/bin/env elixir</span>
+<span style="color: #FFCC80;">HTTPoison</span>.start
+<span style="color: #80CBC4;">body</span> = <span style="color: #FFCC80;">HTTPoison</span>.get!<span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"http://www.baidu.com"</span><span style="color: #9575CD;">)</span>.body
+<span style="color: #FFCC80;">IO</span>.puts body
 </pre>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2017-10-15 Sun 11:56</p>
+<p class="date">Created: 2018-07-07 Sat 16:37</p>
 <p class="validation"></p>
 </div>
 </body>
