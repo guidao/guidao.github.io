@@ -1,0 +1,29 @@
+#+TITLE: 分布式锁总结
+
+* 前言
+  在微服务架构中，由于服务是多机部署的，所以常常需要分布式锁来进行互斥操作。比如一些服务中小的定时任务，是随服务一起启动的，但是由于多机部署，如果不做处理，会同时有多个进程在处理，会有一些麻烦。在之前我一般使用的redis来维护这样一个状态。但是之前看到公司大佬有用到consul来实现（原来consul api已经自带了）, 所以总结下相关内容。对于分布式锁的实现需要满足以下一些条件:
+  1. 同时只有一个client可以获取一个锁。
+  2. client异常退出不会影响锁的释放。
+  3. 锁只能由获取锁的client释放。
+  要满足条件一，需要一个标志位，而且标志位的操作必须是原子的。要满足条件二, 得给锁一个占用时间，过期自动释放。要满足条件三，client端能检测标志位是否由自己设置。
+* redis实现
+  由于redis是在后台服务中用的比较多的一个组件，所以很多情况下可以使用redis来实现分布式锁是很方便的。简单情况下通过 "SET KEY VALUE NX" 命令来获取锁，使用 "DEL KEY"来释放锁。但是这样有个问题，就是没有满足条件二。如果释放锁失败了，key就一直在redis中。之后就再也没有client能够获取锁了，所以一般情况下还需要给锁加个时间限制。"SET KEY VALUE NX PX 3000" ，这样当锁超时后，就会自动被释放。但是这样又会出现一个新的问题。如果需要锁的时间比较长，有可能key就提前过期了。这时候一般做法是开启一个新的goroutinue(或者线程)在过期之前更新锁的时间。当然这个也有可能更新锁时间失败，所以一般需要不停尝试，如果一直不行，说明redis不稳定或者client端网络异常。对于前面这种原因，redis官方介绍了一种redlock算法。使用多个redis master，每次需要获取大多数master上的锁。还是比较复杂的。对于后一种问题其实是有点麻烦的，如果你有一个定时任务需要在某个时间点执行加一操作。你部署了两台机器(由于逻辑简单你直接把定时任务写在了服务中)。到redis网络异常，但是到mysql网络正常。这个时候有可能你锁已经过期了，但是你还在执行定时任务。就会被其他服务抢到这个锁。这个时候最好把逻辑写为幂等的。这样同时多次操作也没有影响。 
+  关于第三个条件，个人认为如果能够保证每次获取锁都是在 SET KEY VALUE NX 成功后释放。这样其实问题不大。但是这样其实把问题放在了使用方。要求使用方满足一定情况。想来也不如lib里自己搞。所以只能自己释放自己的锁。所以这里的value必须能够标识是由哪一个client设置的，所以需要一个clientid的东西。这里有个细节问题，在前面的情况下，任何client都可以del key。但是这里只能del自己设置的key。所以需要先check value是不是等于clientid。由于check跟del是两个操作，而且必须保证这里的原子性。所以一般要使用一个lua脚本进行删除:
+  #+BEGIN_SRC lua
+ if redis.call("get",KEYS[1]) == ARGV[1] then
+    return redis.call("del",KEYS[1])
+else
+    return 0
+end 
+  #+END_SRC
+  对于多master redis的lock实现，可以参考这个golang实现: https://github.com/go-redsync/redsync
+* consul 实现
+  对于consul来说，需要关注的点是一样的。只不过在consul有不同的抽象。consul中使用kv跟session来实现。session用来标识是哪个client获取了lock。consul比较好的一点是它是强一致的集群。consul服务的稳定性有保证。而redis集群是异步同步，所以有可能在master crash期间被其他client获取已经被其他人获取的锁。再者就是consul的api中已经自带了lock的实现可以直接使用。
+  具体细节可以参考: https://www.consul.io/docs/guides/leader-election.html
+  consul中更强大的一点是实现了信号量。一个排他锁可以看做是一个只能一个用户使用的信号量。当然consul中信号量的实现也是通过自带的kv存储跟session来实现的。
+* 参考资料
+  redis官方介绍: https://redis.io/topics/distlock
+  reids分布式锁go实现:https://redis.io/topics/distlock 
+  consul信号量: https://www.consul.io/docs/guides/semaphore.html
+  consul排他锁： https://www.consul.io/docs/guides/leader-election.html
+  
