@@ -7,23 +7,217 @@
   3. 锁只能由获取锁的client释放。
   要满足条件一，需要一个标志位，而且标志位的操作必须是原子的。要满足条件二, 得给锁一个占用时间，过期自动释放。要满足条件三，client端能检测标志位是否由自己设置。
 * redis实现
-  由于redis是在后台服务中用的比较多的一个组件，所以很多情况下可以使用redis来实现分布式锁是很方便的。简单情况下通过 "SET KEY VALUE NX" 命令来获取锁，使用 "DEL KEY"来释放锁。但是这样有个问题，就是没有满足条件二。如果释放锁失败了，key就一直在redis中。之后就再也没有client能够获取锁了，所以一般情况下还需要给锁加个时间限制。"SET KEY VALUE NX PX 3000" ，这样当锁超时后，就会自动被释放。但是这样又会出现一个新的问题。如果需要锁的时间比较长，有可能key就提前过期了。这时候一般做法是开启一个新的goroutinue(或者线程)在过期之前更新锁的时间。当然这个也有可能更新锁时间失败，所以一般需要不停尝试，如果一直不行，说明redis不稳定或者client端网络异常。对于前面这种原因，redis官方介绍了一种redlock算法。使用多个redis master，每次需要获取大多数master上的锁。还是比较复杂的。对于后一种问题其实是有点麻烦的，如果你有一个定时任务需要在某个时间点执行加一操作。你部署了两台机器(由于逻辑简单你直接把定时任务写在了服务中)。到redis网络异常，但是到mysql网络正常。这个时候有可能你锁已经过期了，但是你还在执行定时任务。就会被其他服务抢到这个锁。这个时候最好把逻辑写为幂等的。这样同时多次操作也没有影响。 
-  关于第三个条件，个人认为如果能够保证每次获取锁都是在 SET KEY VALUE NX 成功后释放。这样其实问题不大。但是这样其实把问题放在了使用方。要求使用方满足一定情况。想来也不如lib里自己搞。所以只能自己释放自己的锁。所以这里的value必须能够标识是由哪一个client设置的，所以需要一个clientid的东西。这里有个细节问题，在前面的情况下，任何client都可以del key。但是这里只能del自己设置的key。所以需要先check value是不是等于clientid。由于check跟del是两个操作，而且必须保证这里的原子性。所以一般要使用一个lua脚本进行删除:
-  #+BEGIN_SRC lua
+  由于redis是在后台服务中用的比较多的一个组件，所以很多情况下可以使用redis来实现分布式锁是很方便的。
+**  版本一:
+  lock: 通过SET KEY VALUE NX 来获取锁
+  
+  unlock: 通过DEL KEY 来释放锁
+  
+  通过设置NX标志保证唯一性。但是这样有个问题，就是没有满足条件二。如果释放锁失败了(client crash了或者网络出现了问题)，key就会一直在redis中。之后的client就不能再获取了。所以为了能够自动释放需要加上超时设置。
+**  版本二:
+  lock: SET KEY VALUE NX PX 3000
+  
+  unlock: DEL KEY
+  这个时候其实还是没有完美解决锁超时的问题，比如：获取锁的服务需要的锁的时间比你设置key的过期时间还要长，这时候锁就被自动释放就有可能被其他client获取到。通常做法是开一个goroutine或者线程在要过期的时候刷新锁的过期时间。
+  
+  extern: SET KEY VALUE PX 3000
+  但是这里又出现了一个小问题，extern这个操作并不知道是谁设置了这个锁, 有可能锁过期了，还傻乎乎的以为自己占用了锁，一直延长锁的过期时间。也就是没满足条件三，client只能操作自己获取的锁。而且这里unlock操作也没有判断是否是自己的锁。如果使用方操作不当的话很容易删掉别人的key。所以这两个地方需要加上check，只有在是自己的锁的情况下才能操作，这里可以利用VALUE来存储当前占有锁是哪个client。所以需要一个clientid。还有需要注意的地方就是check跟unlock，check跟extern的操作是原子的，不然一切都没了意义，一般情况下使用redis lua脚本来实现，由于redis是单线程，所以能保证原子性。
+**  版本三:
+  lock: SET KEY VALUE NX PX 3000
+  
+  unlock:
+    #+BEGIN_SRC lua
  if redis.call("get",KEYS[1]) == ARGV[1] then
     return redis.call("del",KEYS[1])
 else
     return 0
 end 
   #+END_SRC
-  对于多master redis的lock实现，可以参考这个golang实现: https://github.com/go-redsync/redsync
+  extern:
+  #+BEGIN_SRC lua
+    if redis.call("GET", KEYS[1]) == ARGV[1] then
+      return redis.call("SET", KEYS[1], ARGV[1], "XX", "PX", ARGV[2])
+    else
+      return 0
+    end
+  #+END_SRC
+  
+  版本三就是一个可以在通常情况下使用的分布式锁了。但是还有点小问题，如果redis crash了咋办？这里我们只使用了一个redis。而redis集群是异步同步，有可能丢失数据，也有可能存在时间差，在这种情况下都有可能被其他client获取到lock。当然redis官方提供了一个redlock的算法，利用多台redis master, 每次lock，unlock，extern都需要大多是redis节点操作成功才算成功，复杂度也提升了很多，可以参考这里的实现:https://github.com/go-redsync/redsync。
+  还有要注意的地方就是最好操作实现幂等性，防止锁出现未知问题。
+
 * consul 实现
-  对于consul来说，需要关注的点是一样的。只不过在consul有不同的抽象。consul中使用kv跟session来实现。session用来标识是哪个client获取了lock。consul比较好的一点是它是强一致的集群。consul服务的稳定性有保证。而redis集群是异步同步，所以有可能在master crash期间被其他client获取已经被其他人获取的锁。再者就是consul的api中已经自带了lock的实现可以直接使用。
-  具体细节可以参考: https://www.consul.io/docs/guides/leader-election.html
-  consul中更强大的一点是实现了信号量。一个排他锁可以看做是一个只能一个用户使用的信号量。当然consul中信号量的实现也是通过自带的kv存储跟session来实现的。
+  对于consul来说，需要关注的点是一样的。只不过在consul有不同的抽象。consul中使用kv跟session来实现。session用来标识是哪个client获取了lock。consul比较好的一点是它是强一致的集群。consul服务的稳定性有保证。
+  参考官方文档: https://www.consul.io/docs/guides/leader-election.html
+  在官方的sdk中已经实现了一个可以直接使用的分布式锁，操作如下:
+  lock:
+#+BEGIN_SRC go
+  func (l *Lock) Lock(stopCh <-chan struct{}) (<-chan struct{}, error) {
+    // Hold the lock as we try to acquire
+    l.l.Lock()
+    defer l.l.Unlock()
+
+    // Check if we already hold the lock
+    if l.isHeld {
+      return nil, ErrLockHeld
+    }
+
+    // Check if we need to create a session first
+    // 如果没有session，创建一个，用于标识获取锁的对象和过期管理
+    l.lockSession = l.opts.Session
+    if l.lockSession == "" {
+      s, err := l.createSession()
+      if err != nil {
+        return nil, fmt.Errorf("failed to create session: %v", err)
+      }
+
+      l.sessionRenew = make(chan struct{})
+      l.lockSession = s
+      session := l.c.Session()
+      // 在没释放锁之前一直刷新session的时间
+      go session.RenewPeriodic(l.opts.SessionTTL, s, nil, l.sessionRenew)
+
+      // If we fail to acquire the lock, cleanup the session
+      defer func() {
+        if !l.isHeld {
+          close(l.sessionRenew)
+          l.sessionRenew = nil
+        }
+      }()
+    }
+
+    // Setup the query options
+    kv := l.c.KV()
+    qOpts := &QueryOptions{
+      WaitTime: l.opts.LockWaitTime,
+    }
+
+    start := time.Now()
+    attempts := 0
+  WAIT:
+    // Check if we should quit
+    select {
+    case <-stopCh:
+      return nil, nil
+    default:
+    }
+
+    // Handle the one-shot mode.
+    if l.opts.LockTryOnce && attempts > 0 {
+      elapsed := time.Since(start)
+      if elapsed > qOpts.WaitTime {
+        return nil, nil
+      }
+
+      qOpts.WaitTime -= elapsed
+    }
+    attempts++
+
+    // Look for an existing lock, blocking until not taken
+    pair, meta, err := kv.Get(l.opts.Key, qOpts)
+    if err != nil {
+      return nil, fmt.Errorf("failed to read lock: %v", err)
+    }
+    if pair != nil && pair.Flags != LockFlagValue {
+      return nil, ErrLockConflict
+    }
+    locked := false
+    if pair != nil && pair.Session == l.lockSession {
+      goto HELD
+    }
+    if pair != nil && pair.Session != "" {
+      qOpts.WaitIndex = meta.LastIndex
+      goto WAIT
+    }
+
+    //获取一个lock
+    pair = l.lockEntry(l.lockSession)
+    locked, _, err = kv.Acquire(pair, nil)
+    if err != nil {
+      return nil, fmt.Errorf("failed to acquire lock: %v", err)
+    }
+
+    // Handle the case of not getting the lock
+    if !locked {
+      // Determine why the lock failed
+      qOpts.WaitIndex = 0
+      pair, meta, err = kv.Get(l.opts.Key, qOpts)
+      if pair != nil && pair.Session != "" {
+        //If the session is not null, this means that a wait can safely happen
+        //using a long poll
+        qOpts.WaitIndex = meta.LastIndex
+        goto WAIT
+      } else {
+        // If the session is empty and the lock failed to acquire, then it means
+        // a lock-delay is in effect and a timed wait must be used
+        select {
+        case <-time.After(DefaultLockRetryTime):
+          goto WAIT
+        case <-stopCh:
+          return nil, nil
+        }
+      }
+    }
+
+  HELD:
+    // Watch to ensure we maintain leadership
+    leaderCh := make(chan struct{})
+    //一直监视锁的占用者，当锁的占用者不是当前session，close掉leaderCh
+    go l.monitorLock(l.lockSession, leaderCh)
+
+    // Set that we own the lock
+    l.isHeld = true
+
+    // Locked! All done
+    return leaderCh, nil
+  }
+#+END_SRC  
+
+unlock:
+#+BEGIN_SRC go
+  //unlock操作比较简单
+  func (l *Lock) Unlock() error {
+    // Hold the lock as we try to release
+    l.l.Lock()
+    defer l.l.Unlock()
+
+    // Ensure the lock is actually held
+    if !l.isHeld {
+      return ErrLockNotHeld
+    }
+
+    // Set that we no longer own the lock
+    l.isHeld = false
+
+    // Stop the session renew
+    // 停止延长session的时间
+    if l.sessionRenew != nil {
+      defer func() {
+        close(l.sessionRenew)
+        l.sessionRenew = nil
+      }()
+    }
+
+    // Get the lock entry, and clear the lock session
+    lockEnt := l.lockEntry(l.lockSession)
+    l.lockSession = ""
+
+    // Release the lock explicitly
+    //直接调用release释放掉lock
+    kv := l.c.KV()
+    _, _, err := kv.Release(lockEnt, nil)
+    if err != nil {
+      return fmt.Errorf("failed to release lock: %v", err)
+    }
+    return nil
+  }
+
+#+END_SRC
+
+ 从上可以看到consul的实现还是比较严谨的。比如不停的监视锁的占用者。比如在锁释放后才停止延长session的周期(这里要注意的是就算锁释放失败了也不代表你占用了锁，因为已经停止了session的刷新, 锁会被过期自动释放掉，所以最好是在调用之后不再使用互斥操作, 但是可以多次调用unlock)
+  
 * 参考资料
   redis官方介绍: https://redis.io/topics/distlock
-  reids分布式锁go实现:https://redis.io/topics/distlock 
+  reids分布式锁go实现: https://github.com/go-redsync/redsync
   consul信号量: https://www.consul.io/docs/guides/semaphore.html
   consul排他锁： https://www.consul.io/docs/guides/leader-election.html
   
