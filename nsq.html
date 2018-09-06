@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-06 Thu 09:05 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>nsq源码阅读(一)</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">nsq源码阅读(一)</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgda66109">1. nsq是什么</a></li>
+<li><a href="#org91cfa1a">2. nsq的设计</a>
+<ul>
+<li><a href="#org4d283a8">2.1. nsqd如何保证消息不丢</a></li>
+<li><a href="#orgcf87eda">2.2. nsqd如何水平扩展</a></li>
+<li><a href="#org1f254f4">2.3. nsq支持延迟消息</a></li>
+<li><a href="#org540cc63">2.4. 疑惑</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgda66109" class="outline-2">
+<h2 id="orgda66109"><span class="section-number-2">1</span> nsq是什么</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+nsq是一个使用纯go实现的消息队列，具有以下特点:
+</p>
+<ul class="org-ul">
+<li>支持分布式拓扑</li>
+<li>支持水平扩展</li>
+<li>低延时消息发送</li>
+<li>主要操作在内存中，达到一定条件落到磁盘</li>
+</ul>
+<p>
+nsq保证消息至少被消费一次,不保证重复消费(需要客户端自己保持操作幂等)，不保证顺序。根据官方的测试，单机情况下每秒pub可以达到40w，sub可以达到10w。(ps: 由于nsq是为了分布式而设计，作者建议不要太在意单机的执行速度)
+</p>
+</div>
+</div>
+<div id="outline-container-org91cfa1a" class="outline-2">
+<h2 id="org91cfa1a"><span class="section-number-2">2</span> nsq的设计</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+nsq主要包含三个二进制程序: nsqd, nsqlookupd, nsqadmin。nsqd就是主要的用于消息队列的主程序，nsqlookupd是通过topic来寻找nsqd的地址，相当于一个服务发现机制，只在客户端订阅的时候会查找一次。nsqadmin主要提供一个后台管理界面，方便用户查看与统计。
+nsqlookupd的实现可以说是很简单,主要是管理topic,channel跟nsqd的关系。主要看下nsqd的实现:
+</p>
+</div>
+<div id="outline-container-org4d283a8" class="outline-3">
+<h3 id="org4d283a8"><span class="section-number-3">2.1</span> nsqd如何保证消息不丢</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+当我们把消息发送给消息队列后如何保证消息不丢失呢，一般做法是持久化，把数据落地磁盘，但是这样当磁盘坏掉的时候也可能丢失，这时候就需要写多个机器。nsq有个选项&#x2013;mem-queue-size来指示内存消息队列的大小，大于这个大小的消息会被落到磁盘。而磁盘是单文件写入。不支持写入多个节点。总的来说nsqd处理比较简单。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #fb4933;">func</span> <span style="color: #458588;">(</span>t *<span style="color: #d3869b;">Topic</span><span style="color: #458588;">)</span> <span style="color: #fabd2f;">put</span><span style="color: #458588;">(</span>m *<span style="color: #d3869b;">Message</span><span style="color: #458588;">)</span> <span style="color: #d3869b;">error</span> <span style="color: #458588;">{</span>
+  <span style="color: #fb4933;">select</span> <span style="color: #b16286;">{</span>
+  <span style="color: #fb4933;">case</span> t.memoryMsgChan &lt;- m:
+  <span style="color: #fb4933;">default</span>:
+    b := <span style="color: #fabd2f;">bufferPoolGet</span><span style="color: #8ec07c;">()</span>
+    <span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">&#22914;&#26524;&#28040;&#24687;&#28385;&#20102;&#20889;&#20837;backend, &#20351;&#29992;go-diskqueue &#20889;&#20837;&#25991;&#20214;&#12290;</span>
+    err := <span style="color: #fabd2f;">writeMessageToBackend</span><span style="color: #8ec07c;">(</span>b, m, t.backend<span style="color: #8ec07c;">)</span>
+    <span style="color: #fabd2f;">bufferPoolPut</span><span style="color: #8ec07c;">(</span>b<span style="color: #8ec07c;">)</span>
+    t.ctx.nsqd.<span style="color: #fabd2f;">SetHealth</span><span style="color: #8ec07c;">(</span>err<span style="color: #8ec07c;">)</span>
+    <span style="color: #fb4933;">if</span> err != <span style="color: #d3869b;">nil</span> <span style="color: #8ec07c;">{</span>
+      t.ctx.nsqd.<span style="color: #fabd2f;">logf</span><span style="color: #d65d0e;">(</span>LOG_ERROR,
+        <span style="color: #b8bb26;">"TOPIC(%s) ERROR: failed to write message to backend - %s"</span>,
+        t.name, err<span style="color: #d65d0e;">)</span>
+      <span style="color: #fb4933;">return</span> err
+    <span style="color: #8ec07c;">}</span>
+  <span style="color: #b16286;">}</span>
+  <span style="color: #fb4933;">return</span> <span style="color: #d3869b;">nil</span>
+<span style="color: #458588;">}</span>
+</pre>
+</div>
+<p>
+官方也介绍一种使用nsq<sub>to</sub><sub>file来备份消息</sub>，主要是利用一个topic的message会被多个channel消费。这种方式我个人觉得有点不大好，一般来说用恢复数据还比较好。但是用于软件中的错误容忍感觉不大妥当。这就是一个数据备份的问题。
+</p>
+</div>
+</div>
+<div id="outline-container-orgcf87eda" class="outline-3">
+<h3 id="orgcf87eda"><span class="section-number-3">2.2</span> nsqd如何水平扩展</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+nsqd pub消息的时候都会要求指定nsqd服务。nsqd并没有提供负载均衡的方式。需要手动确定使用的nsqd服务地址。也就是说需要客户端自己负载均衡。每一个topic对应唯一的nsqd,consumer端倒是可以通过nsqlookupd来进行服务发现。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">main</span><span style="color: #458588;">(){</span>
+  cfg := nsq.<span style="color: #fabd2f;">NewConfig</span><span style="color: #b16286;">()</span>
+  p, _ := nsq.<span style="color: #fabd2f;">NewProducer</span><span style="color: #b16286;">(</span><span style="color: #b8bb26;">"localhost:addr"</span>, cfg<span style="color: #b16286;">)</span>
+  p.<span style="color: #fabd2f;">Publish</span><span style="color: #b16286;">(</span><span style="color: #b8bb26;">"hello world"</span>, <span style="color: #8ec07c;">[]</span><span style="color: #fabd2f;">byte</span><span style="color: #8ec07c;">(</span><span style="color: #b8bb26;">"hello world"</span><span style="color: #8ec07c;">)</span><span style="color: #b16286;">)</span>
+<span style="color: #458588;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1f254f4" class="outline-3">
+<h3 id="org1f254f4"><span class="section-number-3">2.3</span> nsq支持延迟消息</h3>
+<div class="outline-text-3" id="text-2-3">
+<div class="org-src-container">
+<pre class="src src-go">  <span style="color: #fb4933;">func</span> <span style="color: #458588;">(</span>c *<span style="color: #d3869b;">Channel</span><span style="color: #458588;">)</span> <span style="color: #fabd2f;">StartDeferredTimeout</span><span style="color: #458588;">(</span>msg *<span style="color: #d3869b;">Message</span>, timeout <span style="color: #d3869b;">time.Duration</span><span style="color: #458588;">)</span> <span style="color: #d3869b;">error</span> <span style="color: #458588;">{</span>
+  absTs := time.<span style="color: #fabd2f;">Now</span><span style="color: #b16286;">()</span>.<span style="color: #fabd2f;">Add</span><span style="color: #b16286;">(</span>timeout<span style="color: #b16286;">)</span>.<span style="color: #fabd2f;">UnixNano</span><span style="color: #b16286;">()</span>
+  item := &amp;pqueue.<span style="color: #d3869b;">Item</span><span style="color: #b16286;">{</span>Value: msg, Priority: absTs<span style="color: #b16286;">}</span>
+  err := c.<span style="color: #fabd2f;">pushDeferredMessage</span><span style="color: #b16286;">(</span>item<span style="color: #b16286;">)</span>
+  <span style="color: #fb4933;">if</span> err != <span style="color: #d3869b;">nil</span> <span style="color: #b16286;">{</span>
+    <span style="color: #fb4933;">return</span> err
+  <span style="color: #b16286;">}</span>
+  c.<span style="color: #fabd2f;">addToDeferredPQ</span><span style="color: #b16286;">(</span>item<span style="color: #b16286;">)</span>
+  <span style="color: #fb4933;">return</span> <span style="color: #d3869b;">nil</span>
+<span style="color: #458588;">}</span> 
+</pre>
+</div>
+<p>
+延迟消息放在内存中，所以不能存放大量的延迟消息，并且长时间的延迟消息也需要注意。维护了一个简单的优先队列。每一次会拿到所有的channel，进行遍历查看是否有需要延迟发送的消息。
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #fb4933;">func</span> <span style="color: #458588;">(</span>n *<span style="color: #d3869b;">NSQD</span><span style="color: #458588;">)</span> <span style="color: #fabd2f;">queueScanLoop</span><span style="color: #458588;">()</span> <span style="color: #458588;">{</span>
+  workCh := <span style="color: #fe8019;">make</span><span style="color: #b16286;">(</span><span style="color: #fb4933;">chan</span> *<span style="color: #d3869b;">Channel</span>, n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanSelectionCount<span style="color: #b16286;">)</span>
+  responseCh := <span style="color: #fe8019;">make</span><span style="color: #b16286;">(</span><span style="color: #fb4933;">chan</span> <span style="color: #d3869b;">bool</span>, n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanSelectionCount<span style="color: #b16286;">)</span>
+  closeCh := <span style="color: #fe8019;">make</span><span style="color: #b16286;">(</span><span style="color: #fb4933;">chan</span> <span style="color: #d3869b;">int</span><span style="color: #b16286;">)</span>
+  <span style="color: #7c6f64;">// </span><span style="color: #7c6f64;">&#36890;&#36807;&#37197;&#32622;&#30340;&#26102;&#38388;&#38388;&#38548;&#26469;&#35843;&#25972;tick</span>
+  workTicker := time.<span style="color: #fabd2f;">NewTicker</span><span style="color: #b16286;">(</span>n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanInterval<span style="color: #b16286;">)</span>
+  refreshTicker := time.<span style="color: #fabd2f;">NewTicker</span><span style="color: #b16286;">(</span>n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanRefreshInterval<span style="color: #b16286;">)</span>
+
+  channels := n.<span style="color: #fabd2f;">channels</span><span style="color: #b16286;">()</span>
+  n.<span style="color: #fabd2f;">resizePool</span><span style="color: #b16286;">(</span><span style="color: #fe8019;">len</span><span style="color: #8ec07c;">(</span>channels<span style="color: #8ec07c;">)</span>, workCh, responseCh, closeCh<span style="color: #b16286;">)</span>
+
+  <span style="color: #fb4933;">for</span> <span style="color: #b16286;">{</span>
+    <span style="color: #fb4933;">select</span> <span style="color: #8ec07c;">{</span>
+    <span style="color: #fb4933;">case</span> &lt;-workTicker.C:
+      <span style="color: #fb4933;">if</span> <span style="color: #fe8019;">len</span><span style="color: #d65d0e;">(</span>channels<span style="color: #d65d0e;">)</span> == <span style="color: #d3869b;">0</span> <span style="color: #d65d0e;">{</span>
+        <span style="color: #fb4933;">continue</span>
+      <span style="color: #d65d0e;">}</span>
+    <span style="color: #fb4933;">case</span> &lt;-refreshTicker.C:
+    <span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">&#23545;&#27599;&#20010;channel&#26469;&#26356;&#26032;&#28040;&#24687;</span>
+      channels = n.<span style="color: #fabd2f;">channels</span><span style="color: #d65d0e;">()</span>
+      n.<span style="color: #fabd2f;">resizePool</span><span style="color: #d65d0e;">(</span><span style="color: #fe8019;">len</span><span style="color: #458588;">(</span>channels<span style="color: #458588;">)</span>, workCh, responseCh, closeCh<span style="color: #d65d0e;">)</span>
+      <span style="color: #fb4933;">continue</span>
+    <span style="color: #fb4933;">case</span> &lt;-n.exitChan:
+      <span style="color: #fb4933;">goto</span> <span style="color: #d3869b;">exit</span>
+    <span style="color: #8ec07c;">}</span>
+
+    num := n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanSelectionCount
+    <span style="color: #fb4933;">if</span> num &gt; <span style="color: #fe8019;">len</span><span style="color: #8ec07c;">(</span>channels<span style="color: #8ec07c;">)</span> <span style="color: #8ec07c;">{</span>
+      num = <span style="color: #fe8019;">len</span><span style="color: #d65d0e;">(</span>channels<span style="color: #d65d0e;">)</span>
+    <span style="color: #8ec07c;">}</span>
+
+  <span style="color: #d3869b;">loop</span>:
+    <span style="color: #fb4933;">for</span> _, i := <span style="color: #fb4933;">range</span> util.<span style="color: #fabd2f;">UniqRands</span><span style="color: #8ec07c;">(</span>num, <span style="color: #fe8019;">len</span><span style="color: #d65d0e;">(</span>channels<span style="color: #d65d0e;">)</span><span style="color: #8ec07c;">)</span> <span style="color: #8ec07c;">{</span>
+      workCh &lt;- channels<span style="color: #d65d0e;">[</span>i<span style="color: #d65d0e;">]</span>
+    <span style="color: #8ec07c;">}</span>
+
+    numDirty := <span style="color: #d3869b;">0</span>
+    <span style="color: #fb4933;">for</span> i := <span style="color: #d3869b;">0</span>; i &lt; num; i++ <span style="color: #8ec07c;">{</span>
+      <span style="color: #fb4933;">if</span> &lt;-responseCh <span style="color: #d65d0e;">{</span>
+        numDirty++
+      <span style="color: #d65d0e;">}</span>
+    <span style="color: #8ec07c;">}</span>
+
+    <span style="color: #fb4933;">if</span> <span style="color: #fabd2f;">float64</span><span style="color: #8ec07c;">(</span>numDirty<span style="color: #8ec07c;">)</span>/<span style="color: #fabd2f;">float64</span><span style="color: #8ec07c;">(</span>num<span style="color: #8ec07c;">)</span> &gt; n.<span style="color: #fabd2f;">getOpts</span><span style="color: #8ec07c;">()</span>.QueueScanDirtyPercent <span style="color: #8ec07c;">{</span>
+      <span style="color: #fb4933;">goto</span> <span style="color: #d3869b;">loop</span>
+    <span style="color: #8ec07c;">}</span>
+  <span style="color: #b16286;">}</span>
+
+<span style="color: #d3869b;">exit</span>:
+  n.<span style="color: #fabd2f;">logf</span><span style="color: #b16286;">(</span>LOG_INFO, <span style="color: #b8bb26;">"QUEUESCAN: closing"</span><span style="color: #b16286;">)</span>
+  <span style="color: #fe8019;">close</span><span style="color: #b16286;">(</span>closeCh<span style="color: #b16286;">)</span>
+  workTicker.<span style="color: #fabd2f;">Stop</span><span style="color: #b16286;">()</span>
+  refreshTicker.<span style="color: #fabd2f;">Stop</span><span style="color: #b16286;">()</span>
+<span style="color: #458588;">}</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org540cc63" class="outline-3">
+<h3 id="org540cc63"><span class="section-number-3">2.4</span> 疑惑</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+对于每个发送失败的msg来说，topic只打了错误日志，并没有做额外的处理，这样子似乎并不能达到文档说的消息至少被消费一次。不知道是否哪里有看漏&#x2026;
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-09-06 Thu 09:05</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>
