@@ -244,7 +244,6 @@ for the JavaScript code in this tag.
 <li><a href="#org4d283a8">2.1. nsqd如何保证消息不丢</a></li>
 <li><a href="#orgcf87eda">2.2. nsqd如何水平扩展</a></li>
 <li><a href="#org1f254f4">2.3. nsq支持延迟消息</a></li>
-<li><a href="#org540cc63">2.4. 疑惑</a></li>
 </ul>
 </li>
 </ul>
@@ -403,11 +402,6 @@ nsqd pub消息的时候都会要求指定nsqd服务。nsqd并没有提供负载�
 </div>
 </div>
 <div id="outline-container-org540cc63" class="outline-3">
-<h3 id="org540cc63"><span class="section-number-3">2.4</span> 疑惑</h3>
-<div class="outline-text-3" id="text-2-4">
-<p>
-对于每个发送失败的msg来说，topic只打了错误日志，并没有做额外的处理，这样子似乎并不能达到文档说的消息至少被消费一次。不知道是否哪里有看漏&#x2026;
-</p>
 </div>
 </div>
 </div>
