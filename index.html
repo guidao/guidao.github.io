@@ -38,7 +38,7 @@
   }
   pre.src {
     position: relative;
-    overflow: visible;
+    overflow: auto;
     padding-top: 1.2em;
   }
   pre.src:before {
@@ -50,7 +50,7 @@
     padding: 3px;
     border: 1px solid black;
   }
-  pre.src:hover:before { display: inline;}
+  pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
@@ -159,6 +159,19 @@
   .footdef  { margin-bottom: 1em; }
   .figure { padding: 1em; }
   .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
   .inlinetask {
     padding: 10px;
     border: 2px solid gray;
@@ -180,50 +193,26 @@
 </style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -233,107 +222,45 @@ for the JavaScript code in this tag.
  <a accesskey="H" href="index.html"> HOME </a>
 </div><div id="content">
 <h1 class="title">个人blog</h1>
-<div id="outline-container-orgc0fa53b" class="outline-2">
-<h2 id="orgc0fa53b">2018年5月</h2>
-<div class="outline-text-2" id="text-orgc0fa53b">
+<div id="outline-container-org281af38" class="outline-2">
+<h2 id="org281af38">2020</h2>
+<div class="outline-text-2" id="text-org281af38">
+<ul class="org-ul">
+<li><a href="2021-01-13T2048.html">Service Mesh 调研</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgdfd76cb" class="outline-2">
+<h2 id="orgdfd76cb">2018</h2>
+<div class="outline-text-2" id="text-orgdfd76cb">
 <ul class="org-ul">
 <li><a href="nsq.html">nsq源码阅读(一)</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org0247e52" class="outline-2">
-<h2 id="org0247e52">2018年4月</h2>
-<div class="outline-text-2" id="text-org0247e52">
-<ul class="org-ul">
 <li><a href="lock.html">分布式锁总结</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org8b5dd6d" class="outline-2">
-<h2 id="org8b5dd6d">2018年3月</h2>
-<div class="outline-text-2" id="text-org8b5dd6d">
-<ul class="org-ul">
 <li><a href="asm.html">golang汇编基础知识</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org04a1213" class="outline-2">
-<h2 id="org04a1213">2017年11月</h2>
-<div class="outline-text-2" id="text-org04a1213">
+<div id="outline-container-orgdcfc3c1" class="outline-2">
+<h2 id="orgdcfc3c1">2017</h2>
+<div class="outline-text-2" id="text-orgdcfc3c1">
 <ul class="org-ul">
 <li><a href="malloc.html">golang内存分配分析</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org4d78c54" class="outline-2">
-<h2 id="org4d78c54">2017年10月</h2>
-<div class="outline-text-2" id="text-org4d78c54">
-<ul class="org-ul">
 <li><a href="elixir_script.html">使用elixir作为日常脚本</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgf63727d" class="outline-2">
-<h2 id="orgf63727d">2017年6月</h2>
-<div class="outline-text-2" id="text-orgf63727d">
-<ul class="org-ul">
 <li><a href="groupcache.html">groupcache源码阅读</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org19e3d72" class="outline-2">
-<h2 id="org19e3d72">2017年5月</h2>
-<div class="outline-text-2" id="text-org19e3d72">
-<ul class="org-ul">
 <li><a href="redis_string.html">redis源码阅读之字符串</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgc665842" class="outline-2">
-<h2 id="orgc665842">2017年3月</h2>
-<div class="outline-text-2" id="text-orgc665842">
-<ul class="org-ul">
 <li><a href="grpc_server.html">golang版本grpc服务端浅析</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org1a79425" class="outline-2">
-<h2 id="org1a79425">2017年2月</h2>
-<div class="outline-text-2" id="text-org1a79425">
-<ul class="org-ul">
 <li><a href="termio.html">终端输入输出的三种模式</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgac63831" class="outline-2">
-<h2 id="orgac63831">2017年1月</h2>
-<div class="outline-text-2" id="text-orgac63831">
-<ul class="org-ul">
 <li><a href="grpc_balancer.html">GRPC golang版源码分析之客户端(二)</a></li>
 <li><a href="grpc.html">GRPC golang版源码分析之客户端(一)</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgce314dd" class="outline-2">
-<h2 id="orgce314dd">2016年10月</h2>
-<div class="outline-text-2" id="text-orgce314dd">
+<div id="outline-container-org8ef4a07" class="outline-2">
+<h2 id="org8ef4a07">2016</h2>
+<div class="outline-text-2" id="text-org8ef4a07">
 <ul class="org-ul">
 <li><a href="go_timer.html">go中的定时器实现</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-org2572c1f" class="outline-2">
-<h2 id="org2572c1f">2016年9月</h2>
-<div class="outline-text-2" id="text-org2572c1f">
-<ul class="org-ul">
 <li><a href="go_debug.html">golang调试工具</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orge2d1f92" class="outline-2">
-<h2 id="orge2d1f92">2016年8月</h2>
-<div class="outline-text-2" id="text-orge2d1f92">
-<ul class="org-ul">
 <li><a href="go_map.html">go语言map结构内部实现</a></li>
 <li><a href="emacs_blog.html">使用org-mode写blog</a></li>
 <li><a href="rsa%E5%8A%A0%E5%AF%86%E4%BB%8B%E7%BB%8D.html">rsa总结</a></li>
@@ -341,9 +268,6 @@ for the JavaScript code in this tag.
 </ul>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="validation"></p>
 </div>
 </body>
 </html>
