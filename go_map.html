@@ -3,13 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-01-22 Fri 22:19 -->
+<!-- 2021-01-22 Fri 23:24 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>GO Map内部实现</title>
 <meta name="generator" content="Org mode" />
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
-<link rel="stylesheet" type="text/css" href="./css/gitalk.css"/> <script src="./js/gitalk.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/gitalk/dist/gitalk.css"/> <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -89,7 +89,7 @@ fmt.<span style="color: #82aaff;">Println</span>(a[<span style="color: #c3e88d;"
 </p>
 
 
-<div id="org4ffb064" class="figure">
+<div id="orga18f5a1" class="figure">
 <p><img src="..//image/2016-08-18-162914_462x441_scrot.png" alt="2016-08-18-162914_462x441_scrot.png" /> 
 </p>
 </div>
@@ -338,7 +338,7 @@ map存值的源码:
   repo: 'guidao.github.io',
   owner: 'guidao',
   admin: ['guidao'],
-  id: 'gitalk',      // Ensure uniqueness and length less than 50
+  id: location.pathname,      // Ensure uniqueness and length less than 50
   distractionFreeMode: false  // Facebook-like distraction free mode
 })
 gitalk.render('gitalk') </script>
