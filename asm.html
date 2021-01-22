@@ -3,34 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-01-22 Fri 17:59 -->
+<!-- 2021-01-22 Fri 22:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>golang汇编基础知识</title>
 <meta name="generator" content="Org mode" />
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
+<link rel="stylesheet" type="text/css" href="./css/gitalk.css"/> <script src="./js/gitalk.min.js"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -209,7 +188,16 @@ RET指令加载返回地址，跳到返回地址。
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2021-01-22 Fri 17:59</p>
+<div id="gitalk" /> <script> var gitalk = new Gitalk({
+  clientID: 'f30e66bb5ab9089aa742',
+  clientSecret: '5d256d445447bd4db16540c2aab0e0884218ed12',
+  repo: 'guidao.github.io',
+  owner: 'guidao',
+  admin: ['guidao'],
+  id: 'gitalk',      // Ensure uniqueness and length less than 50
+  distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk') </script>
 </div>
 </body>
 </html>
