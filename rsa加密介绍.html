@@ -3,142 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-08-17 三 16:59 -->
-<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta  name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2021-01-22 Fri 17:59 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RSA总结</title>
-<meta  name="generator" content="Org-mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  pre.src-sh:before    { content: 'sh'; }
-  pre.src-bash:before  { content: 'sh'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-R:before     { content: 'R'; }
-  pre.src-perl:before  { content: 'Perl'; }
-  pre.src-java:before  { content: 'Java'; }
-  pre.src-sql:before   { content: 'SQL'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  /*]]>*/-->
-</style>
+<meta name="generator" content="Org mode" />
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -152,51 +43,38 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgheadline2">1. rsa算法原理</a>
+<li><a href="#org3c962a3">1. rsa算法原理</a>
 <ul>
-<li>
-<ul>
-<li><a href="#orgheadline1">1.0.1. 公式推导</a></li>
+<li><a href="#org226be36">1.1. 公式推导</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a href="#orgheadline5">2. ASN1格式</a>
+<li><a href="#orga1b2a2c">2. ASN1格式</a>
 <ul>
-<li>
+<li><a href="#orga72f77e">2.1. 私有类型</a></li>
+<li><a href="#org92ae1e2">2.2. 组合类型</a></li>
+</ul>
+</li>
+<li><a href="#orge89de48">3. PKCS#1 格式</a></li>
+<li><a href="#org7d1c42d">4. PKCS#8</a></li>
+<li><a href="#orgf93f6d1">5. go 中的rsa包</a>
 <ul>
-<li><a href="#orgheadline3">2.0.1. 私有类型</a></li>
-<li><a href="#orgheadline4">2.0.2. 组合类型</a></li>
+<li><a href="#orge97b667">5.1. 获取公钥或私钥</a></li>
+<li><a href="#org881ba35">5.2. 签名与验签</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a href="#orgheadline6">3. PKCS#1 格式</a></li>
-<li><a href="#orgheadline7">4. PKCS#8</a></li>
-<li><a href="#orgheadline10">5. go 中的rsa包</a>
-<ul>
-<li>
-<ul>
-<li><a href="#orgheadline8">5.0.1. 获取公钥或私钥</a></li>
-<li><a href="#orgheadline9">5.0.2. 签名与验签</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#orgheadline11">6. 资料</a></li>
+<li><a href="#orgf2d5b48">6. 资料</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgheadline2" class="outline-2">
-<h2 id="orgheadline2"><span class="section-number-2">1</span> rsa算法原理</h2>
+<div id="outline-container-org3c962a3" class="outline-2">
+<h2 id="org3c962a3"><span class="section-number-2">1</span> rsa算法原理</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, e. 私钥也主要保持两个数字n, d.对于任一一个数字a满足(a<sup>ed</sup>) mod n = a, 其中 ed mod (p-1)(q-1) = 1, n = pq. 这就保证了一个数字经过公钥加密后能被私钥解密.
 </p>
 
 <div class="org-src-container">
-
 <pre class="src src-math">加密算法: c = a^e mod n
 解密算法: a = c^d mod n
 </pre>
@@ -211,11 +89,10 @@ rsa是非对称加密,分为私钥与公钥,公钥主要保持了两个数字n, 
 </p>
 </div>
 
-<div id="outline-container-orgheadline1" class="outline-4">
-<h4 id="orgheadline1"><span class="section-number-4">1.0.1</span> 公式推导</h4>
-<div class="outline-text-4" id="text-1-0-1">
+<div id="outline-container-org226be36" class="outline-3">
+<h3 id="org226be36"><span class="section-number-3">1.1</span> 公式推导</h3>
+<div class="outline-text-3" id="text-1-1">
 <div class="org-src-container">
-
 <pre class="src src-math">我们主要推导以下公式成立:
 (a^ed) mod n = a
 
@@ -227,18 +104,21 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 所以: ed = h(p-1)(q-1) + 1
 所以我们要证明: a^(h(p-1)(q-1)+1) mod n = a
 =&gt; a*a^(h*(p-1)*(q-1)) mod n = a
+
+
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgheadline5" class="outline-2">
-<h2 id="orgheadline5"><span class="section-number-2">2</span> ASN1格式</h2>
+<div id="outline-container-orga1b2a2c" class="outline-2">
+<h2 id="orga1b2a2c"><span class="section-number-2">2</span> ASN1格式</h2>
 <div class="outline-text-2" id="text-2">
-</div><div id="outline-container-orgheadline3" class="outline-4">
-<h4 id="orgheadline3"><span class="section-number-4">2.0.1</span> 私有类型</h4>
-<div class="outline-text-4" id="text-2-0-1">
+</div>
+<div id="outline-container-orga72f77e" class="outline-3">
+<h3 id="orga72f77e"><span class="section-number-3">2.1</span> 私有类型</h3>
+<div class="outline-text-3" id="text-2-1">
 <ol class="org-ol">
 <li>BOOLEAN</li>
 <li>INTEGER</li>
@@ -253,9 +133,9 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 </ol>
 </div>
 </div>
-<div id="outline-container-orgheadline4" class="outline-4">
-<h4 id="orgheadline4"><span class="section-number-4">2.0.2</span> 组合类型</h4>
-<div class="outline-text-4" id="text-2-0-2">
+<div id="outline-container-org92ae1e2" class="outline-3">
+<h3 id="org92ae1e2"><span class="section-number-3">2.2</span> 组合类型</h3>
+<div class="outline-text-3" id="text-2-2">
 <ol class="org-ol">
 <li>SEQUENCE</li>
 <li>SET</li>
@@ -271,11 +151,10 @@ a^(f(n)) mod n = 1, f(n) 是一个函数，在这里只用到了其中一种特�
 </div>
 </div>
 
-<div id="outline-container-orgheadline6" class="outline-2">
-<h2 id="orgheadline6"><span class="section-number-2">3</span> PKCS#1 格式</h2>
+<div id="outline-container-orge89de48" class="outline-2">
+<h2 id="orge89de48"><span class="section-number-2">3</span> PKCS#1 格式</h2>
 <div class="outline-text-2" id="text-3">
 <div class="org-src-container">
-
 <pre class="src src-golang">//公钥
 type public struct {
   n INTEGER // n
@@ -299,14 +178,13 @@ type private struct {
 </div>
 </div>
 </div>
-<div id="outline-container-orgheadline7" class="outline-2">
-<h2 id="orgheadline7"><span class="section-number-2">4</span> PKCS#8</h2>
+<div id="outline-container-org7d1c42d" class="outline-2">
+<h2 id="org7d1c42d"><span class="section-number-2">4</span> PKCS#8</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 由于PKCS#1不够通用，所以提出#8
 </p>
 <div class="org-src-container">
-
 <pre class="src src-golang">type AlgorithmIdentifier struct {
   algorithm OID // 用的哪种算法
   parameters //可选信息
@@ -324,17 +202,19 @@ type private struct {
   algorithm AlgorithmIdentifier
   privateKey []byte //具体私钥信息, rsa 的话就是上面的PKCS#1私钥的结构
 }
+
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgheadline10" class="outline-2">
-<h2 id="orgheadline10"><span class="section-number-2">5</span> go 中的rsa包</h2>
+<div id="outline-container-orgf93f6d1" class="outline-2">
+<h2 id="orgf93f6d1"><span class="section-number-2">5</span> go 中的rsa包</h2>
 <div class="outline-text-2" id="text-5">
-</div><div id="outline-container-orgheadline8" class="outline-4">
-<h4 id="orgheadline8"><span class="section-number-4">5.0.1</span> 获取公钥或私钥</h4>
-<div class="outline-text-4" id="text-5-0-1">
+</div>
+<div id="outline-container-orge97b667" class="outline-3">
+<h3 id="orge97b667"><span class="section-number-3">5.1</span> 获取公钥或私钥</h3>
+<div class="outline-text-3" id="text-5-1">
 <p>
 要使用rsa包，首先要得到公钥或者私钥,对于不同的格式有不同的方法调用。
 </p>
@@ -342,12 +222,11 @@ type private struct {
 <li>PKCS#1格式</li>
 </ol>
 <div class="org-src-container">
-
 <pre class="src src-golang">//公钥:
 //不知道为何公钥的PKCS#1格式golang没有提供专门的接口进行解析,或许这种格式已经很少人用了？（不过我恰好遇到过）
 //由签名的格式我们知道PKCS#1其实就是golang中rsa.PublicKey结构的ASN1编码，所以我们可以使用asn1包接口进行解析
   k := new(rsa.PublicKey)
-  _, err = asn1.Unmarshal(der, k)
+	_, err = asn1.Unmarshal(der, k)
 
 //私钥:
   x509.ParsePKCS1PrivateKey(der []byte)
@@ -359,22 +238,22 @@ type private struct {
 <li>PKCS#8格式</li>
 </ol>
 <div class="org-src-container">
-
 <pre class="src src-golang">//公钥:
-  x509.ParsePKIXPublicKey(derBytes []byte)
+	x509.ParsePKIXPublicKey(derBytes []byte)
 //这里derBytes一般由公钥文件进行base64解码获得
 
 //私钥:
   x509.ParsePKCS8PrivateKey(der []byte)
 //der为私钥文件进行base64解码获得
+
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgheadline9" class="outline-4">
-<h4 id="orgheadline9"><span class="section-number-4">5.0.2</span> 签名与验签</h4>
-<div class="outline-text-4" id="text-5-0-2">
+<div id="outline-container-org881ba35" class="outline-3">
+<h3 id="org881ba35"><span class="section-number-3">5.2</span> 签名与验签</h3>
+<div class="outline-text-3" id="text-5-2">
 <p>
 对于rsa，我们最常做的操作就是签名与验签。
 </p>
@@ -385,13 +264,12 @@ type private struct {
 一般来说签名之前我们需要对数据进行hash得到签名串，再对签名串进行加密.hash算法可以是md5,sha1等。这里我们使用md5
 </p>
 <div class="org-src-container">
-
-<pre class="src src-go">d := <span style="color: #CDC673;">"this is test"</span> 
-m := md5.<span style="color: #87D700;">New</span><span style="color: #AF87FF;">()</span>
-m.<span style="color: #87D700;">Write</span><span style="color: #AF87FF;">(</span><span style="color: #5FD7FF;">[]</span><span style="color: #87D700;">byte</span><span style="color: #5FD7FF;">(</span>d<span style="color: #5FD7FF;">)</span><span style="color: #AF87FF;">)</span>
-h := m.<span style="color: #87D700;">Sum</span><span style="color: #AF87FF;">(</span><span style="color: #AF87FF;">nil</span><span style="color: #AF87FF;">)</span>
-<span style="color: #FF1493;">var</span> b *rsa.PrivateKey <span style="color: #8B8878;">//</span><span style="color: #8B8878;">&#36825;&#37324;&#20351;&#29992;&#31614;&#21517;&#30340;&#26041;&#27861;&#33719;&#21462;</span>
-sign, err := b.<span style="color: #87D700;">Sign</span><span style="color: #AF87FF;">(</span>rand.rander, h, crypto.MD5<span style="color: #AF87FF;">)</span>
+<pre class="src src-go"><span style="color: #ffcb6b;">d</span> := <span style="color: #c3e88d;">"this is test"</span> 
+<span style="color: #ffcb6b;">m</span> := md5.<span style="color: #82aaff;">New</span>()
+m.<span style="color: #82aaff;">Write</span>([]<span style="color: #82aaff;">byte</span>(d))
+<span style="color: #ffcb6b;">h</span> := m.<span style="color: #82aaff;">Sum</span>(<span style="color: #f78c6c;">nil</span>)
+<span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">b</span> *<span style="color: #c792ea;">rsa.PrivateKey</span> <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36825;&#37324;&#20351;&#29992;&#31614;&#21517;&#30340;&#26041;&#27861;&#33719;&#21462;</span>
+<span style="color: #ffcb6b;">sign</span>, <span style="color: #ffcb6b;">err</span> := b.<span style="color: #82aaff;">Sign</span>(rand.rander, h, crypto.MD5)
 </pre>
 </div>
 
@@ -399,7 +277,6 @@ sign, err := b.<span style="color: #87D700;">Sign</span><span style="color: #AF8
 <li>验证签名</li>
 </ol>
 <div class="org-src-container">
-
 <pre class="src src-golang">sign := "xxxx" //这是我们的签名
 hash := "xxx" // 对数据进行的hash
 var pk *rsa.PublicKey //公钥
@@ -412,8 +289,8 @@ if err == nil {
 </div>
 </div>
 </div>
-<div id="outline-container-orgheadline11" class="outline-2">
-<h2 id="orgheadline11"><span class="section-number-2">6</span> 资料</h2>
+<div id="outline-container-orgf2d5b48" class="outline-2">
+<h2 id="orgf2d5b48"><span class="section-number-2">6</span> 资料</h2>
 <div class="outline-text-2" id="text-6">
 <ol class="org-ol">
 <li><a href="https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf">ASN1编码规则</a></li>
@@ -425,8 +302,7 @@ if err == nil {
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2016-08-17 三 16:59</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

@@ -3,227 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-01-11 Wed 16:39 -->
+<!-- 2021-01-22 Fri 17:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>GRPC golang版源码分析之客户端(二)</title>
 <meta name="generator" content="Org mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -237,123 +43,123 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org34b9f3c">1. 前言</a></li>
-<li><a href="#org4296133">2. 负载均衡</a></li>
-<li><a href="#orgb0a8079">3. 相关链接</a></li>
+<li><a href="#org5288d76">1. 前言</a></li>
+<li><a href="#orge36d607">2. 负载均衡</a></li>
+<li><a href="#org3270768">3. 相关链接</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org34b9f3c" class="outline-2">
-<h2 id="org34b9f3c"><span class="section-number-2">1</span> 前言</h2>
+<div id="outline-container-org5288d76" class="outline-2">
+<h2 id="org5288d76"><span class="section-number-2">1</span> 前言</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 前面一篇文章分析了一个grpc call的大致调用流程，顺着源码走了一遍，但是grpc中有一些特性并没有进行分析，这篇blog主要就是分析负载均衡这个特性。负载均衡可以让你在使用grpc调用方法是连接不同的服务器。在启动的时候，grpc client会建立对所有服务器的连接，然后通过轮询算法拿不同的服务器。
 </p>
 </div>
 </div>
-<div id="outline-container-org4296133" class="outline-2">
-<h2 id="org4296133"><span class="section-number-2">2</span> 负载均衡</h2>
+<div id="outline-container-orge36d607" class="outline-2">
+<h2 id="orge36d607"><span class="section-number-2">2</span> 负载均衡</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 负载均衡是在客户端实现的，通过在初始化一个grpc客户端传入一个负载均衡器，默认是通过轮询算法每次调用时切换调用的服务器，由于是在客户端做的，所以只能让服务器平摊压力，并不能实时的根据服务器的状态来进行负载均衡。比如某一刻所有的grpc客户端都轮到了同一个服务器（这里只是举例）。
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #74af68;">//</span><span style="color: #74af68;">&#22312;clientconn.go&#30340;DialContext&#20989;&#25968;&#20013;</span>
-<span style="color: #ffad29; font-weight: bold;">go</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #8c8c8c;">()</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #ffad29; font-weight: bold;">var</span> addrs <span style="color: #93a8c6;">[]</span><span style="color: #34cae2;">Address</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> cc.dopts.balancer == <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
-    <span style="color: #74af68;">// </span><span style="color: #74af68;">Connect to target directly if balancer is nil.</span>
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#22914;&#26524;&#27809;&#26377;&#35774;&#32622;&#36127;&#36733;&#22343;&#34913;&#22120;&#65292;&#21017;&#30452;&#25509;&#36830;&#25509;</span>
-    addrs = <span style="color: #23d7d7;">append</span><span style="color: #b0b1a3;">(</span>addrs, <span style="color: #34cae2;">Address</span><span style="color: #97b098;">{</span>Addr: target<span style="color: #97b098;">}</span><span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span> <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #93a8c6;">{</span>
-    <span style="color: #ffad29; font-weight: bold;">var</span> credsClone credentials.TransportCredentials
-    <span style="color: #ffad29; font-weight: bold;">if</span> creds != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      credsClone = creds.<span style="color: #00ede1; font-weight: bold;">Clone</span><span style="color: #97b098;">()</span>
-    <span style="color: #b0b1a3;">}</span>
-    config := <span style="color: #34cae2;">BalancerConfig</span><span style="color: #b0b1a3;">{</span>
-      <span style="color: #008b8b;">DialCreds</span>: credsClone,
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21551;&#21160;&#19968;&#20010;&#36127;&#36733;&#22343;&#34913;&#22120;,start&#20989;&#25968;&#20250;&#21551;&#21160;&#19968;&#20010;watch&#30417;&#21548;&#22320;&#22336;&#30340;&#21464;&#21270;&#65292;&#32780;Notify&#36820;&#22238;&#19968;&#20010;&#36890;&#36947;&#65292;&#22312;&#27599;&#27425;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#21518;&#30340;&#26368;&#26032;&#22320;&#22336;&#20449;&#24687;.</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> err := cc.dopts.balancer.<span style="color: #00ede1; font-weight: bold;">Start</span><span style="color: #b0b1a3;">(</span>target, config<span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      waitC &lt;- err
-      <span style="color: #ffad29; font-weight: bold;">return</span>
-    <span style="color: #b0b1a3;">}</span>
-    ch := cc.dopts.balancer.<span style="color: #00ede1; font-weight: bold;">Notify</span><span style="color: #b0b1a3;">()</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> ch == <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      <span style="color: #74af68;">// </span><span style="color: #74af68;">There is no name resolver installed.</span>
-      addrs = <span style="color: #23d7d7;">append</span><span style="color: #97b098;">(</span>addrs, <span style="color: #34cae2;">Address</span><span style="color: #aebed8;">{</span>Addr: target<span style="color: #aebed8;">}</span><span style="color: #97b098;">)</span>
-    <span style="color: #b0b1a3;">}</span> <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #b0b1a3;">{</span>
-      addrs, ok = &lt;-ch
-      <span style="color: #ffad29; font-weight: bold;">if</span> !ok || <span style="color: #23d7d7;">len</span><span style="color: #97b098;">(</span>addrs<span style="color: #97b098;">)</span> == <span style="color: #008b8b;">0</span> <span style="color: #97b098;">{</span>
-        waitC &lt;- errNoAddr
-        <span style="color: #ffad29; font-weight: bold;">return</span>
-      <span style="color: #97b098;">}</span>
-    <span style="color: #b0b1a3;">}</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#23545;&#27599;&#19968;&#20010;&#22320;&#22336;&#36827;&#34892;&#36830;&#25509;, &#22240;&#20026;&#36825;&#26159;&#23458;&#25143;&#31471;&#21551;&#21160;&#26102;&#65292;&#25152;&#20197;&#38656;&#35201;&#23545;&#25152;&#26377;&#22320;&#22336;&#25805;&#20316;.</span>
-  <span style="color: #ffad29; font-weight: bold;">for</span> _, a := <span style="color: #ffad29; font-weight: bold;">range</span> addrs <span style="color: #93a8c6;">{</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> err := cc.<span style="color: #00ede1; font-weight: bold;">resetAddrConn</span><span style="color: #b0b1a3;">(</span>a, <span style="color: #008b8b;">false</span>, <span style="color: #008b8b;">nil</span><span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      waitC &lt;- err
-      <span style="color: #ffad29; font-weight: bold;">return</span>
-    <span style="color: #b0b1a3;">}</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #23d7d7;">close</span><span style="color: #93a8c6;">(</span>waitC<span style="color: #93a8c6;">)</span>
-<span style="color: #8c8c8c;">}()</span>
+<pre class="src src-go"><span style="color: #676E95;">//</span><span style="color: #676E95;">&#22312;clientconn.go&#30340;DialContext&#20989;&#25968;&#20013;</span>
+<span style="color: #89DDFF;">go</span> <span style="color: #89DDFF;">func</span>() {
+          <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">addrs</span> []<span style="color: #c792ea;">Address</span>
+          <span style="color: #89DDFF;">if</span> cc.dopts.balancer == <span style="color: #f78c6c;">nil</span> {
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">Connect to target directly if balancer is nil.</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#27809;&#26377;&#35774;&#32622;&#36127;&#36733;&#22343;&#34913;&#22120;&#65292;&#21017;&#30452;&#25509;&#36830;&#25509;</span>
+              addrs = <span style="color: #82aaff;">append</span>(addrs, <span style="color: #c792ea;">Address</span>{<span style="color: #f78c6c;">Addr</span>: target})
+          } <span style="color: #89DDFF;">else</span> {
+              <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">credsClone</span> <span style="color: #c792ea;">credentials.TransportCredentials</span>
+              <span style="color: #89DDFF;">if</span> creds != <span style="color: #f78c6c;">nil</span> {
+                  credsClone = creds.<span style="color: #82aaff;">Clone</span>()
+              }
+              <span style="color: #ffcb6b;">config</span> := <span style="color: #c792ea;">BalancerConfig</span>{
+                  <span style="color: #f78c6c;">DialCreds</span>: credsClone,
+              }
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21551;&#21160;&#19968;&#20010;&#36127;&#36733;&#22343;&#34913;&#22120;,start&#20989;&#25968;&#20250;&#21551;&#21160;&#19968;&#20010;watch&#30417;&#21548;&#22320;&#22336;&#30340;&#21464;&#21270;&#65292;&#32780;Notify&#36820;&#22238;&#19968;&#20010;&#36890;&#36947;&#65292;&#22312;&#27599;&#27425;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#21518;&#30340;&#26368;&#26032;&#22320;&#22336;&#20449;&#24687;.</span>
+              <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := cc.dopts.balancer.<span style="color: #82aaff;">Start</span>(target, config); err != <span style="color: #f78c6c;">nil</span> {
+                  waitC &lt;- err
+                  <span style="color: #89DDFF;">return</span>
+              }
+              <span style="color: #ffcb6b;">ch</span> := cc.dopts.balancer.<span style="color: #82aaff;">Notify</span>()
+              <span style="color: #89DDFF;">if</span> ch == <span style="color: #f78c6c;">nil</span> {
+                  <span style="color: #676E95;">// </span><span style="color: #676E95;">There is no name resolver installed.</span>
+                  addrs = <span style="color: #82aaff;">append</span>(addrs, <span style="color: #c792ea;">Address</span>{<span style="color: #f78c6c;">Addr</span>: target})
+              } <span style="color: #89DDFF;">else</span> {
+                  addrs, ok = &lt;-ch
+                  <span style="color: #89DDFF;">if</span> <span style="color: #89DDFF; font-weight: bold;">!</span>ok || <span style="color: #82aaff;">len</span>(addrs) == 0 {
+                      waitC &lt;- errNoAddr
+                      <span style="color: #89DDFF;">return</span>
+                  }
+              }
+          }
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#23545;&#27599;&#19968;&#20010;&#22320;&#22336;&#36827;&#34892;&#36830;&#25509;, &#22240;&#20026;&#36825;&#26159;&#23458;&#25143;&#31471;&#21551;&#21160;&#26102;&#65292;&#25152;&#20197;&#38656;&#35201;&#23545;&#25152;&#26377;&#22320;&#22336;&#25805;&#20316;.</span>
+          <span style="color: #89DDFF;">for</span> <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">a</span> := <span style="color: #89DDFF;">range</span> addrs {
+              <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := cc.<span style="color: #82aaff;">resetAddrConn</span>(a, <span style="color: #f78c6c;">false</span>, <span style="color: #f78c6c;">nil</span>); err != <span style="color: #f78c6c;">nil</span> {
+                  waitC &lt;- err
+                  <span style="color: #89DDFF;">return</span>
+              }
+          }
+          <span style="color: #82aaff;">close</span>(waitC)
+      }()
 ..............
-<span style="color: #74af68;">//</span><span style="color: #74af68;">&#30465;&#30053;&#19968;&#20123;&#20195;&#30721;</span>
-<span style="color: #ffad29; font-weight: bold;">if</span> ok <span style="color: #8c8c8c;">{</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#36825;&#37324;&#24320;&#21551;&#19968;&#20010;&#30417;&#21548;goroutine&#65292;&#20027;&#35201;&#26159;&#30417;&#21548;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#24182;&#23545;&#26032;&#30340;&#22320;&#22336;&#24314;&#31435;&#36830;&#25509;&#65292;&#23545;&#32769;&#30340;&#22320;&#22336;&#20851;&#38381;&#36830;&#25509;</span>
-  <span style="color: #ffad29; font-weight: bold;">go</span> cc.<span style="color: #00ede1; font-weight: bold;">lbWatcher</span><span style="color: #93a8c6;">()</span>
-<span style="color: #8c8c8c;">}</span>
+<span style="color: #676E95;">//</span><span style="color: #676E95;">&#30465;&#30053;&#19968;&#20123;&#20195;&#30721;</span>
+<span style="color: #89DDFF;">if</span> ok {
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36825;&#37324;&#24320;&#21551;&#19968;&#20010;&#30417;&#21548;goroutine&#65292;&#20027;&#35201;&#26159;&#30417;&#21548;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#24182;&#23545;&#26032;&#30340;&#22320;&#22336;&#24314;&#31435;&#36830;&#25509;&#65292;&#23545;&#32769;&#30340;&#22320;&#22336;&#20851;&#38381;&#36830;&#25509;</span>
+          <span style="color: #89DDFF;">go</span> cc.<span style="color: #82aaff;">lbWatcher</span>()
+      }
 </pre>
 </div>
 <p>
 上面的代码大致是说明了一个负载均衡器是怎么使用的，下面看看负载均衡具体的结构:
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">type</span> <span style="color: #34cae2;">Balancer</span> <span style="color: #ffad29; font-weight: bold;">interface</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21551;&#21160;&#19968;&#20010;&#36127;&#36733;&#22343;&#34913;&#65292;&#20869;&#37096;&#20250;&#21551;&#21160;&#19968;&#20010;&#21517;&#31216;&#26381;&#21153;&#22120;&#30340;watcher&#65292;&#19981;&#26029;&#30417;&#21548;&#22320;&#22336;&#30340;&#21464;&#21270;</span>
-  <span style="color: #00ede1; font-weight: bold;">Start</span><span style="color: #93a8c6;">(</span>target string, config BalancerConfig<span style="color: #93a8c6;">)</span> error
-  <span style="color: #00ede1; font-weight: bold;">Up</span><span style="color: #93a8c6;">(</span>addr Address<span style="color: #93a8c6;">)</span> <span style="color: #93a8c6;">(</span>down <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">(</span><span style="color: #34cae2;">error</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#24471;&#21040;&#19979;&#19968;&#27425;&#36830;&#25509;&#30340;&#22320;&#22336;</span>
-  <span style="color: #00ede1; font-weight: bold;">Get</span><span style="color: #93a8c6;">(</span>ctx context.Context, opts BalancerGetOptions<span style="color: #93a8c6;">)</span> <span style="color: #93a8c6;">(</span>addr Address, put <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">()</span>, err error<span style="color: #93a8c6;">)</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20174;&#26381;&#21153;&#22120;&#24471;&#21040;&#26356;&#26032;&#30340;&#22320;&#22336;,&#36825;&#20010;&#22320;&#22336;&#26159;&#26356;&#26032;&#21518;&#30340;&#25152;&#26377;&#22320;&#22336;</span>
-  <span style="color: #00ede1; font-weight: bold;">Notify</span><span style="color: #93a8c6;">()</span> &lt;-<span style="color: #ffad29; font-weight: bold;">chan</span> <span style="color: #93a8c6;">[]</span><span style="color: #34cae2;">Address</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20851;&#38381;&#36127;&#36733;&#22343;&#34913;&#22120;</span>
-  <span style="color: #00ede1; font-weight: bold;">Close</span><span style="color: #93a8c6;">()</span> error
-<span style="color: #8c8c8c;">}</span>
+<pre class="src src-go"><span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">Balancer</span> <span style="color: #89DDFF;">interface</span> {
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21551;&#21160;&#19968;&#20010;&#36127;&#36733;&#22343;&#34913;&#65292;&#20869;&#37096;&#20250;&#21551;&#21160;&#19968;&#20010;&#21517;&#31216;&#26381;&#21153;&#22120;&#30340;watcher&#65292;&#19981;&#26029;&#30417;&#21548;&#22320;&#22336;&#30340;&#21464;&#21270;</span>
+      <span style="color: #82aaff;">Start</span>(<span style="color: #ffcb6b;">target</span> <span style="color: #c792ea;">string</span>, <span style="color: #ffcb6b;">config</span> <span style="color: #c792ea;">BalancerConfig</span>) <span style="color: #c792ea;">error</span>
+      <span style="color: #82aaff;">Up</span>(<span style="color: #ffcb6b;">addr</span> <span style="color: #c792ea;">Address</span>) (<span style="color: #ffcb6b;">down</span> <span style="color: #89DDFF;">func</span>(<span style="color: #c792ea;">error</span>))
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#24471;&#21040;&#19979;&#19968;&#27425;&#36830;&#25509;&#30340;&#22320;&#22336;</span>
+      <span style="color: #82aaff;">Get</span>(<span style="color: #ffcb6b;">ctx</span> <span style="color: #c792ea;">context.Context</span>, <span style="color: #ffcb6b;">opts</span> <span style="color: #c792ea;">BalancerGetOptions</span>) (<span style="color: #ffcb6b;">addr</span> <span style="color: #c792ea;">Address</span>, <span style="color: #ffcb6b;">put</span> <span style="color: #89DDFF;">func</span>(), <span style="color: #ffcb6b;">err</span> <span style="color: #c792ea;">error</span>)
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20174;&#26381;&#21153;&#22120;&#24471;&#21040;&#26356;&#26032;&#30340;&#22320;&#22336;,&#36825;&#20010;&#22320;&#22336;&#26159;&#26356;&#26032;&#21518;&#30340;&#25152;&#26377;&#22320;&#22336;</span>
+      <span style="color: #82aaff;">Notify</span>() &lt;-<span style="color: #89DDFF;">chan</span> []<span style="color: #c792ea;">Address</span>
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20851;&#38381;&#36127;&#36733;&#22343;&#34913;&#22120;</span>
+      <span style="color: #82aaff;">Close</span>() <span style="color: #c792ea;">error</span>
+}
 </pre>
 </div>
 <p>
 负载均衡器有个默认实现在balancer.go中，使用的轮询算法。这个实现中包含了一个名字服务器的服务，我们可以通过实现一个名字服务器的接口，然后封装到这个负载均衡器中，这样就不需要自己实现整个负载均衡器。名字服务器的接口如下:
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">type</span> <span style="color: #34cae2;">Update</span> <span style="color: #ffad29; font-weight: bold;">struct</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Op indicates the operation of the update.</span>
-  Op Operation
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Addr is the updated address. It is empty string if there is no address update.</span>
-  Addr string
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Metadata is the updated metadata. It is nil if there is no metadata update.</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Metadata is not required for a custom naming implementation.</span>
-  Metadata <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span>
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #74af68;">// </span><span style="color: #74af68;">Resolver creates a Watcher for a target to track its resolution changes.</span>
-<span style="color: #ffad29; font-weight: bold;">type</span> <span style="color: #34cae2;">Resolver</span> <span style="color: #ffad29; font-weight: bold;">interface</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Resolve creates a Watcher for target.</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#36890;&#36807;&#19968;&#20010;&#21517;&#23383;&#24471;&#21040;&#19968;&#20010;watcher&#65292;&#30417;&#21548;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#12290;</span>
-  <span style="color: #00ede1; font-weight: bold;">Resolve</span><span style="color: #93a8c6;">(</span>target string<span style="color: #93a8c6;">)</span> <span style="color: #93a8c6;">(</span>Watcher, error<span style="color: #93a8c6;">)</span>
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #74af68;">// </span><span style="color: #74af68;">Watcher watches for the updates on the specified target.</span>
-<span style="color: #ffad29; font-weight: bold;">type</span> <span style="color: #34cae2;">Watcher</span> <span style="color: #ffad29; font-weight: bold;">interface</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Next blocks until an update or error happens. It may return one or more</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">updates. The first call should get the full set of the results. It should</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">return an error if and only if Watcher cannot recover.</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">&#24471;&#21040;&#19979;&#27425;&#26356;&#26032;&#30340;&#22320;&#22336;</span>
-  <span style="color: #00ede1; font-weight: bold;">Next</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">(</span><span style="color: #b0b1a3;">[]</span>*<span style="color: #34cae2;">Update</span>, error<span style="color: #93a8c6;">)</span>
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Close closes the Watcher.</span>
-  <span style="color: #00ede1; font-weight: bold;">Close</span><span style="color: #93a8c6;">()</span>
-<span style="color: #8c8c8c;">}</span>
+<pre class="src src-go"><span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">Update</span> <span style="color: #89DDFF;">struct</span> {
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Op indicates the operation of the update.</span>
+      Op <span style="color: #c792ea;">Operation</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Addr is the updated address. It is empty string if there is no address update.</span>
+      Addr <span style="color: #c792ea;">string</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Metadata is the updated metadata. It is nil if there is no metadata update.</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Metadata is not required for a custom naming implementation.</span>
+      Metadata <span style="color: #89DDFF;">interface</span>{}
+}
+<span style="color: #676E95;">// </span><span style="color: #676E95;">Resolver creates a Watcher for a target to track its resolution changes.</span>
+<span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">Resolver</span> <span style="color: #89DDFF;">interface</span> {
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Resolve creates a Watcher for target.</span>
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36890;&#36807;&#19968;&#20010;&#21517;&#23383;&#24471;&#21040;&#19968;&#20010;watcher&#65292;&#30417;&#21548;&#26381;&#21153;&#22120;&#22320;&#22336;&#21464;&#21270;&#12290;</span>
+      <span style="color: #82aaff;">Resolve</span>(<span style="color: #ffcb6b;">target</span> <span style="color: #c792ea;">string</span>) (<span style="color: #c792ea;">Watcher</span>, <span style="color: #c792ea;">error</span>)
+}
+<span style="color: #676E95;">// </span><span style="color: #676E95;">Watcher watches for the updates on the specified target.</span>
+<span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">Watcher</span> <span style="color: #89DDFF;">interface</span> {
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Next blocks until an update or error happens. It may return one or more</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">updates. The first call should get the full set of the results. It should</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">return an error if and only if Watcher cannot recover.</span>
+  <span style="color: #676E95;">// </span><span style="color: #676E95;">&#24471;&#21040;&#19979;&#27425;&#26356;&#26032;&#30340;&#22320;&#22336;</span>
+      <span style="color: #82aaff;">Next</span>() ([]*<span style="color: #c792ea;">Update</span>, <span style="color: #c792ea;">error</span>)
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Close closes the Watcher.</span>
+      <span style="color: #82aaff;">Close</span>()
+}
 </pre>
 </div>
 <p>
@@ -362,8 +168,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb0a8079" class="outline-2">
-<h2 id="orgb0a8079"><span class="section-number-2">3</span> 相关链接</h2>
+<div id="outline-container-org3270768" class="outline-2">
+<h2 id="org3270768"><span class="section-number-2">3</span> 相关链接</h2>
 <div class="outline-text-2" id="text-3">
 <ol class="org-ol">
 <li><a href="http://www.grpc.io/docs/guides/auth.html#overview">http://www.grpc.io/docs/guides/auth.html#overview</a> 验证文档</li>
@@ -372,8 +178,7 @@ for the JavaScript code in this tag.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2017-01-11 Wed 16:39</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

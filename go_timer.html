@@ -3,142 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-10-28 五 16:06 -->
-<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta  name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2021-01-22 Fri 17:59 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>go中的定时器timer</title>
-<meta  name="generator" content="Org-mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  pre.src-sh:before    { content: 'sh'; }
-  pre.src-bash:before  { content: 'sh'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-R:before     { content: 'R'; }
-  pre.src-perl:before  { content: 'Perl'; }
-  pre.src-java:before  { content: 'Java'; }
-  pre.src-sql:before   { content: 'SQL'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  /*]]>*/-->
-</style>
+<meta name="generator" content="Org mode" />
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -152,36 +43,35 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgheadline1">1. 使用方法</a></li>
-<li><a href="#orgheadline2">2. 内部实现</a></li>
-<li><a href="#orgheadline3">3. 其他实现方法</a></li>
+<li><a href="#orgc66beaf">1. 使用方法</a></li>
+<li><a href="#org56e722c">2. 内部实现</a></li>
+<li><a href="#orgc13592d">3. 其他实现方法</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgheadline1" class="outline-2">
-<h2 id="orgheadline1"><span class="section-number-2">1</span> 使用方法</h2>
+<div id="outline-container-orgc66beaf" class="outline-2">
+<h2 id="orgc66beaf"><span class="section-number-2">1</span> 使用方法</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 golang中定时器的使用接口在time包中，其中最主要两个接口是time.After跟,time.AfterFunc其中第一个After接口返回一个chan Time, 当时间到时可以读出Timer, AfterFunc接受一个方法，当时间到时执行这个方法。
 </p>
 <div class="org-src-container">
+<pre class="src src-go"><span style="color: #89DDFF;">package</span> main
 
-<pre class="src src-go"><span style="color: #F92672;">package</span> main
+<span style="color: #89DDFF;">import</span> (
+  <span style="color: #c3e88d;">"time"</span>
+  <span style="color: #c3e88d;">"fmt"</span>
+)
 
-<span style="color: #F92672;">import</span> <span style="color: #AE81FF;">(</span>
-  <span style="color: #E6DB74;">"time"</span>
-  <span style="color: #E6DB74;">"fmt"</span>
-<span style="color: #AE81FF;">)</span>
-
-<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">main</span><span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
-  a := time.<span style="color: #A6E22E;">After</span><span style="color: #66D9EF;">(</span><span style="color: #AE81FF;">2</span> * time.Second<span style="color: #66D9EF;">)</span>
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">main</span>() {
+  <span style="color: #ffcb6b;">a</span> := time.<span style="color: #82aaff;">After</span>(2 * time.Second)
   &lt;- a
-  fmt.<span style="color: #A6E22E;">Println</span><span style="color: #66D9EF;">(</span><span style="color: #E6DB74;">"timer receive"</span><span style="color: #66D9EF;">)</span>
+  fmt.<span style="color: #82aaff;">Println</span>(<span style="color: #c3e88d;">"timer receive"</span>)
 
-  time.<span style="color: #A6E22E;">AfterFunc</span><span style="color: #66D9EF;">(</span><span style="color: #AE81FF;">2</span> * time.Second, <span style="color: #F92672;">func</span><span style="color: #A6E22E;">(){</span>
-    fmt.<span style="color: #A6E22E;">Println</span><span style="color: #E6DB74;">(</span><span style="color: #E6DB74;">"timer receive"</span><span style="color: #E6DB74;">)</span>
-  <span style="color: #A6E22E;">}</span><span style="color: #66D9EF;">)</span>
-<span style="color: #AE81FF;">}</span>
+  time.<span style="color: #82aaff;">AfterFunc</span>(2 * time.Second, <span style="color: #89DDFF;">func</span>(){
+    fmt.<span style="color: #82aaff;">Println</span>(<span style="color: #c3e88d;">"timer receive"</span>)
+  })
+}
 </pre>
 </div>
 <p>
@@ -190,29 +80,28 @@ After其实跟AfterFunc差不多，只不过其中的func参数是先通道中�
 </div>
 </div>
 
-<div id="outline-container-orgheadline2" class="outline-2">
-<h2 id="orgheadline2"><span class="section-number-2">2</span> 内部实现</h2>
+<div id="outline-container-org56e722c" class="outline-2">
+<h2 id="org56e722c"><span class="section-number-2">2</span> 内部实现</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 由于After跟AfterFunc差不多，这里主要看看AfterFunc的实现
 </p>
 <div class="org-src-container">
-
-<pre class="src src-go">  <span style="color: #75715E;">//</span><span style="color: #75715E;">time/sleep.go</span>
- <span style="color: #F92672;">func</span> <span style="color: #A6E22E;">AfterFunc</span><span style="color: #AE81FF;">(</span>d <span style="color: #66D9EF;">Duration</span>, f <span style="color: #F92672;">func</span><span style="color: #66D9EF;">()</span><span style="color: #AE81FF;">)</span> *<span style="color: #66D9EF;">Timer</span> <span style="color: #AE81FF;">{</span>
-    t := &amp;<span style="color: #66D9EF;">Timer</span><span style="color: #66D9EF;">{</span>
-      <span style="color: #AE81FF;">r</span>: <span style="color: #66D9EF;">runtimeTimer</span><span style="color: #A6E22E;">{</span>
-        <span style="color: #AE81FF;">when</span>: <span style="color: #A6E22E;">when</span><span style="color: #E6DB74;">(</span>d<span style="color: #E6DB74;">)</span>,
-        <span style="color: #AE81FF;">f</span>:    goFunc,
-        <span style="color: #AE81FF;">arg</span>:  f,
-      <span style="color: #A6E22E;">}</span>,
-    <span style="color: #66D9EF;">}</span>
-    <span style="color: #A6E22E;">startTimer</span><span style="color: #66D9EF;">(</span>&amp;t.r<span style="color: #66D9EF;">)</span>
-    <span style="color: #F92672;">return</span> t
-  <span style="color: #AE81FF;">}</span> 
-  <span style="color: #F92672;">func</span> <span style="color: #A6E22E;">goFunc</span><span style="color: #AE81FF;">(</span>arg <span style="color: #F92672;">interface</span><span style="color: #66D9EF;">{}</span>, seq <span style="color: #66D9EF;">uintptr</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
-    <span style="color: #F92672;">go</span> arg.<span style="color: #66D9EF;">(</span><span style="color: #F92672;">func</span><span style="color: #A6E22E;">()</span><span style="color: #66D9EF;">)()</span>
-<span style="color: #AE81FF;">}</span>
+<pre class="src src-go">  <span style="color: #676E95;">//</span><span style="color: #676E95;">time/sleep.go</span>
+ <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">AfterFunc</span>(<span style="color: #ffcb6b;">d</span> <span style="color: #c792ea;">Duration</span>, <span style="color: #ffcb6b;">f</span> <span style="color: #89DDFF;">func</span>()) *<span style="color: #c792ea;">Timer</span> {
+    <span style="color: #ffcb6b;">t</span> := &amp;<span style="color: #c792ea;">Timer</span>{
+      <span style="color: #f78c6c;">r</span>: <span style="color: #c792ea;">runtimeTimer</span>{
+    <span style="color: #f78c6c;">when</span>: <span style="color: #82aaff;">when</span>(d),
+    <span style="color: #f78c6c;">f</span>:    goFunc,
+    <span style="color: #f78c6c;">arg</span>:  f,
+      },
+    }
+    <span style="color: #82aaff;">startTimer</span>(&amp;t.r)
+    <span style="color: #89DDFF;">return</span> t
+  } 
+  <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">goFunc</span>(<span style="color: #ffcb6b;">arg</span> <span style="color: #89DDFF;">interface</span>{}, <span style="color: #ffcb6b;">seq</span> <span style="color: #c792ea;">uintptr</span>) {
+      <span style="color: #89DDFF;">go</span> arg.(<span style="color: #89DDFF;">func</span>())()
+}
 </pre>
 </div>
 <p>
@@ -220,128 +109,127 @@ AfterFunc很简单，就是把参数封装为runtimeTimer,然后启动timer(把t
 </p>
 
 <div class="org-src-container">
+<pre class="src src-go"><span style="color: #676E95;">//</span><span style="color: #676E95;">runtime/time.go</span>
+  <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">startTimer</span>(<span style="color: #ffcb6b;">t</span> *<span style="color: #c792ea;">timer</span>) {
+    <span style="color: #89DDFF;">if</span> raceenabled {
+      <span style="color: #82aaff;">racerelease</span>(unsafe.<span style="color: #82aaff;">Pointer</span>(t))
+    }
+    <span style="color: #82aaff;">addtimer</span>(t)
+  }
 
-<pre class="src src-go"><span style="color: #75715E;">//</span><span style="color: #75715E;">runtime/time.go</span>
-  <span style="color: #F92672;">func</span> <span style="color: #A6E22E;">startTimer</span><span style="color: #AE81FF;">(</span>t *<span style="color: #66D9EF;">timer</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
-    <span style="color: #F92672;">if</span> raceenabled <span style="color: #66D9EF;">{</span>
-      <span style="color: #A6E22E;">racerelease</span><span style="color: #A6E22E;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #E6DB74;">(</span>t<span style="color: #E6DB74;">)</span><span style="color: #A6E22E;">)</span>
-    <span style="color: #66D9EF;">}</span>
-    <span style="color: #A6E22E;">addtimer</span><span style="color: #66D9EF;">(</span>t<span style="color: #66D9EF;">)</span>
-  <span style="color: #AE81FF;">}</span>
+  <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">addtimer</span>(<span style="color: #ffcb6b;">t</span> *<span style="color: #c792ea;">timer</span>) {
+    <span style="color: #82aaff;">lock</span>(&amp;timers.lock)
+    <span style="color: #82aaff;">addtimerLocked</span>(t)
+    <span style="color: #82aaff;">unlock</span>(&amp;timers.lock)
+  }
 
-  <span style="color: #F92672;">func</span> <span style="color: #A6E22E;">addtimer</span><span style="color: #AE81FF;">(</span>t *<span style="color: #66D9EF;">timer</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
-    <span style="color: #A6E22E;">lock</span><span style="color: #66D9EF;">(</span>&amp;timers.lock<span style="color: #66D9EF;">)</span>
-    <span style="color: #A6E22E;">addtimerLocked</span><span style="color: #66D9EF;">(</span>t<span style="color: #66D9EF;">)</span>
-    <span style="color: #A6E22E;">unlock</span><span style="color: #66D9EF;">(</span>&amp;timers.lock<span style="color: #66D9EF;">)</span>
-  <span style="color: #AE81FF;">}</span>
+  <span style="color: #676E95;">// </span><span style="color: #676E95;">Add a timer to the heap and start or kick the timer proc.</span>
+  <span style="color: #676E95;">// </span><span style="color: #676E95;">If the new timer is earlier than any of the others.</span>
+  <span style="color: #676E95;">// </span><span style="color: #676E95;">Timers are locked.</span>
+  <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">addtimerLocked</span>(<span style="color: #ffcb6b;">t</span> *<span style="color: #c792ea;">timer</span>) {
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">when must never be negative; otherwise timerproc will overflow</span>
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">during its delta calculation and never expire other runtime&#183;timers.</span>
+    <span style="color: #89DDFF;">if</span> t.when &lt; 0 {
+      t.when = 1&lt;&lt;63 - 1
+    }
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#28155;&#21152;time&#21040;&#20840;&#23616;timer</span>
+    t.i = <span style="color: #82aaff;">len</span>(timers.t)
+    timers.t = <span style="color: #82aaff;">append</span>(timers.t, t)
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20351;&#29992;&#26368;&#23567;&#22534;&#31639;&#27861;&#32500;&#25252;timer&#38431;&#21015;</span>
+    <span style="color: #82aaff;">siftupTimer</span>(t.i)
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#26159;&#31532;&#19968;&#20010;</span>
+    <span style="color: #89DDFF;">if</span> t.i == 0 {
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">siftup moved to top: new earliest deadline.</span>
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#22312;sleep&#20013;, &#21796;&#37266;</span>
+      <span style="color: #89DDFF;">if</span> timers.sleeping {
+    timers.sleeping = <span style="color: #f78c6c;">false</span>
+    <span style="color: #82aaff;">notewakeup</span>(&amp;timers.waitnote)
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#22312;&#35843;&#24230;&#20013;, &#31561;&#24453;</span>
+      <span style="color: #89DDFF;">if</span> timers.rescheduling {
+    timers.rescheduling = <span style="color: #f78c6c;">false</span>
+    <span style="color: #82aaff;">goready</span>(timers.gp, 0)
+      }
+    }
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;timer&#36824;&#27809;&#21019;&#24314;,&#21017;&#21019;&#24314;</span>
+    <span style="color: #89DDFF;">if</span> <span style="color: #89DDFF; font-weight: bold;">!</span>timers.created {
+      timers.created = <span style="color: #f78c6c;">true</span>
+      <span style="color: #89DDFF;">go</span> <span style="color: #82aaff;">timerproc</span>()
+    }
+  }
 
-  <span style="color: #75715E;">// </span><span style="color: #75715E;">Add a timer to the heap and start or kick the timer proc.</span>
-  <span style="color: #75715E;">// </span><span style="color: #75715E;">If the new timer is earlier than any of the others.</span>
-  <span style="color: #75715E;">// </span><span style="color: #75715E;">Timers are locked.</span>
-  <span style="color: #F92672;">func</span> <span style="color: #A6E22E;">addtimerLocked</span><span style="color: #AE81FF;">(</span>t *<span style="color: #66D9EF;">timer</span><span style="color: #AE81FF;">)</span> <span style="color: #AE81FF;">{</span>
-    <span style="color: #75715E;">// </span><span style="color: #75715E;">when must never be negative; otherwise timerproc will overflow</span>
-    <span style="color: #75715E;">// </span><span style="color: #75715E;">during its delta calculation and never expire other runtime&#183;timers.</span>
-    <span style="color: #F92672;">if</span> t.when &lt; <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
-      t.when = <span style="color: #AE81FF;">1</span>&lt;&lt;<span style="color: #AE81FF;">63</span> - <span style="color: #AE81FF;">1</span>
-    <span style="color: #66D9EF;">}</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#28155;&#21152;time&#21040;&#20840;&#23616;timer</span>
-    t.i = <span style="color: #F92672;">len</span><span style="color: #66D9EF;">(</span>timers.t<span style="color: #66D9EF;">)</span>
-    timers.t = <span style="color: #F92672;">append</span><span style="color: #66D9EF;">(</span>timers.t, t<span style="color: #66D9EF;">)</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#20351;&#29992;&#26368;&#23567;&#22534;&#31639;&#27861;&#32500;&#25252;timer&#38431;&#21015;</span>
-    <span style="color: #A6E22E;">siftupTimer</span><span style="color: #66D9EF;">(</span>t.i<span style="color: #66D9EF;">)</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#26159;&#31532;&#19968;&#20010;</span>
-    <span style="color: #F92672;">if</span> t.i == <span style="color: #AE81FF;">0</span> <span style="color: #66D9EF;">{</span>
-      <span style="color: #75715E;">// </span><span style="color: #75715E;">siftup moved to top: new earliest deadline.</span>
-      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#22312;sleep&#20013;, &#21796;&#37266;</span>
-      <span style="color: #F92672;">if</span> timers.sleeping <span style="color: #A6E22E;">{</span>
-        timers.sleeping = <span style="color: #AE81FF;">false</span>
-        <span style="color: #A6E22E;">notewakeup</span><span style="color: #E6DB74;">(</span>&amp;timers.waitnote<span style="color: #E6DB74;">)</span>
-      <span style="color: #A6E22E;">}</span>
-      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#22312;&#35843;&#24230;&#20013;, &#31561;&#24453;</span>
-      <span style="color: #F92672;">if</span> timers.rescheduling <span style="color: #A6E22E;">{</span>
-        timers.rescheduling = <span style="color: #AE81FF;">false</span>
-        <span style="color: #A6E22E;">goready</span><span style="color: #E6DB74;">(</span>timers.gp, <span style="color: #AE81FF;">0</span><span style="color: #E6DB74;">)</span>
-      <span style="color: #A6E22E;">}</span>
-    <span style="color: #66D9EF;">}</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;timer&#36824;&#27809;&#21019;&#24314;,&#21017;&#21019;&#24314;</span>
-    <span style="color: #F92672;">if</span> !timers.created <span style="color: #66D9EF;">{</span>
-      timers.created = <span style="color: #AE81FF;">true</span>
-      <span style="color: #F92672;">go</span> <span style="color: #A6E22E;">timerproc</span><span style="color: #A6E22E;">()</span>
-    <span style="color: #66D9EF;">}</span>
-  <span style="color: #AE81FF;">}</span>
-
-<span style="color: #F92672;">func</span> <span style="color: #A6E22E;">timerproc</span><span style="color: #AE81FF;">()</span> <span style="color: #AE81FF;">{</span>
-  timers.gp = <span style="color: #A6E22E;">getg</span><span style="color: #66D9EF;">()</span>
-  <span style="color: #F92672;">for</span> <span style="color: #66D9EF;">{</span>
-    <span style="color: #A6E22E;">lock</span><span style="color: #A6E22E;">(</span>&amp;timers.lock<span style="color: #A6E22E;">)</span>
-    timers.sleeping = <span style="color: #AE81FF;">false</span>
-    now := <span style="color: #A6E22E;">nanotime</span><span style="color: #A6E22E;">()</span>
-    delta := <span style="color: #A6E22E;">int64</span><span style="color: #A6E22E;">(</span>-<span style="color: #AE81FF;">1</span><span style="color: #A6E22E;">)</span>
-    <span style="color: #F92672;">for</span> <span style="color: #A6E22E;">{</span>
-      <span style="color: #F92672;">if</span> <span style="color: #F92672;">len</span><span style="color: #E6DB74;">(</span>timers.t<span style="color: #E6DB74;">)</span> == <span style="color: #AE81FF;">0</span> <span style="color: #E6DB74;">{</span>
-        delta = -<span style="color: #AE81FF;">1</span>
-        <span style="color: #F92672;">break</span>
-      <span style="color: #E6DB74;">}</span>
-      t := timers.t<span style="color: #E6DB74;">[</span><span style="color: #AE81FF;">0</span><span style="color: #E6DB74;">]</span>
-      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#24471;&#21040;&#21097;&#20313;&#26102;&#38388;, &#36824;&#27809;&#21040;&#26102;&#38388;&#23601;sleep</span>
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">timerproc</span>() {
+  timers.gp = <span style="color: #82aaff;">getg</span>()
+  <span style="color: #89DDFF;">for</span> {
+    <span style="color: #82aaff;">lock</span>(&amp;timers.lock)
+    timers.sleeping = <span style="color: #f78c6c;">false</span>
+    <span style="color: #ffcb6b;">now</span> := <span style="color: #82aaff;">nanotime</span>()
+    <span style="color: #ffcb6b;">delta</span> := <span style="color: #82aaff;">int64</span>(-1)
+    <span style="color: #89DDFF;">for</span> {
+      <span style="color: #89DDFF;">if</span> <span style="color: #82aaff;">len</span>(timers.t) == 0 {
+    delta = -1
+    <span style="color: #89DDFF;">break</span>
+      }
+      <span style="color: #ffcb6b;">t</span> := timers.t[0]
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#24471;&#21040;&#21097;&#20313;&#26102;&#38388;, &#36824;&#27809;&#21040;&#26102;&#38388;&#23601;sleep</span>
       delta = t.when - now
-      <span style="color: #F92672;">if</span> delta &gt; <span style="color: #AE81FF;">0</span> <span style="color: #E6DB74;">{</span>
-        <span style="color: #F92672;">break</span>
-      <span style="color: #E6DB74;">}</span>
-      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#22914;&#26524;&#26159;&#21608;&#26399;&#24615;&#30340;&#23601;&#31639;&#19979;&#19968;&#27425;&#26102;&#38388;</span>
-      <span style="color: #F92672;">if</span> t.period &gt; <span style="color: #AE81FF;">0</span> <span style="color: #E6DB74;">{</span>
-        <span style="color: #75715E;">// </span><span style="color: #75715E;">leave in heap but adjust next time to fire</span>
-        t.when += t.period * <span style="color: #FD971F;">(</span><span style="color: #AE81FF;">1</span> + -delta/t.period<span style="color: #FD971F;">)</span>
-        <span style="color: #75715E;">//</span><span style="color: #75715E;">&#26368;&#23567;&#22534;&#19979;&#27785;</span>
-        <span style="color: #A6E22E;">siftdownTimer</span><span style="color: #FD971F;">(</span><span style="color: #AE81FF;">0</span><span style="color: #FD971F;">)</span>
-      <span style="color: #E6DB74;">}</span> <span style="color: #F92672;">else</span> <span style="color: #E6DB74;">{</span>
-        <span style="color: #75715E;">// </span><span style="color: #75715E;">remove from heap</span>
-        <span style="color: #75715E;">//</span><span style="color: #75715E;">&#21024;&#38500;&#23558;&#35201;&#25191;&#34892;&#30340;timer,(&#26368;&#23567;&#22534;&#31639;&#27861;)</span>
-        last := <span style="color: #F92672;">len</span><span style="color: #FD971F;">(</span>timers.t<span style="color: #FD971F;">)</span> - <span style="color: #AE81FF;">1</span>
-        <span style="color: #F92672;">if</span> last &gt; <span style="color: #AE81FF;">0</span> <span style="color: #FD971F;">{</span>
-          timers.t<span style="color: #F92672;">[</span><span style="color: #AE81FF;">0</span><span style="color: #F92672;">]</span> = timers.t<span style="color: #F92672;">[</span>last<span style="color: #F92672;">]</span>
-          timers.t<span style="color: #F92672;">[</span><span style="color: #AE81FF;">0</span><span style="color: #F92672;">]</span>.i = <span style="color: #AE81FF;">0</span>
-        <span style="color: #FD971F;">}</span>
-        timers.t<span style="color: #FD971F;">[</span>last<span style="color: #FD971F;">]</span> = <span style="color: #AE81FF;">nil</span>
-        timers.t = timers.t<span style="color: #FD971F;">[</span>:last<span style="color: #FD971F;">]</span>
-        <span style="color: #F92672;">if</span> last &gt; <span style="color: #AE81FF;">0</span> <span style="color: #FD971F;">{</span>
-          <span style="color: #A6E22E;">siftdownTimer</span><span style="color: #F92672;">(</span><span style="color: #AE81FF;">0</span><span style="color: #F92672;">)</span>
-        <span style="color: #FD971F;">}</span>
-        t.i = -<span style="color: #AE81FF;">1</span> <span style="color: #75715E;">// </span><span style="color: #75715E;">mark as removed</span>
-      <span style="color: #E6DB74;">}</span>
-      f := t.f
-      arg := t.arg
-      seq := t.seq
-      <span style="color: #A6E22E;">unlock</span><span style="color: #E6DB74;">(</span>&amp;timers.lock<span style="color: #E6DB74;">)</span>
-      <span style="color: #F92672;">if</span> raceenabled <span style="color: #E6DB74;">{</span>
-        <span style="color: #A6E22E;">raceacquire</span><span style="color: #FD971F;">(</span>unsafe.<span style="color: #A6E22E;">Pointer</span><span style="color: #F92672;">(</span>t<span style="color: #F92672;">)</span><span style="color: #FD971F;">)</span>
-      <span style="color: #E6DB74;">}</span>
-      <span style="color: #75715E;">//</span><span style="color: #75715E;">&#25191;&#34892;&#20989;&#25968;&#35843;&#29992;&#20989;&#25968;</span>
-      <span style="color: #A6E22E;">f</span><span style="color: #E6DB74;">(</span>arg, seq<span style="color: #E6DB74;">)</span>
-      <span style="color: #A6E22E;">lock</span><span style="color: #E6DB74;">(</span>&amp;timers.lock<span style="color: #E6DB74;">)</span>
-    <span style="color: #A6E22E;">}</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#32487;&#32493;&#19979;&#19968;&#20010;,&#22240;&#20026;&#21487;&#33021;&#19979;&#19968;&#20010;timer&#20063;&#21040;&#26102;&#38388;&#20102;</span>
-    <span style="color: #F92672;">if</span> delta &lt; <span style="color: #AE81FF;">0</span> || faketime &gt; <span style="color: #AE81FF;">0</span> <span style="color: #A6E22E;">{</span>
-      <span style="color: #75715E;">// </span><span style="color: #75715E;">No timers left - put goroutine to sleep.</span>
-      timers.rescheduling = <span style="color: #AE81FF;">true</span>
-      <span style="color: #A6E22E;">goparkunlock</span><span style="color: #E6DB74;">(</span>&amp;timers.lock, <span style="color: #E6DB74;">"timer goroutine (idle)"</span>, traceEvGoBlock, <span style="color: #AE81FF;">1</span><span style="color: #E6DB74;">)</span>
-      <span style="color: #F92672;">continue</span>
-    <span style="color: #A6E22E;">}</span>
-    <span style="color: #75715E;">// </span><span style="color: #75715E;">At least one timer pending.  Sleep until then.</span>
-    timers.sleeping = <span style="color: #AE81FF;">true</span>
-    <span style="color: #A6E22E;">noteclear</span><span style="color: #A6E22E;">(</span>&amp;timers.waitnote<span style="color: #A6E22E;">)</span>
-    <span style="color: #A6E22E;">unlock</span><span style="color: #A6E22E;">(</span>&amp;timers.lock<span style="color: #A6E22E;">)</span>
-    <span style="color: #75715E;">//</span><span style="color: #75715E;">&#27809;&#21040;&#26102;&#38388;,&#30561;&#30496;delta&#26102;&#38388;</span>
-    <span style="color: #A6E22E;">notetsleepg</span><span style="color: #A6E22E;">(</span>&amp;timers.waitnote, delta<span style="color: #A6E22E;">)</span>
-  <span style="color: #66D9EF;">}</span>
-<span style="color: #AE81FF;">}</span>
+      <span style="color: #89DDFF;">if</span> delta &gt; 0 {
+    <span style="color: #89DDFF;">break</span>
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#26159;&#21608;&#26399;&#24615;&#30340;&#23601;&#31639;&#19979;&#19968;&#27425;&#26102;&#38388;</span>
+      <span style="color: #89DDFF;">if</span> t.period &gt; 0 {
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">leave in heap but adjust next time to fire</span>
+    t.when += t.period * (1 + -delta/t.period)
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26368;&#23567;&#22534;&#19979;&#27785;</span>
+    <span style="color: #82aaff;">siftdownTimer</span>(0)
+      } <span style="color: #89DDFF;">else</span> {
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">remove from heap</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21024;&#38500;&#23558;&#35201;&#25191;&#34892;&#30340;timer,(&#26368;&#23567;&#22534;&#31639;&#27861;)</span>
+    <span style="color: #ffcb6b;">last</span> := <span style="color: #82aaff;">len</span>(timers.t) - 1
+    <span style="color: #89DDFF;">if</span> last &gt; 0 {
+      timers.t[0] = timers.t[last]
+      timers.t[0].i = 0
+    }
+    timers.t[last] = <span style="color: #f78c6c;">nil</span>
+    timers.t = timers.t[:last]
+    <span style="color: #89DDFF;">if</span> last &gt; 0 {
+      <span style="color: #82aaff;">siftdownTimer</span>(0)
+    }
+    t.i = -1 <span style="color: #676E95;">// </span><span style="color: #676E95;">mark as removed</span>
+      }
+      <span style="color: #ffcb6b;">f</span> := t.f
+      <span style="color: #ffcb6b;">arg</span> := t.arg
+      <span style="color: #ffcb6b;">seq</span> := t.seq
+      <span style="color: #82aaff;">unlock</span>(&amp;timers.lock)
+      <span style="color: #89DDFF;">if</span> raceenabled {
+    <span style="color: #82aaff;">raceacquire</span>(unsafe.<span style="color: #82aaff;">Pointer</span>(t))
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#25191;&#34892;&#20989;&#25968;&#35843;&#29992;&#20989;&#25968;</span>
+      <span style="color: #82aaff;">f</span>(arg, seq)
+      <span style="color: #82aaff;">lock</span>(&amp;timers.lock)
+    }
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#32487;&#32493;&#19979;&#19968;&#20010;,&#22240;&#20026;&#21487;&#33021;&#19979;&#19968;&#20010;timer&#20063;&#21040;&#26102;&#38388;&#20102;</span>
+    <span style="color: #89DDFF;">if</span> delta &lt; 0 || faketime &gt; 0 {
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">No timers left - put goroutine to sleep.</span>
+      timers.rescheduling = <span style="color: #f78c6c;">true</span>
+      <span style="color: #82aaff;">goparkunlock</span>(&amp;timers.lock, <span style="color: #c3e88d;">"timer goroutine (idle)"</span>, traceEvGoBlock, 1)
+      <span style="color: #89DDFF;">continue</span>
+    }
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">At least one timer pending.  Sleep until then.</span>
+    timers.sleeping = <span style="color: #f78c6c;">true</span>
+    <span style="color: #82aaff;">noteclear</span>(&amp;timers.waitnote)
+    <span style="color: #82aaff;">unlock</span>(&amp;timers.lock)
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#27809;&#21040;&#26102;&#38388;,&#30561;&#30496;delta&#26102;&#38388;</span>
+    <span style="color: #82aaff;">notetsleepg</span>(&amp;timers.waitnote, delta)
+  }
+}
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgheadline3" class="outline-2">
-<h2 id="orgheadline3"><span class="section-number-2">3</span> 其他实现方法</h2>
+<div id="outline-container-orgc13592d" class="outline-2">
+<h2 id="orgc13592d"><span class="section-number-2">3</span> 其他实现方法</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 以前也看过erlang的timer的实现，不过erlang的实现是使用时间轮的方式，不同的时间挂在不同的时间刻度上，而golang使用的最小堆维护的一个timer队列。总的来说golang的实现方式比较简单，erlang的方式比较复杂，但是erlang在支持比较大量的timer情况下比较好,效率比较高。而go比较费时，每次操作最坏情况下都是logn（n为时间队列长度）.
@@ -350,8 +238,7 @@ AfterFunc很简单，就是把参数封装为runtimeTimer,然后启动timer(把t
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2016-10-28 五 16:06</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

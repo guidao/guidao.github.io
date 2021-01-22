@@ -3,227 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-03-11 Sat 10:00 -->
+<!-- 2021-01-22 Fri 17:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>golang版本grpc服务端浅析</title>
 <meta name="generator" content="Org mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -237,45 +43,45 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org6d7fb19">1. 前言</a></li>
-<li><a href="#orgf197dd2">2. 注册流程</a></li>
-<li><a href="#org042b16d">3. 调用流程</a></li>
-<li><a href="#org1662978">4. 总结</a></li>
+<li><a href="#org56ccccb">1. 前言</a></li>
+<li><a href="#orgb84b704">2. 注册流程</a></li>
+<li><a href="#org8baba1f">3. 调用流程</a></li>
+<li><a href="#org866d166">4. 总结</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org6d7fb19" class="outline-2">
-<h2 id="org6d7fb19"><span class="section-number-2">1</span> 前言</h2>
+<div id="outline-container-org56ccccb" class="outline-2">
+<h2 id="org56ccccb"><span class="section-number-2">1</span> 前言</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 前面分析完了客户端，在经过一段时间的颓废后，我觉得我至少应该做到有始有终，所以今天写写服务的流程.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf197dd2" class="outline-2">
-<h2 id="orgf197dd2"><span class="section-number-2">2</span> 注册流程</h2>
+<div id="outline-container-orgb84b704" class="outline-2">
+<h2 id="orgb84b704"><span class="section-number-2">2</span> 注册流程</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 想象一个rpc的流程, 客户端指明一个函数的函数名跟参数，服务端找到这个函数，然后把参数应用到这个函数上。所以一个注册服务流程，就是告诉grpc让收到一个rpc调用的时候，如何找到我们的函数。看一个最简单的服务端程序.
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #ffad29; font-weight: bold;">type</span> <span style="color: #34cae2;">server</span> <span style="color: #ffad29; font-weight: bold;">struct</span><span style="color: #8c8c8c;">{}</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">SayHello</span><span style="color: #8c8c8c;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, in *<span style="color: #34cae2;">pb.HelloRequest</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>*<span style="color: #34cae2;">pb.HelloReply</span>, <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #ffad29; font-weight: bold;">return</span> &amp;pb.<span style="color: #34cae2;">HelloReply</span><span style="color: #93a8c6;">{</span>Message: <span style="color: #e67128;">"Hello "</span> + in.Name<span style="color: #93a8c6;">}</span>, <span style="color: #008b8b;">nil</span>
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">main</span><span style="color: #8c8c8c;">()</span> <span style="color: #8c8c8c;">{</span>
-  lis, err := net.<span style="color: #00ede1; font-weight: bold;">Listen</span><span style="color: #93a8c6;">(</span><span style="color: #e67128;">"tcp"</span>, port<span style="color: #93a8c6;">)</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
-    log.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"failed to listen: %v"</span>, err<span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-  s := grpc.<span style="color: #00ede1; font-weight: bold;">NewServer</span><span style="color: #93a8c6;">()</span>
-  pb.<span style="color: #00ede1; font-weight: bold;">RegisterGreeterServer</span><span style="color: #93a8c6;">(</span>s, &amp;<span style="color: #34cae2;">server</span><span style="color: #b0b1a3;">{}</span><span style="color: #93a8c6;">)</span>
-  reflection.<span style="color: #00ede1; font-weight: bold;">Register</span><span style="color: #93a8c6;">(</span>s<span style="color: #93a8c6;">)</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> err := s.<span style="color: #00ede1; font-weight: bold;">Serve</span><span style="color: #93a8c6;">(</span>lis<span style="color: #93a8c6;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
-    log.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"failed to serve: %v"</span>, err<span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-<span style="color: #8c8c8c;">}</span>
+<pre class="src src-go"><span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">server</span> <span style="color: #89DDFF;">struct</span>{}
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">server</span>) <span style="color: #82aaff;">SayHello</span>(<span style="color: #ffcb6b;">ctx</span> <span style="color: #c792ea;">context.Context</span>, <span style="color: #ffcb6b;">in</span> *<span style="color: #c792ea;">pb.HelloRequest</span>) (*<span style="color: #c792ea;">pb.HelloReply</span>, <span style="color: #c792ea;">error</span>) {
+      <span style="color: #89DDFF;">return</span> &amp;<span style="color: #c792ea;">pb.HelloReply</span>{<span style="color: #f78c6c;">Message</span>: <span style="color: #c3e88d;">"Hello "</span> + in.Name}, <span style="color: #f78c6c;">nil</span>
+}
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">main</span>() {
+      <span style="color: #ffcb6b;">lis</span>, <span style="color: #ffcb6b;">err</span> := net.<span style="color: #82aaff;">Listen</span>(<span style="color: #c3e88d;">"tcp"</span>, port)
+      <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+          log.<span style="color: #82aaff;">Fatalf</span>(<span style="color: #c3e88d;">"failed to listen: %v"</span>, err)
+      }
+      <span style="color: #ffcb6b;">s</span> := grpc.<span style="color: #82aaff;">NewServer</span>()
+      pb.<span style="color: #82aaff;">RegisterGreeterServer</span>(s, &amp;<span style="color: #c792ea;">server</span>{})
+      reflection.<span style="color: #82aaff;">Register</span>(s)
+      <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := s.<span style="color: #82aaff;">Serve</span>(lis); err != <span style="color: #f78c6c;">nil</span> {
+          log.<span style="color: #82aaff;">Fatalf</span>(<span style="color: #c3e88d;">"failed to serve: %v"</span>, err)
+      }
+}
 </pre>
 </div>
 <p>
@@ -293,57 +99,57 @@ for the JavaScript code in this tag.
 我们看下RegisterGreeterServer这个方法
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #74af68;">//</span><span style="color: #74af68;">&#25551;&#36848;&#19968;&#20010;service&#20855;&#26377;&#21738;&#20123;&#26041;&#27861;</span>
-<span style="color: #ffad29; font-weight: bold;">var</span> _Greeter_serviceDesc = grpc.<span style="color: #34cae2;">ServiceDesc</span><span style="color: #8c8c8c;">{</span>
-  <span style="color: #008b8b;">ServiceName</span>: <span style="color: #e67128;">"helloworld.Greeter"</span>,
-  <span style="color: #008b8b;">HandlerType</span>: <span style="color: #93a8c6;">(</span>*GreeterServer<span style="color: #93a8c6;">)(</span><span style="color: #008b8b;">nil</span><span style="color: #93a8c6;">)</span>,
-  <span style="color: #008b8b;">Methods</span>: <span style="color: #93a8c6;">[]</span><span style="color: #34cae2;">grpc.MethodDesc</span><span style="color: #93a8c6;">{</span>
-    <span style="color: #b0b1a3;">{</span>
-      <span style="color: #008b8b;">MethodName</span>: <span style="color: #e67128;">"SayHello"</span>,
-      <span style="color: #008b8b;">Handler</span>:    _Greeter_SayHello_Handler,
-    <span style="color: #b0b1a3;">}</span>,
-  <span style="color: #93a8c6;">}</span>,
-  <span style="color: #008b8b;">Streams</span>:  <span style="color: #93a8c6;">[]</span><span style="color: #34cae2;">grpc.StreamDesc</span><span style="color: #93a8c6;">{}</span>,
-  <span style="color: #008b8b;">Metadata</span>: <span style="color: #e67128;">"helloworld.proto"</span>,
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #00ede1; font-weight: bold;">RegisterGreeterServer</span><span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">grpc.Server</span>, srv <span style="color: #34cae2;">GreeterServer</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  s.<span style="color: #00ede1; font-weight: bold;">RegisterService</span><span style="color: #93a8c6;">(</span>&amp;_Greeter_serviceDesc, srv<span style="color: #93a8c6;">)</span>
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">RegisterService</span><span style="color: #8c8c8c;">(</span>sd *<span style="color: #34cae2;">ServiceDesc</span>, ss <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  ht := reflect.<span style="color: #00ede1; font-weight: bold;">TypeOf</span><span style="color: #93a8c6;">(</span>sd.HandlerType<span style="color: #93a8c6;">)</span>.<span style="color: #00ede1; font-weight: bold;">Elem</span><span style="color: #93a8c6;">()</span>
-  st := reflect.<span style="color: #00ede1; font-weight: bold;">TypeOf</span><span style="color: #93a8c6;">(</span>ss<span style="color: #93a8c6;">)</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21028;&#26029;&#26159;&#21542;&#23454;&#29616;&#30456;&#24212;&#30340;&#25509;&#21475;</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> !st.<span style="color: #00ede1; font-weight: bold;">Implements</span><span style="color: #93a8c6;">(</span>ht<span style="color: #93a8c6;">)</span> <span style="color: #93a8c6;">{</span>
-    grpclog.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"grpc: Server.RegisterService found the handler of type %v that does not satisfy %v"</span>, st, ht<span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-  s.<span style="color: #00ede1; font-weight: bold;">register</span><span style="color: #93a8c6;">(</span>sd, ss<span style="color: #93a8c6;">)</span>
-<span style="color: #8c8c8c;">}</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">register</span><span style="color: #8c8c8c;">(</span>sd *<span style="color: #34cae2;">ServiceDesc</span>, ss <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #93a8c6;">{}</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  s.mu.<span style="color: #00ede1; font-weight: bold;">Lock</span><span style="color: #93a8c6;">()</span>
-  <span style="color: #ffad29; font-weight: bold;">defer</span> s.mu.<span style="color: #00ede1; font-weight: bold;">Unlock</span><span style="color: #93a8c6;">()</span>
-  s.<span style="color: #00ede1; font-weight: bold;">printf</span><span style="color: #93a8c6;">(</span><span style="color: #e67128;">"RegisterService(%q)"</span>, sd.ServiceName<span style="color: #93a8c6;">)</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> _, ok := s.m<span style="color: #93a8c6;">[</span>sd.ServiceName<span style="color: #93a8c6;">]</span>; ok <span style="color: #93a8c6;">{</span>
-    grpclog.<span style="color: #00ede1; font-weight: bold;">Fatalf</span><span style="color: #b0b1a3;">(</span><span style="color: #e67128;">"grpc: Server.RegisterService found duplicate service registration for %q"</span>, sd.ServiceName<span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21021;&#22987;&#21270;&#19968;&#20010;&#26381;&#21153;</span>
-  srv := &amp;<span style="color: #34cae2;">service</span><span style="color: #93a8c6;">{</span>
-    <span style="color: #008b8b;">server</span>: ss,
-    <span style="color: #008b8b;">md</span>:     <span style="color: #23d7d7;">make</span><span style="color: #b0b1a3;">(</span><span style="color: #ffad29; font-weight: bold;">map</span><span style="color: #97b098;">[</span><span style="color: #34cae2;">string</span><span style="color: #97b098;">]</span>*<span style="color: #34cae2;">MethodDesc</span><span style="color: #b0b1a3;">)</span>,
-    <span style="color: #008b8b;">sd</span>:     <span style="color: #23d7d7;">make</span><span style="color: #b0b1a3;">(</span><span style="color: #ffad29; font-weight: bold;">map</span><span style="color: #97b098;">[</span><span style="color: #34cae2;">string</span><span style="color: #97b098;">]</span>*<span style="color: #34cae2;">StreamDesc</span><span style="color: #b0b1a3;">)</span>,
-    <span style="color: #008b8b;">mdata</span>:  sd.Metadata,
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #74af68;">//</span><span style="color: #74af68;">&#26681;&#25454;&#21517;&#23383;&#26144;&#23556;&#26041;&#27861;</span>
-  <span style="color: #ffad29; font-weight: bold;">for</span> i := <span style="color: #ffad29; font-weight: bold;">range</span> sd.Methods <span style="color: #93a8c6;">{</span>
-    d := &amp;sd.Methods<span style="color: #b0b1a3;">[</span>i<span style="color: #b0b1a3;">]</span>
-    srv.md<span style="color: #b0b1a3;">[</span>d.MethodName<span style="color: #b0b1a3;">]</span> = d
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #ffad29; font-weight: bold;">for</span> i := <span style="color: #ffad29; font-weight: bold;">range</span> sd.Streams <span style="color: #93a8c6;">{</span>
-    d := &amp;sd.Streams<span style="color: #b0b1a3;">[</span>i<span style="color: #b0b1a3;">]</span>
-    srv.sd<span style="color: #b0b1a3;">[</span>d.StreamName<span style="color: #b0b1a3;">]</span> = d
-  <span style="color: #93a8c6;">}</span>
-  &#25226;&#26381;&#21153;&#27880;&#20876;&#21040;server&#20013;
-  s.m<span style="color: #93a8c6;">[</span>sd.ServiceName<span style="color: #93a8c6;">]</span> = srv
-<span style="color: #8c8c8c;">}</span>
+<pre class="src src-go"><span style="color: #676E95;">//</span><span style="color: #676E95;">&#25551;&#36848;&#19968;&#20010;service&#20855;&#26377;&#21738;&#20123;&#26041;&#27861;</span>
+<span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">_Greeter_serviceDesc</span> = <span style="color: #c792ea;">grpc.ServiceDesc</span>{
+  <span style="color: #f78c6c;">ServiceName</span>: <span style="color: #c3e88d;">"helloworld.Greeter"</span>,
+  <span style="color: #f78c6c;">HandlerType</span>: (*GreeterServer)(<span style="color: #f78c6c;">nil</span>),
+  <span style="color: #f78c6c;">Methods</span>: []<span style="color: #c792ea;">grpc.MethodDesc</span>{
+      {
+          <span style="color: #f78c6c;">MethodName</span>: <span style="color: #c3e88d;">"SayHello"</span>,
+          <span style="color: #f78c6c;">Handler</span>:    _Greeter_SayHello_Handler,
+      },
+  },
+  <span style="color: #f78c6c;">Streams</span>:  []<span style="color: #c792ea;">grpc.StreamDesc</span>{},
+  <span style="color: #f78c6c;">Metadata</span>: <span style="color: #c3e88d;">"helloworld.proto"</span>,
+}
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">RegisterGreeterServer</span>(<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">grpc.Server</span>, <span style="color: #ffcb6b;">srv</span> <span style="color: #c792ea;">GreeterServer</span>) {
+  s.<span style="color: #82aaff;">RegisterService</span>(&amp;_Greeter_serviceDesc, srv)
+}
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">RegisterService</span>(<span style="color: #ffcb6b;">sd</span> *<span style="color: #c792ea;">ServiceDesc</span>, <span style="color: #ffcb6b;">ss</span> <span style="color: #89DDFF;">interface</span>{}) {
+      <span style="color: #ffcb6b;">ht</span> := reflect.<span style="color: #82aaff;">TypeOf</span>(sd.HandlerType).<span style="color: #82aaff;">Elem</span>()
+      <span style="color: #ffcb6b;">st</span> := reflect.<span style="color: #82aaff;">TypeOf</span>(ss)
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21028;&#26029;&#26159;&#21542;&#23454;&#29616;&#30456;&#24212;&#30340;&#25509;&#21475;</span>
+      <span style="color: #89DDFF;">if</span> <span style="color: #89DDFF; font-weight: bold;">!</span>st.<span style="color: #82aaff;">Implements</span>(ht) {
+          grpclog.<span style="color: #82aaff;">Fatalf</span>(<span style="color: #c3e88d;">"grpc: Server.RegisterService found the handler of type %v that does not satisfy %v"</span>, st, ht)
+      }
+      s.<span style="color: #82aaff;">register</span>(sd, ss)
+}
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">register</span>(<span style="color: #ffcb6b;">sd</span> *<span style="color: #c792ea;">ServiceDesc</span>, <span style="color: #ffcb6b;">ss</span> <span style="color: #89DDFF;">interface</span>{}) {
+      s.mu.<span style="color: #82aaff;">Lock</span>()
+      <span style="color: #89DDFF;">defer</span> s.mu.<span style="color: #82aaff;">Unlock</span>()
+      s.<span style="color: #82aaff;">printf</span>(<span style="color: #c3e88d;">"RegisterService(%q)"</span>, sd.ServiceName)
+      <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">ok</span> := s.m[sd.ServiceName]; ok {
+          grpclog.<span style="color: #82aaff;">Fatalf</span>(<span style="color: #c3e88d;">"grpc: Server.RegisterService found duplicate service registration for %q"</span>, sd.ServiceName)
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21021;&#22987;&#21270;&#19968;&#20010;&#26381;&#21153;</span>
+      <span style="color: #ffcb6b;">srv</span> := &amp;<span style="color: #c792ea;">service</span>{
+          <span style="color: #f78c6c;">server</span>: ss,
+          <span style="color: #f78c6c;">md</span>:     <span style="color: #82aaff;">make</span>(<span style="color: #89DDFF;">map</span>[<span style="color: #c792ea;">string</span>]*<span style="color: #c792ea;">MethodDesc</span>),
+          <span style="color: #f78c6c;">sd</span>:     <span style="color: #82aaff;">make</span>(<span style="color: #89DDFF;">map</span>[<span style="color: #c792ea;">string</span>]*<span style="color: #c792ea;">StreamDesc</span>),
+          <span style="color: #f78c6c;">mdata</span>:  sd.Metadata,
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26681;&#25454;&#21517;&#23383;&#26144;&#23556;&#26041;&#27861;</span>
+      <span style="color: #89DDFF;">for</span> <span style="color: #ffcb6b;">i</span> := <span style="color: #89DDFF;">range</span> sd.Methods {
+          <span style="color: #ffcb6b;">d</span> := &amp;sd.Methods[i]
+          srv.md[d.MethodName] = d
+      }
+      <span style="color: #89DDFF;">for</span> <span style="color: #ffcb6b;">i</span> := <span style="color: #89DDFF;">range</span> sd.Streams {
+          <span style="color: #ffcb6b;">d</span> := &amp;sd.Streams[i]
+          srv.sd[d.StreamName] = d
+      }
+      &#25226;&#26381;&#21153;&#27880;&#20876;&#21040;server&#20013;
+      s.m[sd.ServiceName] = srv
+}
 </pre>
 </div>
 <p>
@@ -351,212 +157,212 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-org042b16d" class="outline-2">
-<h2 id="org042b16d"><span class="section-number-2">3</span> 调用流程</h2>
+<div id="outline-container-org8baba1f" class="outline-2">
+<h2 id="org8baba1f"><span class="section-number-2">3</span> 调用流程</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 注册流程看完了，接下来再来看下让一个请求到达服务端的时候是如何处理。
 在Server中的Serve方法中，服务端通过监听请求的到来，通过for循环不断接受到来的连接。
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #74af68;">//</span><span style="color: #74af68;">&#21435;&#25481;&#19968;&#20123;&#38169;&#35823;&#22788;&#29702;&#30340;&#20195;&#30721;&#21518;&#65292;&#21313;&#20998;&#31616;&#27905;</span>
-  <span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">Serve</span><span style="color: #8c8c8c;">(</span>lis <span style="color: #34cae2;">net.Listener</span><span style="color: #8c8c8c;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #8c8c8c;">{</span>
+<pre class="src src-go"><span style="color: #676E95;">//</span><span style="color: #676E95;">&#21435;&#25481;&#19968;&#20123;&#38169;&#35823;&#22788;&#29702;&#30340;&#20195;&#30721;&#21518;&#65292;&#21313;&#20998;&#31616;&#27905;</span>
+  <span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">Serve</span>(<span style="color: #ffcb6b;">lis</span> <span style="color: #c792ea;">net.Listener</span>) <span style="color: #c792ea;">error</span> {
     ..........
 
-    <span style="color: #ffad29; font-weight: bold;">for</span> <span style="color: #93a8c6;">{</span>
-      rawConn, err := lis.<span style="color: #00ede1; font-weight: bold;">Accept</span><span style="color: #b0b1a3;">()</span>
+    <span style="color: #89DDFF;">for</span> {
+      <span style="color: #ffcb6b;">rawConn</span>, <span style="color: #ffcb6b;">err</span> := lis.<span style="color: #82aaff;">Accept</span>()
       .............
 
-      <span style="color: #74af68;">// </span><span style="color: #74af68;">Start a new goroutine to deal with rawConn</span>
-      <span style="color: #74af68;">// </span><span style="color: #74af68;">so we don't stall this Accept loop goroutine.</span>
-      <span style="color: #ffad29; font-weight: bold;">go</span> s.<span style="color: #00ede1; font-weight: bold;">handleRawConn</span><span style="color: #b0b1a3;">(</span>rawConn<span style="color: #b0b1a3;">)</span>
-    <span style="color: #93a8c6;">}</span>
-  <span style="color: #8c8c8c;">}</span>
-<span style="color: #74af68;">//</span><span style="color: #74af68;">&#26368;&#21518;&#36890;&#36807;http2&#21019;&#24314;&#19968;&#20010;stream&#65292;&#26469;&#25910;&#21462;&#28040;&#24687;</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">Start a new goroutine to deal with rawConn</span>
+      <span style="color: #676E95;">// </span><span style="color: #676E95;">so we don't stall this Accept loop goroutine.</span>
+      <span style="color: #89DDFF;">go</span> s.<span style="color: #82aaff;">handleRawConn</span>(rawConn)
+    }
+  }
+<span style="color: #676E95;">//</span><span style="color: #676E95;">&#26368;&#21518;&#36890;&#36807;http2&#21019;&#24314;&#19968;&#20010;stream&#65292;&#26469;&#25910;&#21462;&#28040;&#24687;</span>
 
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">serveStreams</span><span style="color: #8c8c8c;">(</span>st <span style="color: #34cae2;">transport.ServerTransport</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #ffad29; font-weight: bold;">defer</span> s.<span style="color: #00ede1; font-weight: bold;">removeConn</span><span style="color: #93a8c6;">(</span>st<span style="color: #93a8c6;">)</span>
-  <span style="color: #ffad29; font-weight: bold;">defer</span> st.<span style="color: #00ede1; font-weight: bold;">Close</span><span style="color: #93a8c6;">()</span>
-  <span style="color: #ffad29; font-weight: bold;">var</span> wg sync.WaitGroup
-  st.<span style="color: #00ede1; font-weight: bold;">HandleStreams</span><span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">(</span>stream *<span style="color: #34cae2;">transport.Stream</span><span style="color: #b0b1a3;">)</span> <span style="color: #b0b1a3;">{</span>
-    wg.<span style="color: #00ede1; font-weight: bold;">Add</span><span style="color: #97b098;">(</span><span style="color: #008b8b;">1</span><span style="color: #97b098;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">go</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #97b098;">()</span> <span style="color: #97b098;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">defer</span> wg.<span style="color: #00ede1; font-weight: bold;">Done</span><span style="color: #aebed8;">()</span>
-      s.<span style="color: #00ede1; font-weight: bold;">handleStream</span><span style="color: #aebed8;">(</span>st, stream, s.<span style="color: #00ede1; font-weight: bold;">traceInfo</span><span style="color: #b0b0b3;">(</span>st, stream<span style="color: #b0b0b3;">)</span><span style="color: #aebed8;">)</span>
-    <span style="color: #97b098;">}()</span>
-  <span style="color: #b0b1a3;">}</span>, <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">(</span>ctx <span style="color: #34cae2;">context.Context</span>, method <span style="color: #34cae2;">string</span><span style="color: #b0b1a3;">)</span> <span style="color: #34cae2;">context.Context</span> <span style="color: #b0b1a3;">{</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> !EnableTracing <span style="color: #97b098;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">return</span> ctx
-    <span style="color: #97b098;">}</span>
-    tr := trace.<span style="color: #00ede1; font-weight: bold;">New</span><span style="color: #97b098;">(</span><span style="color: #e67128;">"grpc.Recv."</span>+<span style="color: #00ede1; font-weight: bold;">methodFamily</span><span style="color: #aebed8;">(</span>method<span style="color: #aebed8;">)</span>, method<span style="color: #97b098;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">return</span> trace.<span style="color: #00ede1; font-weight: bold;">NewContext</span><span style="color: #97b098;">(</span>ctx, tr<span style="color: #97b098;">)</span>
-  <span style="color: #b0b1a3;">}</span><span style="color: #93a8c6;">)</span>
-  wg.<span style="color: #00ede1; font-weight: bold;">Wait</span><span style="color: #93a8c6;">()</span>
-<span style="color: #8c8c8c;">}</span>
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">serveStreams</span>(<span style="color: #ffcb6b;">st</span> <span style="color: #c792ea;">transport.ServerTransport</span>) {
+  <span style="color: #89DDFF;">defer</span> s.<span style="color: #82aaff;">removeConn</span>(st)
+  <span style="color: #89DDFF;">defer</span> st.<span style="color: #82aaff;">Close</span>()
+  <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">wg</span> <span style="color: #c792ea;">sync.WaitGroup</span>
+  st.<span style="color: #82aaff;">HandleStreams</span>(<span style="color: #89DDFF;">func</span>(<span style="color: #ffcb6b;">stream</span> *<span style="color: #c792ea;">transport.Stream</span>) {
+      wg.<span style="color: #82aaff;">Add</span>(1)
+      <span style="color: #89DDFF;">go</span> <span style="color: #89DDFF;">func</span>() {
+          <span style="color: #89DDFF;">defer</span> wg.<span style="color: #82aaff;">Done</span>()
+          s.<span style="color: #82aaff;">handleStream</span>(st, stream, s.<span style="color: #82aaff;">traceInfo</span>(st, stream))
+      }()
+  }, <span style="color: #89DDFF;">func</span>(<span style="color: #ffcb6b;">ctx</span> <span style="color: #c792ea;">context.Context</span>, <span style="color: #ffcb6b;">method</span> <span style="color: #c792ea;">string</span>) <span style="color: #c792ea;">context.Context</span> {
+      <span style="color: #89DDFF;">if</span> <span style="color: #89DDFF; font-weight: bold;">!</span>EnableTracing {
+          <span style="color: #89DDFF;">return</span> ctx
+      }
+      <span style="color: #ffcb6b;">tr</span> := trace.<span style="color: #82aaff;">New</span>(<span style="color: #c3e88d;">"grpc.Recv."</span>+<span style="color: #82aaff;">methodFamily</span>(method), method)
+      <span style="color: #89DDFF;">return</span> trace.<span style="color: #82aaff;">NewContext</span>(ctx, tr)
+  })
+  wg.<span style="color: #82aaff;">Wait</span>()
+}
 
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">handleStream</span><span style="color: #8c8c8c;">(</span>t <span style="color: #34cae2;">transport.ServerTransport</span>, stream *<span style="color: #34cae2;">transport.Stream</span>, trInfo *<span style="color: #34cae2;">traceInfo</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  sm := stream.<span style="color: #00ede1; font-weight: bold;">Method</span><span style="color: #93a8c6;">()</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> sm != <span style="color: #e67128;">""</span> &amp;&amp; sm<span style="color: #93a8c6;">[</span><span style="color: #008b8b;">0</span><span style="color: #93a8c6;">]</span> == <span style="color: #e67128;">'/'</span> <span style="color: #93a8c6;">{</span>
-    sm = sm<span style="color: #b0b1a3;">[</span><span style="color: #008b8b;">1</span>:<span style="color: #b0b1a3;">]</span>
-  <span style="color: #93a8c6;">}</span>
-  pos := strings.<span style="color: #00ede1; font-weight: bold;">LastIndex</span><span style="color: #93a8c6;">(</span>sm, <span style="color: #e67128;">"/"</span><span style="color: #93a8c6;">)</span>
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">handleStream</span>(<span style="color: #ffcb6b;">t</span> <span style="color: #c792ea;">transport.ServerTransport</span>, <span style="color: #ffcb6b;">stream</span> *<span style="color: #c792ea;">transport.Stream</span>, <span style="color: #ffcb6b;">trInfo</span> *<span style="color: #c792ea;">traceInfo</span>) {
+  <span style="color: #ffcb6b;">sm</span> := stream.<span style="color: #82aaff;">Method</span>()
+  <span style="color: #89DDFF;">if</span> sm != <span style="color: #c3e88d;">""</span> &amp;&amp; sm[0] == <span style="color: #c3e88d;">'/'</span> {
+      sm = sm[1:]
+  }
+  <span style="color: #ffcb6b;">pos</span> := strings.<span style="color: #82aaff;">LastIndex</span>(sm, <span style="color: #c3e88d;">"/"</span>)
 
   ............
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#20174;&#36825;&#37324;&#21040;&#26381;&#21153;&#21644;&#27880;&#20876;&#30340;&#26041;&#27861;</span>
-  service := sm<span style="color: #93a8c6;">[</span>:pos<span style="color: #93a8c6;">]</span>
-  method := sm<span style="color: #93a8c6;">[</span>pos+<span style="color: #008b8b;">1</span>:<span style="color: #93a8c6;">]</span>
-  srv, ok := s.m<span style="color: #93a8c6;">[</span>service<span style="color: #93a8c6;">]</span>
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20174;&#36825;&#37324;&#21040;&#26381;&#21153;&#21644;&#27880;&#20876;&#30340;&#26041;&#27861;</span>
+  <span style="color: #ffcb6b;">service</span> := sm[:pos]
+  <span style="color: #ffcb6b;">method</span> := sm[pos+1:]
+  <span style="color: #ffcb6b;">srv</span>, <span style="color: #ffcb6b;">ok</span> := s.m[service]
 
   .................
 
-  <span style="color: #74af68;">// </span><span style="color: #74af68;">Unary RPC or Streaming RPC?</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> md, ok := srv.md<span style="color: #93a8c6;">[</span>method<span style="color: #93a8c6;">]</span>; ok <span style="color: #93a8c6;">{</span>
-    s.<span style="color: #00ede1; font-weight: bold;">processUnaryRPC</span><span style="color: #b0b1a3;">(</span>t, stream, srv, md, trInfo<span style="color: #b0b1a3;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">return</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> sd, ok := srv.sd<span style="color: #93a8c6;">[</span>method<span style="color: #93a8c6;">]</span>; ok <span style="color: #93a8c6;">{</span>
-    s.<span style="color: #00ede1; font-weight: bold;">processStreamingRPC</span><span style="color: #b0b1a3;">(</span>t, stream, srv, sd, trInfo<span style="color: #b0b1a3;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">return</span>
-  <span style="color: #93a8c6;">}</span>
+  <span style="color: #676E95;">// </span><span style="color: #676E95;">Unary RPC or Streaming RPC?</span>
+  <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">md</span>, <span style="color: #ffcb6b;">ok</span> := srv.md[method]; ok {
+      s.<span style="color: #82aaff;">processUnaryRPC</span>(t, stream, srv, md, trInfo)
+      <span style="color: #89DDFF;">return</span>
+  }
+  <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">sd</span>, <span style="color: #ffcb6b;">ok</span> := srv.sd[method]; ok {
+      s.<span style="color: #82aaff;">processStreamingRPC</span>(t, stream, srv, sd, trInfo)
+      <span style="color: #89DDFF;">return</span>
+  }
 
   ...........
 
-<span style="color: #8c8c8c;">}</span>
+}
 
-<span style="color: #74af68;">//</span><span style="color: #74af68;">&#25509;&#19979;&#26469;&#26159;&#26368;&#20027;&#35201;&#30340;&#22788;&#29702;&#20989;&#25968;</span>
-<span style="color: #ffad29; font-weight: bold;">func</span> <span style="color: #8c8c8c;">(</span>s *<span style="color: #34cae2;">Server</span><span style="color: #8c8c8c;">)</span> <span style="color: #00ede1; font-weight: bold;">processUnaryRPC</span><span style="color: #8c8c8c;">(</span>t <span style="color: #34cae2;">transport.ServerTransport</span>, stream *<span style="color: #34cae2;">transport.Stream</span>, srv *<span style="color: #34cae2;">service</span>, md *<span style="color: #34cae2;">MethodDesc</span>, trInfo *<span style="color: #34cae2;">traceInfo</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>err <span style="color: #34cae2;">error</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
-    begin := &amp;stats.<span style="color: #34cae2;">Begin</span><span style="color: #b0b1a3;">{</span>
-      <span style="color: #008b8b;">BeginTime</span>: time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #97b098;">()</span>,
-    <span style="color: #b0b1a3;">}</span>
-    stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #b0b1a3;">(</span>stream.<span style="color: #00ede1; font-weight: bold;">Context</span><span style="color: #97b098;">()</span>, begin<span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #93a8c6;">()</span> <span style="color: #93a8c6;">{</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #b0b1a3;">()</span> <span style="color: #b0b1a3;">{</span>
-      end := &amp;stats.<span style="color: #34cae2;">End</span><span style="color: #97b098;">{</span>
-        <span style="color: #008b8b;">EndTime</span>: time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #aebed8;">()</span>,
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> &amp;&amp; err != io.EOF <span style="color: #97b098;">{</span>
-        end.Error = <span style="color: #00ede1; font-weight: bold;">toRPCErr</span><span style="color: #aebed8;">(</span>err<span style="color: #aebed8;">)</span>
-      <span style="color: #97b098;">}</span>
-      stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #97b098;">(</span>stream.<span style="color: #00ede1; font-weight: bold;">Context</span><span style="color: #aebed8;">()</span>, end<span style="color: #97b098;">)</span>
-    <span style="color: #b0b1a3;">}</span>
-  <span style="color: #93a8c6;">}()</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> trInfo != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
-    <span style="color: #ffad29; font-weight: bold;">defer</span> trInfo.tr.<span style="color: #00ede1; font-weight: bold;">Finish</span><span style="color: #b0b1a3;">()</span>
-    trInfo.firstLine.client = <span style="color: #008b8b;">false</span>
-    trInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #b0b1a3;">(</span>&amp;trInfo.firstLine, <span style="color: #008b8b;">false</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">defer</span> <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">()</span> <span style="color: #b0b1a3;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> &amp;&amp; err != io.EOF <span style="color: #97b098;">{</span>
-        trInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #aebed8;">(</span>&amp;<span style="color: #34cae2;">fmtStringer</span><span style="color: #b0b0b3;">{</span><span style="color: #e67128;">"%v"</span>, <span style="color: #90a890;">[]</span><span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #90a890;">{}{</span>err<span style="color: #90a890;">}</span><span style="color: #b0b0b3;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #aebed8;">)</span>
-        trInfo.tr.<span style="color: #00ede1; font-weight: bold;">SetError</span><span style="color: #aebed8;">()</span>
-      <span style="color: #97b098;">}</span>
-    <span style="color: #b0b1a3;">}()</span>
-  <span style="color: #93a8c6;">}</span>
-  <span style="color: #ffad29; font-weight: bold;">if</span> s.opts.cp != <span style="color: #008b8b;">nil</span> <span style="color: #93a8c6;">{</span>
-    <span style="color: #74af68;">// </span><span style="color: #d0bf8f;">NOTE</span><span style="color: #74af68;">: this needs to be ahead of all handling, https://github.com/grpc/grpc-go/issues/686.</span>
-    stream.<span style="color: #00ede1; font-weight: bold;">SetSendCompress</span><span style="color: #b0b1a3;">(</span>s.opts.cp.<span style="color: #00ede1; font-weight: bold;">Type</span><span style="color: #97b098;">()</span><span style="color: #b0b1a3;">)</span>
-  <span style="color: #93a8c6;">}</span>
-  p := &amp;<span style="color: #34cae2;">parser</span><span style="color: #93a8c6;">{</span>r: stream<span style="color: #93a8c6;">}</span>
-  <span style="color: #ffad29; font-weight: bold;">for</span> <span style="color: #93a8c6;">{</span>
-    pf, req, err := p.<span style="color: #00ede1; font-weight: bold;">recvMsg</span><span style="color: #b0b1a3;">(</span>s.opts.maxMsgSize<span style="color: #b0b1a3;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> err == io.EOF <span style="color: #b0b1a3;">{</span>
-      <span style="color: #74af68;">// </span><span style="color: #74af68;">The entire stream is done (for unary RPC only).</span>
-      <span style="color: #ffad29; font-weight: bold;">return</span> err
-    <span style="color: #b0b1a3;">}</span>
+<span style="color: #676E95;">//</span><span style="color: #676E95;">&#25509;&#19979;&#26469;&#26159;&#26368;&#20027;&#35201;&#30340;&#22788;&#29702;&#20989;&#25968;</span>
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">s</span> *<span style="color: #c792ea;">Server</span>) <span style="color: #82aaff;">processUnaryRPC</span>(<span style="color: #ffcb6b;">t</span> <span style="color: #c792ea;">transport.ServerTransport</span>, <span style="color: #ffcb6b;">stream</span> *<span style="color: #c792ea;">transport.Stream</span>, <span style="color: #ffcb6b;">srv</span> *<span style="color: #c792ea;">service</span>, <span style="color: #ffcb6b;">md</span> *<span style="color: #c792ea;">MethodDesc</span>, <span style="color: #ffcb6b;">trInfo</span> *<span style="color: #c792ea;">traceInfo</span>) (<span style="color: #ffcb6b;">err</span> <span style="color: #c792ea;">error</span>) {
+      <span style="color: #89DDFF;">if</span> stats.<span style="color: #82aaff;">On</span>() {
+          <span style="color: #ffcb6b;">begin</span> := &amp;<span style="color: #c792ea;">stats.Begin</span>{
+              <span style="color: #f78c6c;">BeginTime</span>: time.<span style="color: #82aaff;">Now</span>(),
+          }
+          stats.<span style="color: #82aaff;">HandleRPC</span>(stream.<span style="color: #82aaff;">Context</span>(), begin)
+      }
+      <span style="color: #89DDFF;">defer</span> <span style="color: #89DDFF;">func</span>() {
+          <span style="color: #89DDFF;">if</span> stats.<span style="color: #82aaff;">On</span>() {
+              <span style="color: #ffcb6b;">end</span> := &amp;<span style="color: #c792ea;">stats.End</span>{
+                  <span style="color: #f78c6c;">EndTime</span>: time.<span style="color: #82aaff;">Now</span>(),
+              }
+              <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> &amp;&amp; err != io.EOF {
+                  end.Error = <span style="color: #82aaff;">toRPCErr</span>(err)
+              }
+              stats.<span style="color: #82aaff;">HandleRPC</span>(stream.<span style="color: #82aaff;">Context</span>(), end)
+          }
+      }()
+      <span style="color: #89DDFF;">if</span> trInfo != <span style="color: #f78c6c;">nil</span> {
+          <span style="color: #89DDFF;">defer</span> trInfo.tr.<span style="color: #82aaff;">Finish</span>()
+          trInfo.firstLine.client = <span style="color: #f78c6c;">false</span>
+          trInfo.tr.<span style="color: #82aaff;">LazyLog</span>(&amp;trInfo.firstLine, <span style="color: #f78c6c;">false</span>)
+          <span style="color: #89DDFF;">defer</span> <span style="color: #89DDFF;">func</span>() {
+              <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> &amp;&amp; err != io.EOF {
+                  trInfo.tr.<span style="color: #82aaff;">LazyLog</span>(&amp;<span style="color: #c792ea;">fmtStringer</span>{<span style="color: #c3e88d;">"%v"</span>, []<span style="color: #89DDFF;">interface</span>{}{err}}, <span style="color: #f78c6c;">true</span>)
+                  trInfo.tr.<span style="color: #82aaff;">SetError</span>()
+              }
+          }()
+      }
+      <span style="color: #89DDFF;">if</span> s.opts.cp != <span style="color: #f78c6c;">nil</span> {
+          <span style="color: #676E95;">// </span><span style="color: #d0bf8f;">NOTE</span><span style="color: #676E95;">: this needs to be ahead of all handling, https://github.com/grpc/grpc-go/issues/686.</span>
+          stream.<span style="color: #82aaff;">SetSendCompress</span>(s.opts.cp.<span style="color: #82aaff;">Type</span>())
+      }
+      <span style="color: #ffcb6b;">p</span> := &amp;<span style="color: #c792ea;">parser</span>{<span style="color: #f78c6c;">r</span>: stream}
+      <span style="color: #89DDFF;">for</span> {
+          <span style="color: #ffcb6b;">pf</span>, <span style="color: #ffcb6b;">req</span>, <span style="color: #ffcb6b;">err</span> := p.<span style="color: #82aaff;">recvMsg</span>(s.opts.maxMsgSize)
+          <span style="color: #89DDFF;">if</span> err == io.EOF {
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">The entire stream is done (for unary RPC only).</span>
+              <span style="color: #89DDFF;">return</span> err
+          }
 
-    .............
+          .............
 
-    <span style="color: #ffad29; font-weight: bold;">if</span> err := <span style="color: #00ede1; font-weight: bold;">checkRecvPayload</span><span style="color: #b0b1a3;">(</span>pf, stream.<span style="color: #00ede1; font-weight: bold;">RecvCompress</span><span style="color: #97b098;">()</span>, s.opts.dc<span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">switch</span> err := err.<span style="color: #97b098;">(</span><span style="color: #ffad29; font-weight: bold;">type</span><span style="color: #97b098;">)</span> <span style="color: #97b098;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">case</span> *rpcError:
-        <span style="color: #ffad29; font-weight: bold;">if</span> e := t.<span style="color: #00ede1; font-weight: bold;">WriteStatus</span><span style="color: #aebed8;">(</span>stream, err.code, err.desc<span style="color: #aebed8;">)</span>; e != <span style="color: #008b8b;">nil</span> <span style="color: #aebed8;">{</span>
-          grpclog.<span style="color: #00ede1; font-weight: bold;">Printf</span><span style="color: #b0b0b3;">(</span><span style="color: #e67128;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, e<span style="color: #b0b0b3;">)</span>
-        <span style="color: #aebed8;">}</span>
-        <span style="color: #ffad29; font-weight: bold;">return</span> err
-      <span style="color: #ffad29; font-weight: bold;">default</span>:
-        <span style="color: #ffad29; font-weight: bold;">if</span> e := t.<span style="color: #00ede1; font-weight: bold;">WriteStatus</span><span style="color: #aebed8;">(</span>stream, codes.Internal, err.<span style="color: #00ede1; font-weight: bold;">Error</span><span style="color: #b0b0b3;">()</span><span style="color: #aebed8;">)</span>; e != <span style="color: #008b8b;">nil</span> <span style="color: #aebed8;">{</span>
-          grpclog.<span style="color: #00ede1; font-weight: bold;">Printf</span><span style="color: #b0b0b3;">(</span><span style="color: #e67128;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, e<span style="color: #b0b0b3;">)</span>
-        <span style="color: #aebed8;">}</span>
-        <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;"> checkRecvPayload always return RPC error. Add a return here if necessary.</span>
-      <span style="color: #97b098;">}</span>
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #ffad29; font-weight: bold;">var</span> inPayload *stats.InPayload
-    <span style="color: #ffad29; font-weight: bold;">if</span> stats.<span style="color: #00ede1; font-weight: bold;">On</span><span style="color: #b0b1a3;">()</span> <span style="color: #b0b1a3;">{</span>
-      inPayload = &amp;stats.<span style="color: #34cae2;">InPayload</span><span style="color: #97b098;">{</span>
-        <span style="color: #008b8b;">RecvTime</span>: time.<span style="color: #00ede1; font-weight: bold;">Now</span><span style="color: #aebed8;">()</span>,
-      <span style="color: #97b098;">}</span>
-    <span style="color: #b0b1a3;">}</span>
-    statusCode := codes.OK
-    statusDesc := <span style="color: #e67128;">""</span>
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">df&#20989;&#25968;&#20027;&#35201;&#29992;&#20110;&#35835;&#21462;http2&#35831;&#27714;&#24182;&#21453;&#24207;&#21015;&#21270;&#21040;v&#20013;(&#30456;&#24403;&#20110;&#19968;&#20010;&#35299;&#21253;&#30340;&#25805;&#20316;)</span>
-    df := <span style="color: #ffad29; font-weight: bold;">func</span><span style="color: #b0b1a3;">(</span>v <span style="color: #ffad29; font-weight: bold;">interface</span><span style="color: #97b098;">{}</span><span style="color: #b0b1a3;">)</span> <span style="color: #34cae2;">error</span> <span style="color: #b0b1a3;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> inPayload != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
-        inPayload.WireLength = <span style="color: #23d7d7;">len</span><span style="color: #aebed8;">(</span>req<span style="color: #aebed8;">)</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> pf == compressionMade <span style="color: #97b098;">{</span>
-        <span style="color: #ffad29; font-weight: bold;">var</span> err error
-        req, err = s.opts.dc.<span style="color: #00ede1; font-weight: bold;">Do</span><span style="color: #aebed8;">(</span>bytes.<span style="color: #00ede1; font-weight: bold;">NewReader</span><span style="color: #b0b0b3;">(</span>req<span style="color: #b0b0b3;">)</span><span style="color: #aebed8;">)</span>
-        <span style="color: #ffad29; font-weight: bold;">if</span> err != <span style="color: #008b8b;">nil</span> <span style="color: #aebed8;">{</span>
-          <span style="color: #ffad29; font-weight: bold;">if</span> err := t.<span style="color: #00ede1; font-weight: bold;">WriteStatus</span><span style="color: #b0b0b3;">(</span>stream, codes.Internal, err.<span style="color: #00ede1; font-weight: bold;">Error</span><span style="color: #90a890;">()</span><span style="color: #b0b0b3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b0b3;">{</span>
-            grpclog.<span style="color: #00ede1; font-weight: bold;">Printf</span><span style="color: #90a890;">(</span><span style="color: #e67128;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, err<span style="color: #90a890;">)</span>
-          <span style="color: #b0b0b3;">}</span>
-          <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #b0b0b3;">(</span>codes.Internal, err.<span style="color: #00ede1; font-weight: bold;">Error</span><span style="color: #90a890;">()</span><span style="color: #b0b0b3;">)</span>
-        <span style="color: #aebed8;">}</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span><span style="color: #97b098;">(</span>req<span style="color: #97b098;">)</span> &gt; s.opts.maxMsgSize <span style="color: #97b098;">{</span>
-        <span style="color: #74af68;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #74af68;">: Revisit the error code. Currently keep it consistent with</span>
-        <span style="color: #74af68;">// </span><span style="color: #74af68;">java implementation.</span>
-        statusCode = codes.Internal
-        statusDesc = fmt.<span style="color: #00ede1; font-weight: bold;">Sprintf</span><span style="color: #aebed8;">(</span><span style="color: #e67128;">"grpc: server received a message of %d bytes exceeding %d limit"</span>, <span style="color: #23d7d7;">len</span><span style="color: #b0b0b3;">(</span>req<span style="color: #b0b0b3;">)</span>, s.opts.maxMsgSize<span style="color: #aebed8;">)</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> err := s.opts.codec.<span style="color: #00ede1; font-weight: bold;">Unmarshal</span><span style="color: #97b098;">(</span>req, v<span style="color: #97b098;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
-        <span style="color: #ffad29; font-weight: bold;">return</span> err
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> inPayload != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
-        inPayload.Payload = v
-        inPayload.Data = req
-        inPayload.Length = <span style="color: #23d7d7;">len</span><span style="color: #aebed8;">(</span>req<span style="color: #aebed8;">)</span>
-        stats.<span style="color: #00ede1; font-weight: bold;">HandleRPC</span><span style="color: #aebed8;">(</span>stream.<span style="color: #00ede1; font-weight: bold;">Context</span><span style="color: #b0b0b3;">()</span>, inPayload<span style="color: #aebed8;">)</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">if</span> trInfo != <span style="color: #008b8b;">nil</span> <span style="color: #97b098;">{</span>
-        trInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #aebed8;">(</span>&amp;<span style="color: #34cae2;">payload</span><span style="color: #b0b0b3;">{</span>sent: <span style="color: #008b8b;">false</span>, msg: v<span style="color: #b0b0b3;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #aebed8;">)</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">nil</span>
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#36825;&#20123;&#25105;&#20204;&#27880;&#20876;&#30340;&#20989;&#25968;</span>
-    reply, appErr := md.<span style="color: #00ede1; font-weight: bold;">Handler</span><span style="color: #b0b1a3;">(</span>srv.server, stream.<span style="color: #00ede1; font-weight: bold;">Context</span><span style="color: #97b098;">()</span>, df, s.opts.unaryInt<span style="color: #b0b1a3;">)</span>
+          <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := <span style="color: #82aaff;">checkRecvPayload</span>(pf, stream.<span style="color: #82aaff;">RecvCompress</span>(), s.opts.dc); err != <span style="color: #f78c6c;">nil</span> {
+              <span style="color: #89DDFF;">switch</span> <span style="color: #ffcb6b;">err</span> := err.(<span style="color: #89DDFF;">type</span>) {
+              <span style="color: #89DDFF;">case</span> *<span style="color: #c792ea;">rpcError</span>:
+                  <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">e</span> := t.<span style="color: #82aaff;">WriteStatus</span>(stream, err.code, err.desc); e != <span style="color: #f78c6c;">nil</span> {
+                      grpclog.<span style="color: #82aaff;">Printf</span>(<span style="color: #c3e88d;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, e)
+                  }
+                  <span style="color: #89DDFF;">return</span> err
+              <span style="color: #89DDFF;">default</span>:
+                  <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">e</span> := t.<span style="color: #82aaff;">WriteStatus</span>(stream, codes.Internal, err.<span style="color: #82aaff;">Error</span>()); e != <span style="color: #f78c6c;">nil</span> {
+                      grpclog.<span style="color: #82aaff;">Printf</span>(<span style="color: #c3e88d;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, e)
+                  }
+                  <span style="color: #676E95;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #676E95;"> checkRecvPayload always return RPC error. Add a return here if necessary.</span>
+              }
+          }
+          <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">inPayload</span> *<span style="color: #c792ea;">stats.InPayload</span>
+          <span style="color: #89DDFF;">if</span> stats.<span style="color: #82aaff;">On</span>() {
+              inPayload = &amp;<span style="color: #c792ea;">stats.InPayload</span>{
+                  <span style="color: #f78c6c;">RecvTime</span>: time.<span style="color: #82aaff;">Now</span>(),
+              }
+          }
+          <span style="color: #ffcb6b;">statusCode</span> := codes.OK
+          <span style="color: #ffcb6b;">statusDesc</span> := <span style="color: #c3e88d;">""</span>
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">df&#20989;&#25968;&#20027;&#35201;&#29992;&#20110;&#35835;&#21462;http2&#35831;&#27714;&#24182;&#21453;&#24207;&#21015;&#21270;&#21040;v&#20013;(&#30456;&#24403;&#20110;&#19968;&#20010;&#35299;&#21253;&#30340;&#25805;&#20316;)</span>
+          <span style="color: #ffcb6b;">df</span> := <span style="color: #89DDFF;">func</span>(<span style="color: #ffcb6b;">v</span> <span style="color: #89DDFF;">interface</span>{}) <span style="color: #c792ea;">error</span> {
+              <span style="color: #89DDFF;">if</span> inPayload != <span style="color: #f78c6c;">nil</span> {
+                  inPayload.WireLength = <span style="color: #82aaff;">len</span>(req)
+              }
+              <span style="color: #89DDFF;">if</span> pf == compressionMade {
+                  <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">err</span> <span style="color: #c792ea;">error</span>
+                  req, err = s.opts.dc.<span style="color: #82aaff;">Do</span>(bytes.<span style="color: #82aaff;">NewReader</span>(req))
+                  <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+                      <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := t.<span style="color: #82aaff;">WriteStatus</span>(stream, codes.Internal, err.<span style="color: #82aaff;">Error</span>()); err != <span style="color: #f78c6c;">nil</span> {
+                          grpclog.<span style="color: #82aaff;">Printf</span>(<span style="color: #c3e88d;">"grpc: Server.processUnaryRPC failed to write status %v"</span>, err)
+                      }
+                      <span style="color: #89DDFF;">return</span> <span style="color: #82aaff;">Errorf</span>(codes.Internal, err.<span style="color: #82aaff;">Error</span>())
+                  }
+              }
+              <span style="color: #89DDFF;">if</span> <span style="color: #82aaff;">len</span>(req) &gt; s.opts.maxMsgSize {
+                  <span style="color: #676E95;">// </span><span style="color: #cc9393;">TODO</span><span style="color: #676E95;">: Revisit the error code. Currently keep it consistent with</span>
+                  <span style="color: #676E95;">// </span><span style="color: #676E95;">java implementation.</span>
+                  statusCode = codes.Internal
+                  statusDesc = fmt.<span style="color: #82aaff;">Sprintf</span>(<span style="color: #c3e88d;">"grpc: server received a message of %d bytes exceeding %d limit"</span>, <span style="color: #82aaff;">len</span>(req), s.opts.maxMsgSize)
+              }
+              <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := s.opts.codec.<span style="color: #82aaff;">Unmarshal</span>(req, v); err != <span style="color: #f78c6c;">nil</span> {
+                  <span style="color: #89DDFF;">return</span> err
+              }
+              <span style="color: #89DDFF;">if</span> inPayload != <span style="color: #f78c6c;">nil</span> {
+                  inPayload.Payload = v
+                  inPayload.Data = req
+                  inPayload.Length = <span style="color: #82aaff;">len</span>(req)
+                  stats.<span style="color: #82aaff;">HandleRPC</span>(stream.<span style="color: #82aaff;">Context</span>(), inPayload)
+              }
+              <span style="color: #89DDFF;">if</span> trInfo != <span style="color: #f78c6c;">nil</span> {
+                  trInfo.tr.<span style="color: #82aaff;">LazyLog</span>(&amp;<span style="color: #c792ea;">payload</span>{<span style="color: #f78c6c;">sent</span>: <span style="color: #f78c6c;">false</span>, <span style="color: #f78c6c;">msg</span>: v}, <span style="color: #f78c6c;">true</span>)
+              }
+              <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">nil</span>
+          }
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36825;&#20123;&#25105;&#20204;&#27880;&#20876;&#30340;&#20989;&#25968;</span>
+          <span style="color: #ffcb6b;">reply</span>, <span style="color: #ffcb6b;">appErr</span> := md.<span style="color: #82aaff;">Handler</span>(srv.server, stream.<span style="color: #82aaff;">Context</span>(), df, s.opts.unaryInt)
 
-    .....................
+          .....................
 
-    opts := &amp;transport.<span style="color: #34cae2;">Options</span><span style="color: #b0b1a3;">{</span>
-      <span style="color: #008b8b;">Last</span>:  <span style="color: #008b8b;">true</span>,
-      <span style="color: #008b8b;">Delay</span>: <span style="color: #008b8b;">false</span>,
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #74af68;">//</span><span style="color: #74af68;">&#21457;&#32467;&#26524;&#21457;&#36865;&#20986;&#21435;</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> err := s.<span style="color: #00ede1; font-weight: bold;">sendResponse</span><span style="color: #b0b1a3;">(</span>t, stream, reply, s.opts.cp, opts<span style="color: #b0b1a3;">)</span>; err != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">switch</span> err := err.<span style="color: #97b098;">(</span><span style="color: #ffad29; font-weight: bold;">type</span><span style="color: #97b098;">)</span> <span style="color: #97b098;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">case</span> transport.ConnectionError:
-        <span style="color: #74af68;">// </span><span style="color: #74af68;">Nothing to do here.</span>
-      <span style="color: #ffad29; font-weight: bold;">case</span> transport.StreamError:
-        statusCode = err.Code
-        statusDesc = err.Desc
-      <span style="color: #ffad29; font-weight: bold;">default</span>:
-        statusCode = codes.Unknown
-        statusDesc = err.<span style="color: #00ede1; font-weight: bold;">Error</span><span style="color: #aebed8;">()</span>
-      <span style="color: #97b098;">}</span>
-      <span style="color: #ffad29; font-weight: bold;">return</span> err
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> trInfo != <span style="color: #008b8b;">nil</span> <span style="color: #b0b1a3;">{</span>
-      trInfo.tr.<span style="color: #00ede1; font-weight: bold;">LazyLog</span><span style="color: #97b098;">(</span>&amp;<span style="color: #34cae2;">payload</span><span style="color: #aebed8;">{</span>sent: <span style="color: #008b8b;">true</span>, msg: reply<span style="color: #aebed8;">}</span>, <span style="color: #008b8b;">true</span><span style="color: #97b098;">)</span>
-    <span style="color: #b0b1a3;">}</span>
-    errWrite := t.<span style="color: #00ede1; font-weight: bold;">WriteStatus</span><span style="color: #b0b1a3;">(</span>stream, statusCode, statusDesc<span style="color: #b0b1a3;">)</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> statusCode != codes.OK <span style="color: #b0b1a3;">{</span>
-      <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #00ede1; font-weight: bold;">Errorf</span><span style="color: #97b098;">(</span>statusCode, statusDesc<span style="color: #97b098;">)</span>
-    <span style="color: #b0b1a3;">}</span>
-    <span style="color: #ffad29; font-weight: bold;">return</span> errWrite
-  <span style="color: #93a8c6;">}</span>
-<span style="color: #8c8c8c;">}</span>
+          <span style="color: #ffcb6b;">opts</span> := &amp;<span style="color: #c792ea;">transport.Options</span>{
+              <span style="color: #f78c6c;">Last</span>:  <span style="color: #f78c6c;">true</span>,
+              <span style="color: #f78c6c;">Delay</span>: <span style="color: #f78c6c;">false</span>,
+          }
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#21457;&#32467;&#26524;&#21457;&#36865;&#20986;&#21435;</span>
+          <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := s.<span style="color: #82aaff;">sendResponse</span>(t, stream, reply, s.opts.cp, opts); err != <span style="color: #f78c6c;">nil</span> {
+              <span style="color: #89DDFF;">switch</span> <span style="color: #ffcb6b;">err</span> := err.(<span style="color: #89DDFF;">type</span>) {
+              <span style="color: #89DDFF;">case</span> <span style="color: #c792ea;">transport.ConnectionError</span>:
+                  <span style="color: #676E95;">// </span><span style="color: #676E95;">Nothing to do here.</span>
+              <span style="color: #89DDFF;">case</span> <span style="color: #c792ea;">transport.StreamError</span>:
+                  statusCode = err.Code
+                  statusDesc = err.Desc
+              <span style="color: #89DDFF;">default</span>:
+                  statusCode = codes.Unknown
+                  statusDesc = err.<span style="color: #82aaff;">Error</span>()
+              }
+              <span style="color: #89DDFF;">return</span> err
+          }
+          <span style="color: #89DDFF;">if</span> trInfo != <span style="color: #f78c6c;">nil</span> {
+              trInfo.tr.<span style="color: #82aaff;">LazyLog</span>(&amp;<span style="color: #c792ea;">payload</span>{<span style="color: #f78c6c;">sent</span>: <span style="color: #f78c6c;">true</span>, <span style="color: #f78c6c;">msg</span>: reply}, <span style="color: #f78c6c;">true</span>)
+          }
+          <span style="color: #ffcb6b;">errWrite</span> := t.<span style="color: #82aaff;">WriteStatus</span>(stream, statusCode, statusDesc)
+          <span style="color: #89DDFF;">if</span> statusCode != codes.OK {
+              <span style="color: #89DDFF;">return</span> <span style="color: #82aaff;">Errorf</span>(statusCode, statusDesc)
+          }
+          <span style="color: #89DDFF;">return</span> errWrite
+      }
+}
 </pre>
 </div>
 <p>
@@ -565,8 +371,8 @@ grpc服务端的基本流程就是这样了，我只是看的一个基本流程�
 </div>
 </div>
 
-<div id="outline-container-org1662978" class="outline-2">
-<h2 id="org1662978"><span class="section-number-2">4</span> 总结</h2>
+<div id="outline-container-org866d166" class="outline-2">
+<h2 id="org866d166"><span class="section-number-2">4</span> 总结</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 grpc中有很多我比较喜欢的点，一个是grpcsever的配置通过传递函数来修改，这样又不用取回之前的设置，又可以只修改其中一个值,比较精巧，-0- 原谅我见识不多。还有就是错误的处理，context的使用，trace的使用。
@@ -576,8 +382,7 @@ grpc中有很多我比较喜欢的点，一个是grpcsever的配置通过传递�
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2017-03-11 Sat 10:00</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

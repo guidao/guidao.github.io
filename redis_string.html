@@ -3,227 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-05-13 Sat 12:17 -->
+<!-- 2021-01-22 Fri 17:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>redis源码阅读之字符串</title>
 <meta name="generator" content="Org mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -237,15 +43,15 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org84bb42d">1. 前言</a></li>
-<li><a href="#orge1dccad">2. 字符串的结构</a></li>
-<li><a href="#org1c5386e">3. 字符串的操作</a></li>
-<li><a href="#org3b1fb7e">4. 其他</a></li>
+<li><a href="#org13f9f1c">1. 前言</a></li>
+<li><a href="#orge3337e7">2. 字符串的结构</a></li>
+<li><a href="#org7552672">3. 字符串的操作</a></li>
+<li><a href="#org4b30d9d">4. 其他</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org84bb42d" class="outline-2">
-<h2 id="org84bb42d"><span class="section-number-2">1</span> 前言</h2>
+<div id="outline-container-org13f9f1c" class="outline-2">
+<h2 id="org13f9f1c"><span class="section-number-2">1</span> 前言</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 我一直想阅读一个数据库的源码，但是一直没有动手。一是数据库源码一般比较大，阅读起来比较困难。二是自己能力欠缺，无处着手。这对我是非常大的遗憾，阅读源码是程序要一个非常重要的能力，而自己似乎并没有太大的提升，所以有时候还有点小焦虑。
@@ -262,65 +68,65 @@ for the JavaScript code in this tag.
 字符串在redis中用的非常多，key，value大多都是string类型,可以说string是所有类型的基础类型也不为过 例如:。
 </p>
 <div class="org-src-container">
-<pre class="src src-bash"><span style="color: #a45bad;">127.0.0.1:6379</span>&gt; set test helloworld
+<pre class="src src-bash">127.0.0.1:6379&gt; set test helloworld
 OK
-<span style="color: #a45bad;">127.0.0.1:6379</span>&gt; get test
-<span style="color: #2d9574;">"helloworld"</span>
-<span style="color: #a45bad;">127.0.0.1:6379</span>&gt; type test
+127.0.0.1:6379&gt; get test
+<span style="color: #c3e88d;">"helloworld"</span>
+127.0.0.1:6379&gt; type test
 string
-<span style="color: #a45bad;">127.0.0.1:6379</span>&gt;
+127.0.0.1:6379&gt;
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orge1dccad" class="outline-2">
-<h2 id="orge1dccad"><span class="section-number-2">2</span> 字符串的结构</h2>
+<div id="outline-container-orge3337e7" class="outline-2">
+<h2 id="orge3337e7"><span class="section-number-2">2</span> 字符串的结构</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 在redis中字符串的源码主要在sds.c, sds.h这两个文件中。sds.h中定义了字符串的结构跟一些简单的宏，操作。
 </p>
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7; font-weight: bold;">__attribute__</span> <span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span>__packed__<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">sdshdr5</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26631;&#35782;&#65292;3&#20301;&#29992;&#20110;&#31867;&#22411;&#65292;5&#20301;&#29992;&#20110;&#38271;&#24230;&#65292;&#22312;&#23454;&#38469;&#20013;sdshdr5&#36825;&#20010;&#31867;&#22411;&#19981;&#20250;&#20351;&#29992;</span>
-    <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">flags</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">3 lsb of type, and 5 msb of string length </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#23454;&#38469;&#23384;&#20648;&#23383;&#31526;&#20018;&#30340;&#22320;&#26041;</span>
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">buf</span><span style="color: #bc6ec5;">[]</span>;
-<span style="color: #4f97d7;">}</span>;
-<span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7; font-weight: bold;">__attribute__</span> <span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span>__packed__<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">sdshdr8</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#34987;&#20351;&#29992;&#30340;&#38271;&#24230;</span>
-    <span style="color: #ce537a; font-weight: bold;">uint8_t</span> <span style="color: #7590db;">len</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">used </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#38500;&#21435;&#22836;&#36319;&#31354;&#32456;&#27490;&#31526;&#20998;&#37197;&#30340;&#31354;&#38388;</span>
-    <span style="color: #ce537a; font-weight: bold;">uint8_t</span> <span style="color: #7590db;">alloc</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">excluding the header and null terminator </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26631;&#35782;&#23383;&#31526;&#65292;3&#20301;&#29992;&#20110;&#31867;&#22411;&#65292;5&#20301;&#26410;&#20351;&#29992;</span>
-    <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">flags</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">3 lsb of type, 5 unused bits </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20351;&#29992;&#23384;&#20648;&#23383;&#31526;&#20018;&#30340;&#22320;&#26041;</span>
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">buf</span><span style="color: #bc6ec5;">[]</span>;
-<span style="color: #4f97d7;">}</span>;
-<span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7; font-weight: bold;">__attribute__</span> <span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span>__packed__<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">sdshdr16</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #ce537a; font-weight: bold;">uint16_t</span> <span style="color: #7590db;">len</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">used </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">uint16_t</span> <span style="color: #7590db;">alloc</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">excluding the header and null terminator </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">flags</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">3 lsb of type, 5 unused bits </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">buf</span><span style="color: #bc6ec5;">[]</span>;
-<span style="color: #4f97d7;">}</span>;
-<span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7; font-weight: bold;">__attribute__</span> <span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span>__packed__<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">sdshdr32</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #ce537a; font-weight: bold;">uint32_t</span> <span style="color: #7590db;">len</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">used </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">uint32_t</span> <span style="color: #7590db;">alloc</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">excluding the header and null terminator </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">flags</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">3 lsb of type, 5 unused bits </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">buf</span><span style="color: #bc6ec5;">[]</span>;
-<span style="color: #4f97d7;">}</span>;
-<span style="color: #4f97d7; font-weight: bold;">struct</span> <span style="color: #4f97d7; font-weight: bold;">__attribute__</span> <span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span>__packed__<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #ce537a; font-weight: bold;">sdshdr64</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #ce537a; font-weight: bold;">uint64_t</span> <span style="color: #7590db;">len</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">used </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">uint64_t</span> <span style="color: #7590db;">alloc</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">excluding the header and null terminator </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">flags</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">3 lsb of type, 5 unused bits </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">buf</span><span style="color: #bc6ec5;">[]</span>;
-<span style="color: #4f97d7;">}</span>;
+<pre class="src src-c"><span style="color: #89DDFF;">struct</span> <span style="color: #89DDFF;">__attribute__</span> ((__packed__)) <span style="color: #c792ea;">sdshdr5</span> {
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26631;&#35782;&#65292;3&#20301;&#29992;&#20110;&#31867;&#22411;&#65292;5&#20301;&#29992;&#20110;&#38271;&#24230;&#65292;&#22312;&#23454;&#38469;&#20013;sdshdr5&#36825;&#20010;&#31867;&#22411;&#19981;&#20250;&#20351;&#29992;</span>
+    <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">flags</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">3 lsb of type, and 5 msb of string length</span><span style="color: #676E95;"> */</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#23454;&#38469;&#23384;&#20648;&#23383;&#31526;&#20018;&#30340;&#22320;&#26041;</span>
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">buf</span>[];
+};
+<span style="color: #89DDFF;">struct</span> <span style="color: #89DDFF;">__attribute__</span> ((__packed__)) <span style="color: #c792ea;">sdshdr8</span> {
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#34987;&#20351;&#29992;&#30340;&#38271;&#24230;</span>
+    <span style="color: #c792ea;">uint8_t</span> <span style="color: #ffcb6b;">len</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">used</span><span style="color: #676E95;"> */</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#38500;&#21435;&#22836;&#36319;&#31354;&#32456;&#27490;&#31526;&#20998;&#37197;&#30340;&#31354;&#38388;</span>
+    <span style="color: #c792ea;">uint8_t</span> <span style="color: #ffcb6b;">alloc</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">excluding the header and null terminator</span><span style="color: #676E95;"> */</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26631;&#35782;&#23383;&#31526;&#65292;3&#20301;&#29992;&#20110;&#31867;&#22411;&#65292;5&#20301;&#26410;&#20351;&#29992;</span>
+    <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">flags</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">3 lsb of type, 5 unused bits</span><span style="color: #676E95;"> */</span>
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20351;&#29992;&#23384;&#20648;&#23383;&#31526;&#20018;&#30340;&#22320;&#26041;</span>
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">buf</span>[];
+};
+<span style="color: #89DDFF;">struct</span> <span style="color: #89DDFF;">__attribute__</span> ((__packed__)) <span style="color: #c792ea;">sdshdr16</span> {
+    <span style="color: #c792ea;">uint16_t</span> <span style="color: #ffcb6b;">len</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">used</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">uint16_t</span> <span style="color: #ffcb6b;">alloc</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">excluding the header and null terminator</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">flags</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">3 lsb of type, 5 unused bits</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">buf</span>[];
+};
+<span style="color: #89DDFF;">struct</span> <span style="color: #89DDFF;">__attribute__</span> ((__packed__)) <span style="color: #c792ea;">sdshdr32</span> {
+    <span style="color: #c792ea;">uint32_t</span> <span style="color: #ffcb6b;">len</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">used</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">uint32_t</span> <span style="color: #ffcb6b;">alloc</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">excluding the header and null terminator</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">flags</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">3 lsb of type, 5 unused bits</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">buf</span>[];
+};
+<span style="color: #89DDFF;">struct</span> <span style="color: #89DDFF;">__attribute__</span> ((__packed__)) <span style="color: #c792ea;">sdshdr64</span> {
+    <span style="color: #c792ea;">uint64_t</span> <span style="color: #ffcb6b;">len</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">used</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">uint64_t</span> <span style="color: #ffcb6b;">alloc</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">excluding the header and null terminator</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">flags</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">3 lsb of type, 5 unused bits</span><span style="color: #676E95;"> */</span>
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">buf</span>[];
+};
 </pre>
 </div>
 <p>
 使用图形表示大概是这样.
 </p>
 
-<div class="figure">
+<div id="org7f800ce" class="figure">
 <p><img src="image/uml_sds.png" alt="uml_sds.png" />
 </p>
 </div>
@@ -329,7 +135,7 @@ string
 在redis中还有个类型sds。在各种字符串操作中使用的都是这个类型。下面是它的类型声明:
 </p>
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #4f97d7; font-weight: bold;">typedef</span> <span style="color: #ce537a; font-weight: bold;">char</span> *<span style="color: #ce537a; font-weight: bold;">sds</span>;
+<pre class="src src-c"><span style="color: #89DDFF;">typedef</span> <span style="color: #c792ea;">char</span> *<span style="color: #c792ea;">sds</span>;
 </pre>
 </div>
 <p>
@@ -337,180 +143,180 @@ sds实际上就是char*类型，那么这个sds到底是用来干嘛的呢？其
 </p>
 </div>
 </div>
-<div id="outline-container-org1c5386e" class="outline-2">
-<h2 id="org1c5386e"><span class="section-number-2">3</span> 字符串的操作</h2>
+<div id="outline-container-org7552672" class="outline-2">
+<h2 id="org7552672"><span class="section-number-2">3</span> 字符串的操作</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 字符串操作太多，我就不一一列出来了，只看一些基本的吧。
 </p>
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#21019;&#24314;&#26032;&#30340;&#23383;&#31526;&#20018;</span>
-    <span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #bc6ec5; font-weight: bold;">sdsnewlen</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">const</span> <span style="color: #ce537a; font-weight: bold;">void</span> *<span style="color: #7590db;">init</span>, <span style="color: #ce537a; font-weight: bold;">size_t</span> <span style="color: #7590db;">initlen</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
-        <span style="color: #ce537a; font-weight: bold;">void</span> *<span style="color: #7590db;">sh</span>;
-        <span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #7590db;">s</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
-        <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">type</span> = sdsReqType<span style="color: #bc6ec5;">(</span>initlen<span style="color: #bc6ec5;">)</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">Empty strings are usually created in order to append. Use type 8</span>
-<span style="color: #2aa1ae; background-color: #292e34;">         * since type 5 is not good at this. </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">sds_type_5&#36825;&#20010;&#31867;&#22411;&#26159;&#19981;&#20250;&#20351;&#29992;&#30340;&#21862;.</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>type == SDS_TYPE_5 &amp;&amp; initlen == <span style="color: #a45bad;">0</span><span style="color: #bc6ec5;">)</span> type = SDS_TYPE_8;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26681;&#25454;&#31867;&#22411;&#24471;&#21040;&#22836;&#37096;&#30340;&#38271;&#24230;&#65292;&#36824;&#35760;&#24471;&#21069;&#38754;&#30340;&#31867;&#22411;&#22768;&#26126;&#21527;&#65311;</span>
-        <span style="color: #ce537a; font-weight: bold;">int</span> <span style="color: #7590db;">hdrlen</span> = sdsHdrSize<span style="color: #bc6ec5;">(</span>type<span style="color: #bc6ec5;">)</span>;
-        <span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span> *<span style="color: #7590db;">fp</span>; <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">flags pointer. </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
+<pre class="src src-c"><span style="color: #676E95;">//</span><span style="color: #676E95;">&#21019;&#24314;&#26032;&#30340;&#23383;&#31526;&#20018;</span>
+    <span style="color: #c792ea;">sds</span> <span style="color: #82aaff;">sdsnewlen</span>(<span style="color: #89DDFF;">const</span> <span style="color: #c792ea;">void</span> *<span style="color: #ffcb6b;">init</span>, <span style="color: #c792ea;">size_t</span> <span style="color: #ffcb6b;">initlen</span>) {
+        <span style="color: #c792ea;">void</span> *<span style="color: #ffcb6b;">sh</span>;
+        <span style="color: #c792ea;">sds</span> <span style="color: #ffcb6b;">s</span>;
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
+        <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">type</span> = sdsReqType(initlen);
+        <span style="color: #676E95;">/* </span><span style="color: #676E95;">Empty strings are usually created in order to append. Use type 8</span>
+<span style="color: #676E95;">         * since type 5 is not good at this.</span><span style="color: #676E95;"> */</span>
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">sds_type_5&#36825;&#20010;&#31867;&#22411;&#26159;&#19981;&#20250;&#20351;&#29992;&#30340;&#21862;.</span>
+        <span style="color: #89DDFF;">if</span> (type == SDS_TYPE_5 &amp;&amp; initlen == 0) type = SDS_TYPE_8;
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26681;&#25454;&#31867;&#22411;&#24471;&#21040;&#22836;&#37096;&#30340;&#38271;&#24230;&#65292;&#36824;&#35760;&#24471;&#21069;&#38754;&#30340;&#31867;&#22411;&#22768;&#26126;&#21527;&#65311;</span>
+        <span style="color: #c792ea;">int</span> <span style="color: #ffcb6b;">hdrlen</span> = sdsHdrSize(type);
+        <span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span> *<span style="color: #ffcb6b;">fp</span>; <span style="color: #676E95;">/* </span><span style="color: #676E95;">flags pointer.</span><span style="color: #676E95;"> */</span>
 
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20998;&#37197;&#31354;&#38388;: &#22836;&#37096;&#22823;&#23567;+&#25968;&#25454;&#22823;&#23567;+'\0'&#65288;&#31354;&#32456;&#27490;&#31526;&#65292;&#20026;&#20102;c&#35821;&#35328;&#23383;&#31526;&#20018;&#20860;&#23481;&#65289;</span>
-        sh = s_malloc<span style="color: #bc6ec5;">(</span>hdrlen+initlen+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#27809;&#26377;&#21021;&#22987;&#21270;&#25968;&#25454;&#20043;&#38388;&#20840;&#37096;&#28165;&#31354;</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span><span style="color: #a45bad;">!</span>init<span style="color: #bc6ec5;">)</span>
-            memset<span style="color: #bc6ec5;">(</span>sh, <span style="color: #a45bad;">0</span>, hdrlen+initlen+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span>;
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>sh == <span style="color: #a45bad;">NULL</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">NULL</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">s&#25351;&#21521;buf, &#36820;&#22238;&#30340;sds&#23601;&#26159;&#36825;&#20010;s</span>
-        s = <span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #bc6ec5;">)</span>sh+hdrlen;
-        fp = <span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">unsigned</span> <span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>s<span style="color: #bc6ec5;">)</span>-<span style="color: #a45bad;">1</span>;
-        <span style="color: #4f97d7; font-weight: bold;">switch</span><span style="color: #bc6ec5;">(</span>type<span style="color: #bc6ec5;">)</span> <span style="color: #bc6ec5;">{</span>
-            <span style="color: #4f97d7; font-weight: bold;">case</span> SDS_TYPE_5: <span style="color: #2d9574;">{</span>
-              <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35760;&#24471;&#21527;&#65311;&#23545;&#20110;SDS_TYPE_5&#31867;&#22411;&#65292;&#38271;&#24230;&#26159;&#25918;&#22312;flags&#23383;&#27573;&#37324;&#30340;</span>
-                *fp = type | <span style="color: #67b11d;">(</span>initlen &lt;&lt; SDS_TYPE_BITS<span style="color: #67b11d;">)</span>;
-                <span style="color: #4f97d7; font-weight: bold;">break</span>;
-            <span style="color: #2d9574;">}</span>
-            <span style="color: #4f97d7; font-weight: bold;">case</span> SDS_TYPE_8: <span style="color: #2d9574;">{</span>
-              <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#36825;&#37324;&#26159;&#26032;&#23450;&#20041;&#20102;&#19968;&#20010;&#30456;&#23545;&#24212;&#31867;&#22411;&#30340;sh</span>
-                SDS_HDR_VAR<span style="color: #67b11d;">(</span><span style="color: #a45bad;">8</span>,s<span style="color: #67b11d;">)</span>;
-                <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#38271;&#24230;</span>
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20998;&#37197;&#31354;&#38388;: &#22836;&#37096;&#22823;&#23567;+&#25968;&#25454;&#22823;&#23567;+'\0'&#65288;&#31354;&#32456;&#27490;&#31526;&#65292;&#20026;&#20102;c&#35821;&#35328;&#23383;&#31526;&#20018;&#20860;&#23481;&#65289;</span>
+        sh = s_malloc(hdrlen+initlen+1);
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#27809;&#26377;&#21021;&#22987;&#21270;&#25968;&#25454;&#20043;&#38388;&#20840;&#37096;&#28165;&#31354;</span>
+        <span style="color: #89DDFF;">if</span> (<span style="color: #89DDFF; font-weight: bold;">!</span>init)
+            memset(sh, 0, hdrlen+initlen+1);
+        <span style="color: #89DDFF;">if</span> (sh == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">NULL</span>;
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">s&#25351;&#21521;buf, &#36820;&#22238;&#30340;sds&#23601;&#26159;&#36825;&#20010;s</span>
+        s = (<span style="color: #c792ea;">char</span>*)sh+hdrlen;
+        fp = ((<span style="color: #c792ea;">unsigned</span> <span style="color: #c792ea;">char</span>*)s)-1;
+        <span style="color: #89DDFF;">switch</span>(type) {
+            <span style="color: #89DDFF;">case</span> SDS_TYPE_5: {
+              <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35760;&#24471;&#21527;&#65311;&#23545;&#20110;SDS_TYPE_5&#31867;&#22411;&#65292;&#38271;&#24230;&#26159;&#25918;&#22312;flags&#23383;&#27573;&#37324;&#30340;</span>
+                *fp = type | (initlen &lt;&lt; SDS_TYPE_BITS);
+                <span style="color: #89DDFF;">break</span>;
+            }
+            <span style="color: #89DDFF;">case</span> SDS_TYPE_8: {
+              <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36825;&#37324;&#26159;&#26032;&#23450;&#20041;&#20102;&#19968;&#20010;&#30456;&#23545;&#24212;&#31867;&#22411;&#30340;sh</span>
+                SDS_HDR_VAR(8,s);
+                <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#38271;&#24230;</span>
                 sh-&gt;len = initlen;
-                <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#20998;&#37197;&#30340;&#22823;&#23567;(&#25490;&#26597;&#22836;&#37096;&#36319;&#31354;&#32456;&#27490;&#31526;)</span>
+                <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#20998;&#37197;&#30340;&#22823;&#23567;(&#25490;&#26597;&#22836;&#37096;&#36319;&#31354;&#32456;&#27490;&#31526;)</span>
                 sh-&gt;alloc = initlen;
-                <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#31867;&#22411;</span>
+                <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#31867;&#22411;</span>
                 *fp = type;
-                <span style="color: #4f97d7; font-weight: bold;">break</span>;
-            <span style="color: #2d9574;">}</span>
-            <span style="color: #4f97d7; font-weight: bold;">case</span> SDS_TYPE_16: <span style="color: #2d9574;">{</span>
-                SDS_HDR_VAR<span style="color: #67b11d;">(</span><span style="color: #a45bad;">16</span>,s<span style="color: #67b11d;">)</span>;
-                sh-&gt;len = initlen;
-                sh-&gt;alloc = initlen;
-                *fp = type;
-                <span style="color: #4f97d7; font-weight: bold;">break</span>;
-            <span style="color: #2d9574;">}</span>
-            <span style="color: #4f97d7; font-weight: bold;">case</span> SDS_TYPE_32: <span style="color: #2d9574;">{</span>
-                SDS_HDR_VAR<span style="color: #67b11d;">(</span><span style="color: #a45bad;">32</span>,s<span style="color: #67b11d;">)</span>;
+                <span style="color: #89DDFF;">break</span>;
+            }
+            <span style="color: #89DDFF;">case</span> SDS_TYPE_16: {
+                SDS_HDR_VAR(16,s);
                 sh-&gt;len = initlen;
                 sh-&gt;alloc = initlen;
                 *fp = type;
-                <span style="color: #4f97d7; font-weight: bold;">break</span>;
-            <span style="color: #2d9574;">}</span>
-            <span style="color: #4f97d7; font-weight: bold;">case</span> SDS_TYPE_64: <span style="color: #2d9574;">{</span>
-                SDS_HDR_VAR<span style="color: #67b11d;">(</span><span style="color: #a45bad;">64</span>,s<span style="color: #67b11d;">)</span>;
+                <span style="color: #89DDFF;">break</span>;
+            }
+            <span style="color: #89DDFF;">case</span> SDS_TYPE_32: {
+                SDS_HDR_VAR(32,s);
                 sh-&gt;len = initlen;
                 sh-&gt;alloc = initlen;
                 *fp = type;
-                <span style="color: #4f97d7; font-weight: bold;">break</span>;
-            <span style="color: #2d9574;">}</span>
-        <span style="color: #bc6ec5;">}</span>
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#26377;&#21021;&#22987;&#21270;&#20540;&#65292;&#21017;&#25191;&#34892;memcpy&#22797;&#21046;&#25968;&#25454;</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>initlen &amp;&amp; init<span style="color: #bc6ec5;">)</span>
-            memcpy<span style="color: #bc6ec5;">(</span>s, init, initlen<span style="color: #bc6ec5;">)</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#32456;&#27490;&#31526;,&#36825;&#37324;&#24182;&#19981;&#20250;&#26377;&#20004;&#20010;'\0',&#22240;&#20026;&#21069;&#38754;&#21482;&#22797;&#21046;&#20102;initlen&#20010;&#23383;&#31526;</span>
-        s<span style="color: #bc6ec5;">[</span>initlen<span style="color: #bc6ec5;">]</span> = <span style="color: #2d9574;">'\0'</span>;
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#36820;&#22238;sds&#65292;&#23454;&#38469;&#25191;&#34892;buf</span>
-        <span style="color: #4f97d7; font-weight: bold;">return</span> s;
-    <span style="color: #4f97d7;">}</span>
-  <span style="color: #ce537a; font-weight: bold;">void</span> <span style="color: #bc6ec5; font-weight: bold;">sdsfree</span><span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #7590db;">s</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>s == <span style="color: #a45bad;">NULL</span><span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span>;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#24471;&#21040;&#30495;&#27491;&#30340;&#22836;&#37096;&#25351;&#21521;&#65292;&#28982;&#21518;&#37322;&#25918;</span>
-      s_free<span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>s-sdsHdrSize<span style="color: #2d9574;">(</span>s<span style="color: #67b11d;">[</span>-<span style="color: #a45bad;">1</span><span style="color: #67b11d;">]</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>;
-  <span style="color: #4f97d7;">}</span>
-  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#23383;&#31526;&#20018;&#22686;&#38271;</span>
-  <span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #bc6ec5; font-weight: bold;">sdsMakeRoomFor</span><span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #7590db;">s</span>, <span style="color: #ce537a; font-weight: bold;">size_t</span> <span style="color: #7590db;">addlen</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
-      <span style="color: #ce537a; font-weight: bold;">void</span> *<span style="color: #7590db;">sh</span>, *<span style="color: #7590db;">newsh</span>;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#33719;&#21462;&#21097;&#20313;&#30340;&#31354;&#38388;&#65292;&#20854;&#23454;&#23601;&#26159;alloc-len</span>
-      <span style="color: #ce537a; font-weight: bold;">size_t</span> <span style="color: #7590db;">avail</span> = sdsavail<span style="color: #bc6ec5;">(</span>s<span style="color: #bc6ec5;">)</span>;
-      <span style="color: #ce537a; font-weight: bold;">size_t</span> <span style="color: #7590db;">len</span>, <span style="color: #7590db;">newlen</span>;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20445;&#25345;&#32769;&#30340;&#31867;&#22411;,&#22240;&#20026;&#23383;&#31526;&#20018;&#31354;&#38388;&#21152;&#38271;&#21518;&#26377;&#21487;&#33021;&#31867;&#22411;&#21464;&#21270;</span>
-      <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">type</span>, <span style="color: #7590db;">oldtype</span> = s<span style="color: #bc6ec5;">[</span>-<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">]</span> &amp; SDS_TYPE_MASK;
-      <span style="color: #ce537a; font-weight: bold;">int</span> <span style="color: #7590db;">hdrlen</span>;
+                <span style="color: #89DDFF;">break</span>;
+            }
+            <span style="color: #89DDFF;">case</span> SDS_TYPE_64: {
+                SDS_HDR_VAR(64,s);
+                sh-&gt;len = initlen;
+                sh-&gt;alloc = initlen;
+                *fp = type;
+                <span style="color: #89DDFF;">break</span>;
+            }
+        }
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#26377;&#21021;&#22987;&#21270;&#20540;&#65292;&#21017;&#25191;&#34892;memcpy&#22797;&#21046;&#25968;&#25454;</span>
+        <span style="color: #89DDFF;">if</span> (initlen &amp;&amp; init)
+            memcpy(s, init, initlen);
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#32456;&#27490;&#31526;,&#36825;&#37324;&#24182;&#19981;&#20250;&#26377;&#20004;&#20010;'\0',&#22240;&#20026;&#21069;&#38754;&#21482;&#22797;&#21046;&#20102;initlen&#20010;&#23383;&#31526;</span>
+        s[initlen] = <span style="color: #c3e88d;">'\0'</span>;
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#36820;&#22238;sds&#65292;&#23454;&#38469;&#25191;&#34892;buf</span>
+        <span style="color: #89DDFF;">return</span> s;
+    }
+  <span style="color: #c792ea;">void</span> <span style="color: #82aaff;">sdsfree</span>(<span style="color: #c792ea;">sds</span> <span style="color: #ffcb6b;">s</span>) {
+      <span style="color: #89DDFF;">if</span> (s == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span>;
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#24471;&#21040;&#30495;&#27491;&#30340;&#22836;&#37096;&#25351;&#21521;&#65292;&#28982;&#21518;&#37322;&#25918;</span>
+      s_free((<span style="color: #c792ea;">char</span>*)s-sdsHdrSize(s[-1]));
+  }
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#23383;&#31526;&#20018;&#22686;&#38271;</span>
+  <span style="color: #c792ea;">sds</span> <span style="color: #82aaff;">sdsMakeRoomFor</span>(<span style="color: #c792ea;">sds</span> <span style="color: #ffcb6b;">s</span>, <span style="color: #c792ea;">size_t</span> <span style="color: #ffcb6b;">addlen</span>) {
+      <span style="color: #c792ea;">void</span> *<span style="color: #ffcb6b;">sh</span>, *<span style="color: #ffcb6b;">newsh</span>;
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#33719;&#21462;&#21097;&#20313;&#30340;&#31354;&#38388;&#65292;&#20854;&#23454;&#23601;&#26159;alloc-len</span>
+      <span style="color: #c792ea;">size_t</span> <span style="color: #ffcb6b;">avail</span> = sdsavail(s);
+      <span style="color: #c792ea;">size_t</span> <span style="color: #ffcb6b;">len</span>, <span style="color: #ffcb6b;">newlen</span>;
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20445;&#25345;&#32769;&#30340;&#31867;&#22411;,&#22240;&#20026;&#23383;&#31526;&#20018;&#31354;&#38388;&#21152;&#38271;&#21518;&#26377;&#21487;&#33021;&#31867;&#22411;&#21464;&#21270;</span>
+      <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">type</span>, <span style="color: #ffcb6b;">oldtype</span> = s[-1] &amp; SDS_TYPE_MASK;
+      <span style="color: #c792ea;">int</span> <span style="color: #ffcb6b;">hdrlen</span>;
 
-      <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">Return ASAP if there is enough space left. </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#31354;&#38388;&#36275;&#22815;&#30452;&#25509;&#36820;&#22238;</span>
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>avail &gt;= addlen<span style="color: #bc6ec5;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> s;
+      <span style="color: #676E95;">/* </span><span style="color: #676E95;">Return ASAP if there is enough space left.</span><span style="color: #676E95;"> */</span>
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#31354;&#38388;&#36275;&#22815;&#30452;&#25509;&#36820;&#22238;</span>
+      <span style="color: #89DDFF;">if</span> (avail &gt;= addlen) <span style="color: #89DDFF;">return</span> s;
 
-      len = sdslen<span style="color: #bc6ec5;">(</span>s<span style="color: #bc6ec5;">)</span>;
-      sh = <span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #bc6ec5;">)</span>s-sdsHdrSize<span style="color: #bc6ec5;">(</span>oldtype<span style="color: #bc6ec5;">)</span>;
-      newlen = <span style="color: #bc6ec5;">(</span>len+addlen<span style="color: #bc6ec5;">)</span>;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#23567;&#20110;1024*1024&#30452;&#25509;&#32763;&#20493;&#31354;&#38388;</span>
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>newlen &lt; SDS_MAX_PREALLOC<span style="color: #bc6ec5;">)</span>
-          newlen *= <span style="color: #a45bad;">2</span>;
-      <span style="color: #4f97d7; font-weight: bold;">else</span>
+      len = sdslen(s);
+      sh = (<span style="color: #c792ea;">char</span>*)s-sdsHdrSize(oldtype);
+      newlen = (len+addlen);
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#23567;&#20110;1024*1024&#30452;&#25509;&#32763;&#20493;&#31354;&#38388;</span>
+      <span style="color: #89DDFF;">if</span> (newlen &lt; SDS_MAX_PREALLOC)
+          newlen *= 2;
+      <span style="color: #89DDFF;">else</span>
           newlen += SDS_MAX_PREALLOC;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
-      type = sdsReqType<span style="color: #bc6ec5;">(</span>newlen<span style="color: #bc6ec5;">)</span>;
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
+      type = sdsReqType(newlen);
 
-      <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">Don't use type 5: the user is appending to the string and type 5 is</span>
-<span style="color: #2aa1ae; background-color: #292e34;">       * not able to remember empty space, so sdsMakeRoomFor() must be called</span>
-<span style="color: #2aa1ae; background-color: #292e34;">       * at every appending operation. </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>type == SDS_TYPE_5<span style="color: #bc6ec5;">)</span> type = SDS_TYPE_8;
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#33719;&#21462;&#22836;&#37096;&#38271;&#24230;</span>
-      hdrlen = sdsHdrSize<span style="color: #bc6ec5;">(</span>type<span style="color: #bc6ec5;">)</span>;
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>oldtype==type<span style="color: #bc6ec5;">)</span> <span style="color: #bc6ec5;">{</span>
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#31867;&#22411;&#19981;&#21464;</span>
-          newsh = s_realloc<span style="color: #2d9574;">(</span>sh, hdrlen+newlen+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-          <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>newsh == <span style="color: #a45bad;">NULL</span><span style="color: #2d9574;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">NULL</span>;
-          s = <span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>newsh+hdrlen;
-      <span style="color: #bc6ec5;">}</span> <span style="color: #4f97d7; font-weight: bold;">else</span> <span style="color: #bc6ec5;">{</span>
-          <span style="color: #2aa1ae; background-color: #292e34;">/* </span><span style="color: #2aa1ae; background-color: #292e34;">Since the header size changes, need to move the string forward,</span>
-<span style="color: #2aa1ae; background-color: #292e34;">           * and can't use realloc </span><span style="color: #2aa1ae; background-color: #292e34;">*/</span>
-        <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22914;&#26524;&#31867;&#22411;&#24050;&#32463;&#25913;&#21464;</span>
-          newsh = s_malloc<span style="color: #2d9574;">(</span>hdrlen+newlen+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-          <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>newsh == <span style="color: #a45bad;">NULL</span><span style="color: #2d9574;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">NULL</span>;
-          <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#22797;&#21046;&#25968;&#25454;</span>
-          memcpy<span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #67b11d;">)</span>newsh+hdrlen, s, len+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-          <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#37322;&#25918;&#32769;&#30340;&#25968;&#25454;</span>
-          s_free<span style="color: #2d9574;">(</span>sh<span style="color: #2d9574;">)</span>;
-          s = <span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>newsh+hdrlen;
-          <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#31867;&#22411;s[-1]&#23454;&#38469;&#25191;&#34892;flags</span>
-          s<span style="color: #2d9574;">[</span>-<span style="color: #a45bad;">1</span><span style="color: #2d9574;">]</span> = type;
-          <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#26032;&#23383;&#31526;&#20018;&#30340;&#38271;&#24230;</span>
-          sdssetlen<span style="color: #2d9574;">(</span>s, len<span style="color: #2d9574;">)</span>;
-      <span style="color: #bc6ec5;">}</span>
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#35774;&#32622;&#26032;&#23383;&#31526;&#20018;&#20998;&#37197;&#31354;&#38388;&#22823;&#23567;</span>
-      sdssetalloc<span style="color: #bc6ec5;">(</span>s, newlen<span style="color: #bc6ec5;">)</span>;
-      <span style="color: #4f97d7; font-weight: bold;">return</span> s;
-  <span style="color: #4f97d7;">}</span>
-  <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#32553;&#23567;&#31354;&#38388;,&#20027;&#35201;&#26681;&#25454;len&#23383;&#27573;&#37325;&#26032;&#20998;&#37197;&#31354;&#38388;</span>
-  <span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #bc6ec5; font-weight: bold;">sdsRemoveFreeSpace</span><span style="color: #4f97d7;">(</span><span style="color: #ce537a; font-weight: bold;">sds</span> <span style="color: #7590db;">s</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #ce537a; font-weight: bold;">void</span> *<span style="color: #7590db;">sh</span>, *<span style="color: #7590db;">newsh</span>;
-    <span style="color: #ce537a; font-weight: bold;">char</span> <span style="color: #7590db;">type</span>, <span style="color: #7590db;">oldtype</span> = s<span style="color: #bc6ec5;">[</span>-<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">]</span> &amp; SDS_TYPE_MASK;
-    <span style="color: #ce537a; font-weight: bold;">int</span> <span style="color: #7590db;">hdrlen</span>;
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#33719;&#21462;&#38271;&#24230;</span>
-    <span style="color: #ce537a; font-weight: bold;">size_t</span> <span style="color: #7590db;">len</span> = sdslen<span style="color: #bc6ec5;">(</span>s<span style="color: #bc6ec5;">)</span>;
-    sh = <span style="color: #bc6ec5;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #bc6ec5;">)</span>s-sdsHdrSize<span style="color: #bc6ec5;">(</span>oldtype<span style="color: #bc6ec5;">)</span>;
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
-    type = sdsReqType<span style="color: #bc6ec5;">(</span>len<span style="color: #bc6ec5;">)</span>;
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#33719;&#21462;&#22836;&#37096;&#38271;&#24230;</span>
-    hdrlen = sdsHdrSize<span style="color: #bc6ec5;">(</span>type<span style="color: #bc6ec5;">)</span>;
-    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #bc6ec5;">(</span>oldtype==type<span style="color: #bc6ec5;">)</span> <span style="color: #bc6ec5;">{</span>
-      newsh = s_realloc<span style="color: #2d9574;">(</span>sh, hdrlen+len+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>newsh == <span style="color: #a45bad;">NULL</span><span style="color: #2d9574;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">NULL</span>;
-      s = <span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>newsh+hdrlen;
-    <span style="color: #bc6ec5;">}</span> <span style="color: #4f97d7; font-weight: bold;">else</span> <span style="color: #bc6ec5;">{</span>
-      <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#31867;&#22411;&#25913;&#21464;</span>
-      newsh = s_malloc<span style="color: #2d9574;">(</span>hdrlen+len+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-      <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>newsh == <span style="color: #a45bad;">NULL</span><span style="color: #2d9574;">)</span> <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">NULL</span>;
-      memcpy<span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #67b11d;">)</span>newsh+hdrlen, s, len+<span style="color: #a45bad;">1</span><span style="color: #2d9574;">)</span>;
-      s_free<span style="color: #2d9574;">(</span>sh<span style="color: #2d9574;">)</span>;
-      s = <span style="color: #2d9574;">(</span><span style="color: #ce537a; font-weight: bold;">char</span>*<span style="color: #2d9574;">)</span>newsh+hdrlen;
-      s<span style="color: #2d9574;">[</span>-<span style="color: #a45bad;">1</span><span style="color: #2d9574;">]</span> = type;
-      sdssetlen<span style="color: #2d9574;">(</span>s, len<span style="color: #2d9574;">)</span>;
-    <span style="color: #bc6ec5;">}</span>
-    <span style="color: #2aa1ae; background-color: #292e34;">//</span><span style="color: #2aa1ae; background-color: #292e34;">&#20998;&#37197;&#31354;&#38388;&#36319;&#38271;&#24230;&#19968;&#26679;</span>
-    sdssetalloc<span style="color: #bc6ec5;">(</span>s, len<span style="color: #bc6ec5;">)</span>;
-    <span style="color: #4f97d7; font-weight: bold;">return</span> s;
-  <span style="color: #4f97d7;">}</span>
+      <span style="color: #676E95;">/* </span><span style="color: #676E95;">Don't use type 5: the user is appending to the string and type 5 is</span>
+<span style="color: #676E95;">       * not able to remember empty space, so sdsMakeRoomFor() must be called</span>
+<span style="color: #676E95;">       * at every appending operation.</span><span style="color: #676E95;"> */</span>
+      <span style="color: #89DDFF;">if</span> (type == SDS_TYPE_5) type = SDS_TYPE_8;
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#33719;&#21462;&#22836;&#37096;&#38271;&#24230;</span>
+      hdrlen = sdsHdrSize(type);
+      <span style="color: #89DDFF;">if</span> (oldtype==type) {
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#31867;&#22411;&#19981;&#21464;</span>
+          newsh = s_realloc(sh, hdrlen+newlen+1);
+          <span style="color: #89DDFF;">if</span> (newsh == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">NULL</span>;
+          s = (<span style="color: #c792ea;">char</span>*)newsh+hdrlen;
+      } <span style="color: #89DDFF;">else</span> {
+          <span style="color: #676E95;">/* </span><span style="color: #676E95;">Since the header size changes, need to move the string forward,</span>
+<span style="color: #676E95;">           * and can't use realloc</span><span style="color: #676E95;"> */</span>
+        <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22914;&#26524;&#31867;&#22411;&#24050;&#32463;&#25913;&#21464;</span>
+          newsh = s_malloc(hdrlen+newlen+1);
+          <span style="color: #89DDFF;">if</span> (newsh == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">NULL</span>;
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#22797;&#21046;&#25968;&#25454;</span>
+          memcpy((<span style="color: #c792ea;">char</span>*)newsh+hdrlen, s, len+1);
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#37322;&#25918;&#32769;&#30340;&#25968;&#25454;</span>
+          s_free(sh);
+          s = (<span style="color: #c792ea;">char</span>*)newsh+hdrlen;
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#31867;&#22411;s[-1]&#23454;&#38469;&#25191;&#34892;flags</span>
+          s[-1] = type;
+          <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#26032;&#23383;&#31526;&#20018;&#30340;&#38271;&#24230;</span>
+          sdssetlen(s, len);
+      }
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#35774;&#32622;&#26032;&#23383;&#31526;&#20018;&#20998;&#37197;&#31354;&#38388;&#22823;&#23567;</span>
+      sdssetalloc(s, newlen);
+      <span style="color: #89DDFF;">return</span> s;
+  }
+  <span style="color: #676E95;">//</span><span style="color: #676E95;">&#32553;&#23567;&#31354;&#38388;,&#20027;&#35201;&#26681;&#25454;len&#23383;&#27573;&#37325;&#26032;&#20998;&#37197;&#31354;&#38388;</span>
+  <span style="color: #c792ea;">sds</span> <span style="color: #82aaff;">sdsRemoveFreeSpace</span>(<span style="color: #c792ea;">sds</span> <span style="color: #ffcb6b;">s</span>) {
+    <span style="color: #c792ea;">void</span> *<span style="color: #ffcb6b;">sh</span>, *<span style="color: #ffcb6b;">newsh</span>;
+    <span style="color: #c792ea;">char</span> <span style="color: #ffcb6b;">type</span>, <span style="color: #ffcb6b;">oldtype</span> = s[-1] &amp; SDS_TYPE_MASK;
+    <span style="color: #c792ea;">int</span> <span style="color: #ffcb6b;">hdrlen</span>;
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#33719;&#21462;&#38271;&#24230;</span>
+    <span style="color: #c792ea;">size_t</span> <span style="color: #ffcb6b;">len</span> = sdslen(s);
+    sh = (<span style="color: #c792ea;">char</span>*)s-sdsHdrSize(oldtype);
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#26681;&#25454;&#38271;&#24230;&#33719;&#21462;sds&#30340;&#31867;&#22411;</span>
+    type = sdsReqType(len);
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#33719;&#21462;&#22836;&#37096;&#38271;&#24230;</span>
+    hdrlen = sdsHdrSize(type);
+    <span style="color: #89DDFF;">if</span> (oldtype==type) {
+      newsh = s_realloc(sh, hdrlen+len+1);
+      <span style="color: #89DDFF;">if</span> (newsh == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">NULL</span>;
+      s = (<span style="color: #c792ea;">char</span>*)newsh+hdrlen;
+    } <span style="color: #89DDFF;">else</span> {
+      <span style="color: #676E95;">//</span><span style="color: #676E95;">&#31867;&#22411;&#25913;&#21464;</span>
+      newsh = s_malloc(hdrlen+len+1);
+      <span style="color: #89DDFF;">if</span> (newsh == <span style="color: #f78c6c;">NULL</span>) <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">NULL</span>;
+      memcpy((<span style="color: #c792ea;">char</span>*)newsh+hdrlen, s, len+1);
+      s_free(sh);
+      s = (<span style="color: #c792ea;">char</span>*)newsh+hdrlen;
+      s[-1] = type;
+      sdssetlen(s, len);
+    }
+    <span style="color: #676E95;">//</span><span style="color: #676E95;">&#20998;&#37197;&#31354;&#38388;&#36319;&#38271;&#24230;&#19968;&#26679;</span>
+    sdssetalloc(s, len);
+    <span style="color: #89DDFF;">return</span> s;
+  }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org3b1fb7e" class="outline-2">
-<h2 id="org3b1fb7e"><span class="section-number-2">4</span> 其他</h2>
+<div id="outline-container-org4b30d9d" class="outline-2">
+<h2 id="org4b30d9d"><span class="section-number-2">4</span> 其他</h2>
 <div class="outline-text-2" id="text-4">
 <ol class="org-ol">
 <li><a href="https://redis.io/topics/data-types-intro">https://redis.io/topics/data-types-intro</a> 官方文件介绍数据类型.</li>
@@ -521,8 +327,7 @@ sds实际上就是char*类型，那么这个sds到底是用来干嘛的呢？其
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2017-05-13 Sat 12:17</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

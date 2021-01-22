@@ -3,228 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-07 Sat 16:37 -->
+<!-- 2021-01-22 Fri 17:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>使用elixir作为日常脚本</title>
 <meta name="generator" content="Org mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-hledger:before { content: 'hledger'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -238,31 +43,31 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgab2eaa0">1. 前言</a>
+<li><a href="#org45c6cc4">1. 前言</a>
 <ul>
-<li><a href="#org130cb07">1.1. python</a></li>
-<li><a href="#org96dbe99">1.2. ruby</a></li>
-<li><a href="#orgb44ab87">1.3. nodejs</a></li>
-<li><a href="#org9d4e1d6">1.4. elixir</a></li>
+<li><a href="#org3e8844d">1.1. python</a></li>
+<li><a href="#org1cbf674">1.2. ruby</a></li>
+<li><a href="#org8ad42c9">1.3. nodejs</a></li>
+<li><a href="#org1396a09">1.4. elixir</a></li>
 </ul>
 </li>
-<li><a href="#org91d8fd0">2. go vs elixir</a></li>
-<li><a href="#orga364788">3. 搭建elixir脚本环境</a></li>
-<li><a href="#org222b4ee">4. 使用</a></li>
+<li><a href="#org2f12d8a">2. go vs elixir</a></li>
+<li><a href="#org13b8c5f">3. 搭建elixir脚本环境</a></li>
+<li><a href="#org31f6113">4. 使用</a></li>
 </ul>
 </div>
 </div>
 
 
-<div id="outline-container-orgab2eaa0" class="outline-2">
-<h2 id="orgab2eaa0"><span class="section-number-2">1</span> 前言</h2>
+<div id="outline-container-org45c6cc4" class="outline-2">
+<h2 id="org45c6cc4"><span class="section-number-2">1</span> 前言</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 脚本语言在日常中使用频率非常高。使用python，ruby甚至nodejs的人都有很多。但是都不是我的菜。我放弃他们作为我的脚本语言原因如下:
 </p>
 </div>
-<div id="outline-container-org130cb07" class="outline-3">
-<h3 id="org130cb07"><span class="section-number-3">1.1</span> python</h3>
+<div id="outline-container-org3e8844d" class="outline-3">
+<h3 id="org3e8844d"><span class="section-number-3">1.1</span> python</h3>
 <div class="outline-text-3" id="text-1-1">
 <ol class="org-ol">
 <li>对于python，对函数式编程支持不够强力，而在日常操作中，处理文本数据非常多，大多都是处理数组，列表，对于python来说就得写很多for xx in yy。而没有函数式语言中常见的filter,map,foreach,flodr,flod等。这使得我们不能快速的进行验证我们的思维，而必须要分一部分时间去输入一些额外的字符。</li>
@@ -270,17 +75,17 @@ for the JavaScript code in this tag.
 </ol>
 </div>
 </div>
-<div id="outline-container-org96dbe99" class="outline-3">
-<h3 id="org96dbe99"><span class="section-number-3">1.2</span> ruby</h3>
+<div id="outline-container-org1cbf674" class="outline-3">
+<h3 id="org1cbf674"><span class="section-number-3">1.2</span> ruby</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 曾经有一段时间，我非常喜欢ruby，当时我觉得找到了日常脚本的真爱。ruby中有很多值得让人兴奋的点。比如使用 ``操作符可以直接执行shell命令。这相当于你可以把shell命令嵌入到ruby脚本中，让人几乎不能发现。比如ruby的函数调用可以不使用括号，这对脚本来说大大减少了输入，让思维更流畅。而且ruby支持block，使得语言表达起来更有力。比如ervery thing is object，即使是数字也是对象类型，这使得链式调用大行其道，使用起来非常方便。
 </p>
 <div class="org-src-container">
-<pre class="src src-ruby"><span style="color: #757575;"># </span><span style="color: #757575;">&#19968;&#20010;block&#30340;&#20363;&#23376;</span>
-<span style="color: #9575CD;">(</span><span style="color: #C5CAE9;">0</span>..<span style="color: #C5CAE9;">5</span><span style="color: #9575CD;">)</span>.each <span style="color: #E1BEE7;">do</span> |i|
-   <span style="color: #80DEEA;">puts</span> <span style="color: #C5E1A5;">"&#23616;&#37096;&#21464;&#37327;&#30340;&#20540;&#20026; </span><span style="color: #80CBC4;">#{i}</span><span style="color: #C5E1A5;">"</span>
-<span style="color: #E1BEE7;">end</span>
+<pre class="src src-ruby"><span style="color: #676E95;"># </span><span style="color: #676E95;">&#19968;&#20010;block&#30340;&#20363;&#23376;</span>
+(0..5).each <span style="color: #89DDFF;">do</span> |i|
+   <span style="color: #82aaff;">puts</span> <span style="color: #c3e88d;">"&#23616;&#37096;&#21464;&#37327;&#30340;&#20540;&#20026; </span><span style="color: #ffcb6b;">#{i}</span><span style="color: #c3e88d;">"</span>
+<span style="color: #89DDFF;">end</span>
 </pre>
 </div>
 <p>
@@ -288,8 +93,8 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb44ab87" class="outline-3">
-<h3 id="orgb44ab87"><span class="section-number-3">1.3</span> nodejs</h3>
+<div id="outline-container-org8ad42c9" class="outline-3">
+<h3 id="org8ad42c9"><span class="section-number-3">1.3</span> nodejs</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 对js语言不感冒，所以没有尝试过
@@ -297,8 +102,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9d4e1d6" class="outline-3">
-<h3 id="org9d4e1d6"><span class="section-number-3">1.4</span> elixir</h3>
+<div id="outline-container-org1396a09" class="outline-3">
+<h3 id="org1396a09"><span class="section-number-3">1.4</span> elixir</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都在写erlang。而elixir是erlang vm上的一门语言，所以对于elixir的底层也有一定了解。而且elixir的语法跟ruby很相似，吸引了很多ruby的开发者，这使得elixir的表达能力也非常的强，而elixir也是一门函数式语言，所以对于处理一些文本很是方便。唯一的弱点也在补全，不过补全也比ruby好多了，自带的iex shell也足够好，标准库的例子也足够丰富。
@@ -308,59 +113,59 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 </div>
 
 
-<div id="outline-container-org91d8fd0" class="outline-2">
-<h2 id="org91d8fd0"><span class="section-number-2">2</span> go vs elixir</h2>
+<div id="outline-container-org2f12d8a" class="outline-2">
+<h2 id="org2f12d8a"><span class="section-number-2">2</span> go vs elixir</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 虽然我工作开发使用的是go，go也足够简单，易懂。但是由于易懂，所以几乎没有什么语法糖。写起脚本来很是啰嗦。
 </p>
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #E1BEE7;">package</span> main
+<pre class="src src-go"><span style="color: #89DDFF;">package</span> main
 
-<span style="color: #E1BEE7;">import</span> <span style="color: #9575CD;">(</span>
-  <span style="color: #C5E1A5;">"fmt"</span>
-  <span style="color: #C5E1A5;">"io/ioutil"</span>
-  <span style="color: #C5E1A5;">"strings"</span>
-<span style="color: #9575CD;">)</span>
-<span style="color: #E1BEE7;">func</span> <span style="color: #64B5F6;">main</span><span style="color: #9575CD;">()</span> <span style="color: #9575CD;">{</span>
-  s, err := ioutil.<span style="color: #64B5F6;">ReadFile</span><span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">"./wftest.csv"</span><span style="color: #7986CB;">)</span>
-  <span style="color: #E1BEE7;">if</span> err != <span style="color: #C5CAE9;">nil</span> <span style="color: #7986CB;">{</span>
-    <span style="color: #80DEEA;">panic</span><span style="color: #26C6DA;">(</span>err<span style="color: #26C6DA;">)</span>
-  <span style="color: #7986CB;">}</span>
-  lines := strings.<span style="color: #64B5F6;">Split</span><span style="color: #7986CB;">(</span><span style="color: #64B5F6;">string</span><span style="color: #26C6DA;">(</span>s<span style="color: #26C6DA;">)</span>, <span style="color: #C5E1A5;">"\n"</span><span style="color: #7986CB;">)</span>
-  <span style="color: #E1BEE7;">for</span> _, line := <span style="color: #E1BEE7;">range</span> lines <span style="color: #7986CB;">{</span>
-    fileds := strings.<span style="color: #64B5F6;">Split</span><span style="color: #26C6DA;">(</span>line, <span style="color: #C5E1A5;">","</span><span style="color: #26C6DA;">)</span>
-    <span style="color: #E1BEE7;">var</span> newfileds <span style="color: #26C6DA;">[]</span><span style="color: #FFCC80;">string</span>
-    <span style="color: #E1BEE7;">for</span> _, f := <span style="color: #E1BEE7;">range</span> fileds <span style="color: #26C6DA;">{</span>
-      newfileds = <span style="color: #80DEEA;">append</span><span style="color: #42A5F5;">(</span>newfileds, strings.<span style="color: #64B5F6;">TrimSpace</span><span style="color: #4DB6AC;">(</span>f<span style="color: #4DB6AC;">)</span><span style="color: #42A5F5;">)</span>
-    <span style="color: #26C6DA;">}</span>
-    fmt.<span style="color: #64B5F6;">Println</span><span style="color: #26C6DA;">(</span>strings.<span style="color: #64B5F6;">Join</span><span style="color: #42A5F5;">(</span>newfileds, <span style="color: #C5E1A5;">","</span><span style="color: #42A5F5;">)</span><span style="color: #26C6DA;">)</span>
-  <span style="color: #7986CB;">}</span>
-<span style="color: #9575CD;">}</span>
+<span style="color: #89DDFF;">import</span> (
+  <span style="color: #c3e88d;">"fmt"</span>
+  <span style="color: #c3e88d;">"io/ioutil"</span>
+  <span style="color: #c3e88d;">"strings"</span>
+)
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">main</span>() {
+  <span style="color: #ffcb6b;">s</span>, <span style="color: #ffcb6b;">err</span> := ioutil.<span style="color: #82aaff;">ReadFile</span>(<span style="color: #c3e88d;">"./wftest.csv"</span>)
+  <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+    <span style="color: #82aaff;">panic</span>(err)
+  }
+  <span style="color: #ffcb6b;">lines</span> := strings.<span style="color: #82aaff;">Split</span>(<span style="color: #82aaff;">string</span>(s), <span style="color: #c3e88d;">"\n"</span>)
+  <span style="color: #89DDFF;">for</span> <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">line</span> := <span style="color: #89DDFF;">range</span> lines {
+    <span style="color: #ffcb6b;">fileds</span> := strings.<span style="color: #82aaff;">Split</span>(line, <span style="color: #c3e88d;">","</span>)
+    <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">newfileds</span> []<span style="color: #c792ea;">string</span>
+    <span style="color: #89DDFF;">for</span> <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">f</span> := <span style="color: #89DDFF;">range</span> fileds {
+      newfileds = <span style="color: #82aaff;">append</span>(newfileds, strings.<span style="color: #82aaff;">TrimSpace</span>(f))
+    }
+    fmt.<span style="color: #82aaff;">Println</span>(strings.<span style="color: #82aaff;">Join</span>(newfileds, <span style="color: #c3e88d;">","</span>))
+  }
+}
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #80CBC4;">file</span> = <span style="color: #FFCC80;">File</span>.read! <span style="color: #9575CD;">(</span><span style="color: #FFCC80;">List</span>.first <span style="color: #FFCC80;">System</span>.argv<span style="color: #9575CD;">)</span>
-<span style="color: #80CBC4;">lines</span> = <span style="color: #FFCC80;">String</span>.split<span style="color: #9575CD;">(</span>file, <span style="color: #C5E1A5;">"\n"</span><span style="color: #9575CD;">)</span>
-<span style="color: #E1BEE7;">for</span> line &lt;- lines <span style="color: #E1BEE7;">do</span>
-  <span style="color: #80CBC4;">fields</span> = <span style="color: #FFCC80;">String</span>.split line, <span style="color: #C5E1A5;">","</span>
-  <span style="color: #80CBC4;">newfd</span> = <span style="color: #FFCC80;">Enum</span>.map<span style="color: #9575CD;">(</span>fields, <span style="color: #E1BEE7;">fn</span> x -&gt; <span style="color: #FFCC80;">String</span>.trim x <span style="color: #E1BEE7;">end</span><span style="color: #9575CD;">)</span>
-  <span style="color: #80CBC4;">s</span> = <span style="color: #FFCC80;">Enum</span>.join<span style="color: #9575CD;">(</span>newfd, <span style="color: #C5E1A5;">","</span><span style="color: #9575CD;">)</span>
-  <span style="color: #FFCC80;">IO</span>.puts s
-<span style="color: #E1BEE7;">end</span>
+<pre class="src src-elixir"><span style="color: #ffcb6b;">file</span> = <span style="color: #c792ea;">File</span>.read! (<span style="color: #c792ea;">List</span>.first <span style="color: #c792ea;">System</span>.argv)
+<span style="color: #ffcb6b;">lines</span> = <span style="color: #c792ea;">String</span>.split(file, <span style="color: #c3e88d;">"\n"</span>)
+<span style="color: #89DDFF;">for</span> line &lt;- lines <span style="color: #89DDFF;">do</span>
+  <span style="color: #ffcb6b;">fields</span> = <span style="color: #c792ea;">String</span>.split line, <span style="color: #c3e88d;">","</span>
+  <span style="color: #ffcb6b;">newfd</span> = <span style="color: #c792ea;">Enum</span>.map(fields, <span style="color: #89DDFF;">fn</span> x -&gt; <span style="color: #c792ea;">String</span>.trim x <span style="color: #89DDFF;">end</span>)
+  <span style="color: #ffcb6b;">s</span> = <span style="color: #c792ea;">Enum</span>.join(newfd, <span style="color: #c3e88d;">","</span>)
+  <span style="color: #c792ea;">IO</span>.puts s
+<span style="color: #89DDFF;">end</span>
 </pre>
 </div>
 <p>
 还可以写得更简洁, |&gt;是管道操作符，可以把第一个参数往下传
 </p>
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #FFCC80;">File</span>.read!<span style="color: #9575CD;">(</span><span style="color: #FFCC80;">List</span>.first <span style="color: #FFCC80;">System</span>.argv<span style="color: #9575CD;">)</span>
-|&gt; <span style="color: #FFCC80;">String</span>.split<span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"\n"</span><span style="color: #9575CD;">)</span>
-|&gt; <span style="color: #FFCC80;">Enum</span>.map<span style="color: #9575CD;">(</span><span style="color: #E1BEE7;">fn</span> x-&gt; <span style="color: #FFCC80;">String</span>.split<span style="color: #7986CB;">(</span>x, <span style="color: #C5E1A5;">","</span><span style="color: #7986CB;">)</span>
-|&gt; <span style="color: #FFCC80;">Enum</span>.map<span style="color: #7986CB;">(</span><span style="color: #E1BEE7;">fn</span> y -&gt; <span style="color: #FFCC80;">String</span>.trim y <span style="color: #E1BEE7;">end</span><span style="color: #7986CB;">)</span>
-|&gt; <span style="color: #FFCC80;">Enum</span>.join<span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">","</span><span style="color: #7986CB;">)</span> <span style="color: #E1BEE7;">end</span><span style="color: #9575CD;">)</span>
-|&gt; <span style="color: #FFCC80;">IO</span>.puts
+<pre class="src src-elixir"><span style="color: #c792ea;">File</span>.read!(<span style="color: #c792ea;">List</span>.first <span style="color: #c792ea;">System</span>.argv)
+|&gt; <span style="color: #c792ea;">String</span>.split(<span style="color: #c3e88d;">"\n"</span>)
+|&gt; <span style="color: #c792ea;">Enum</span>.map(<span style="color: #89DDFF;">fn</span> x-&gt; <span style="color: #c792ea;">String</span>.split(x, <span style="color: #c3e88d;">","</span>)
+|&gt; <span style="color: #c792ea;">Enum</span>.map(<span style="color: #89DDFF;">fn</span> y -&gt; <span style="color: #c792ea;">String</span>.trim y <span style="color: #89DDFF;">end</span>)
+|&gt; <span style="color: #c792ea;">Enum</span>.join(<span style="color: #c3e88d;">","</span>) <span style="color: #89DDFF;">end</span>)
+|&gt; <span style="color: #c792ea;">IO</span>.puts
 </pre>
 </div>
 <p>
@@ -369,8 +174,8 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 </div>
 </div>
 
-<div id="outline-container-orga364788" class="outline-2">
-<h2 id="orga364788"><span class="section-number-2">3</span> 搭建elixir脚本环境</h2>
+<div id="outline-container-org13b8c5f" class="outline-2">
+<h2 id="org13b8c5f"><span class="section-number-2">3</span> 搭建elixir脚本环境</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 由于elixir不能全局安装第三方库，所以对于脚本来说不能使用第三方库简直是个灾难，-0- 难道解析个json都要从头造轮子吗？很奇怪的一点就是erlang支持了code path的功能，elixir竟然不支持。所以就得手动适配了。
@@ -384,8 +189,8 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 <li>需要把beam文件所在的目录加入到code path中，erlang在home目录下有个.erlang文件，在erlang启动时会执行其中的代码，所以需要把下面的代码添加到.erlang文件中</li>
 </ol>
 <div class="org-src-container">
-<pre class="src src-erlang"><span style="color: #9575CD;">{</span>ok, <span style="color: #80CBC4;">Dirs</span><span style="color: #9575CD;">}</span> = <span style="color: #FFCC80;">file</span>:<span style="color: #FFCC80;">list_dir</span><span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"/code/elixir/script/_build/dev/lib"</span><span style="color: #9575CD;">)</span>.
-<span style="color: #FFCC80;">lists</span>:<span style="color: #FFCC80;">foreach</span><span style="color: #9575CD;">(</span><span style="color: #E1BEE7;">fun</span><span style="color: #7986CB;">(</span><span style="color: #80CBC4;">A</span><span style="color: #7986CB;">)</span> -&gt;<span style="color: #FFCC80;">code</span>:<span style="color: #FFCC80;">add_patha</span><span style="color: #7986CB;">(</span><span style="color: #C5E1A5;">"/code/elixir/script/_build/dev/lib/"</span>++ <span style="color: #80CBC4;">A</span> ++ <span style="color: #C5E1A5;">"/ebin"</span><span style="color: #7986CB;">)</span> <span style="color: #E1BEE7;">end</span>, <span style="color: #80CBC4;">Dirs</span><span style="color: #9575CD;">)</span>.
+<pre class="src src-erlang">{ok, <span style="color: #ffcb6b;">Dirs</span>} = <span style="color: #c792ea;">file</span>:<span style="color: #c792ea;">list_dir</span>(<span style="color: #c3e88d;">"/code/elixir/script/_build/dev/lib"</span>).
+<span style="color: #c792ea;">lists</span>:<span style="color: #c792ea;">foreach</span>(<span style="color: #89DDFF;">fun</span>(<span style="color: #ffcb6b;">A</span>) -&gt;<span style="color: #c792ea;">code</span>:<span style="color: #c792ea;">add_patha</span>(<span style="color: #c3e88d;">"/code/elixir/script/_build/dev/lib/"</span>++ <span style="color: #ffcb6b;">A</span> ++ <span style="color: #c3e88d;">"/ebin"</span>) <span style="color: #89DDFF;">end</span>, <span style="color: #ffcb6b;">Dirs</span>).
 </pre>
 </div>
 <p>
@@ -394,25 +199,24 @@ elixir对我来说并不陌生，比较我刚毕业的一年多的时间里都�
 </div>
 </div>
 
-<div id="outline-container-org222b4ee" class="outline-2">
-<h2 id="org222b4ee"><span class="section-number-2">4</span> 使用</h2>
+<div id="outline-container-org31f6113" class="outline-2">
+<h2 id="org31f6113"><span class="section-number-2">4</span> 使用</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 比如我们可以使用第三方http client抓取下百度首页, 创建一个文件client.exs,输入下面代码, 然后chmod +x client.exs，然后执行./client.exs就可能看到效果了
 </p>
 <div class="org-src-container">
-<pre class="src src-elixir"><span style="color: #757575;">#</span><span style="color: #757575;">!/usr/bin/env elixir</span>
-<span style="color: #FFCC80;">HTTPoison</span>.start
-<span style="color: #80CBC4;">body</span> = <span style="color: #FFCC80;">HTTPoison</span>.get!<span style="color: #9575CD;">(</span><span style="color: #C5E1A5;">"http://www.baidu.com"</span><span style="color: #9575CD;">)</span>.body
-<span style="color: #FFCC80;">IO</span>.puts body
+<pre class="src src-elixir"><span style="color: #676E95;">#</span><span style="color: #676E95;">!/usr/bin/env elixir</span>
+<span style="color: #c792ea;">HTTPoison</span>.start
+<span style="color: #ffcb6b;">body</span> = <span style="color: #c792ea;">HTTPoison</span>.get!(<span style="color: #c3e88d;">"http://www.baidu.com"</span>).body
+<span style="color: #c792ea;">IO</span>.puts body
 </pre>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-07 Sat 16:37</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>

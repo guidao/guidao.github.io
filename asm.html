@@ -3,228 +3,33 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-07 Sat 16:42 -->
+<!-- 2021-01-22 Fri 17:59 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>golang汇编基础知识</title>
 <meta name="generator" content="Org mode" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-hledger:before { content: 'hledger'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
 </script>
 </head>
 <body>
@@ -238,37 +43,34 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org858b831">1. golang汇编基础知识</a>
+<li><a href="#org45e8e1f">1. golang汇编基础知识</a>
 <ul>
-<li><a href="#org35d4ed5">1.1. 前言</a></li>
-<li><a href="#org6cccd8e">1.2. 寄存器</a></li>
-<li><a href="#org41210f0">1.3. 跟例子学汇编</a>
-<ul>
-<li><a href="#orge8396b9">1.3.1. 第一个例子</a></li>
-<li><a href="#org75aa03b">1.3.2. 第二个例子</a></li>
-</ul>
-</li>
-<li><a href="#org2794517">1.4. 参考资料</a></li>
+<li><a href="#org1264c7d">1.1. 前言</a></li>
+<li><a href="#org0c10809">1.2. 寄存器</a></li>
+<li><a href="#org790433a">1.3. 跟例子学汇编</a></li>
+<li><a href="#org75d01ff">1.4. 第一个例子</a></li>
+<li><a href="#org7ff5117">1.5. 第二个例子</a></li>
+<li><a href="#org0e0adfb">1.6. 参考资料</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org858b831" class="outline-2">
-<h2 id="org858b831"><span class="section-number-2">1</span> golang汇编基础知识</h2>
+<div id="outline-container-org45e8e1f" class="outline-2">
+<h2 id="org45e8e1f"><span class="section-number-2">1</span> golang汇编基础知识</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-org35d4ed5" class="outline-3">
-<h3 id="org35d4ed5"><span class="section-number-3">1.1</span> 前言</h3>
+<div id="outline-container-org1264c7d" class="outline-3">
+<h3 id="org1264c7d"><span class="section-number-3">1.1</span> 前言</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 golang的汇编基于plan9汇编,是一个中间汇编方式。这样可以忽略底层不同架构之间的一些差别。汇编主要了解各种寄存器的使用跟寻址方式。根据汇编我们能够一探golang的底层实现。比如内存如何分配，栈如何扩张。接口如何转变。
 </p>
 </div>
 </div>
-<div id="outline-container-org6cccd8e" class="outline-3">
-<h3 id="org6cccd8e"><span class="section-number-3">1.2</span> 寄存器</h3>
+<div id="outline-container-org0c10809" class="outline-3">
+<h3 id="org0c10809"><span class="section-number-3">1.2</span> 寄存器</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 各种伪计数器:
@@ -286,22 +88,22 @@ golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值
 </p>
 </div>
 </div>
-<div id="outline-container-org41210f0" class="outline-3">
-<h3 id="org41210f0"><span class="section-number-3">1.3</span> 跟例子学汇编</h3>
+<div id="outline-container-org790433a" class="outline-3">
+<h3 id="org790433a"><span class="section-number-3">1.3</span> 跟例子学汇编</h3>
 <div class="outline-text-3" id="text-1-3">
 </div>
-<div id="outline-container-orge8396b9" class="outline-4">
-<h4 id="orge8396b9"><span class="section-number-4">1.3.1</span> 第一个例子</h4>
-<div class="outline-text-4" id="text-1-3-1">
+<div id="outline-container-org75d01ff" class="outline-3">
+<h3 id="org75d01ff"><span class="section-number-3">1.4</span> 第一个例子</h3>
+<div class="outline-text-3" id="text-1-4">
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #fb4933;">package</span> main
-<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
-<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">add</span><span style="color: #458588;">(</span>a, b <span style="color: #d3869b;">int32</span><span style="color: #458588;">)</span> <span style="color: #458588;">(</span><span style="color: #d3869b;">int32</span>, <span style="color: #d3869b;">bool</span><span style="color: #458588;">)</span> <span style="color: #458588;">{</span>
-  <span style="color: #fb4933;">return</span> a + b, <span style="color: #d3869b;">true</span>
-<span style="color: #458588;">}</span>
-<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">main</span><span style="color: #458588;">()</span> <span style="color: #458588;">{</span>
-  <span style="color: #fabd2f;">add</span><span style="color: #b16286;">(</span><span style="color: #d3869b;">10</span>, <span style="color: #d3869b;">32</span><span style="color: #b16286;">)</span>
-<span style="color: #458588;">}</span>
+<pre class="src src-go"><span style="color: #89DDFF;">package</span> main
+<span style="color: #676E95;">//</span><span style="color: #676E95;">go:noinline</span>
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">add</span>(<span style="color: #ffcb6b;">a</span>, <span style="color: #ffcb6b;">b</span> <span style="color: #c792ea;">int32</span>) (<span style="color: #c792ea;">int32</span>, <span style="color: #c792ea;">bool</span>) {
+  <span style="color: #89DDFF;">return</span> a + b, <span style="color: #f78c6c;">true</span>
+}
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">main</span>() {
+  <span style="color: #82aaff;">add</span>(10, 32)
+}
 </pre>
 </div>
 
@@ -309,18 +111,18 @@ golang的汇编是调用者维护参数返回值跟返回地址。所以FP的值
 如上的这段代码会被编译为以下汇编:
 </p>
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #b8bb26;">""</span>.add STEXT nosplit size=20 args=0x10 locals=0x0
-        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        TEXT    <span style="color: #b8bb26;">""</span>.add<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>, NOSPLIT, $0-16
-        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        FUNCDATA        $0, gclocals&#183;f207267fbf96a0178e8758c6e3e0ce28<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        FUNCDATA        $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-        <span style="color: #fb4933;">0x0000</span> 00000 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        MOVL    <span style="color: #b8bb26;">""</span>.b+12<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, AX
-        <span style="color: #fb4933;">0x0004</span> 00004 <span style="color: #458588;">(</span>call.go:4<span style="color: #458588;">)</span>        MOVL    <span style="color: #b8bb26;">""</span>.a+8<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, CX
-        <span style="color: #fb4933;">0x0008</span> 00008 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        ADDL    CX, AX
-        <span style="color: #fb4933;">0x000a</span> 00010 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        MOVL    AX, <span style="color: #b8bb26;">""</span>.~r2+16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
-        <span style="color: #fb4933;">0x000e</span> 00014 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        MOVB    $1, <span style="color: #b8bb26;">""</span>.~r3+20<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
-        <span style="color: #fb4933;">0x0013</span> 00019 <span style="color: #458588;">(</span>call.go:5<span style="color: #458588;">)</span>        RET
-        <span style="color: #fb4933;">0x0000</span> 8b 44 24 0c 8b 4c 24 08 01 c8 89 44 24 10 c6 44  .D$..L$....D$..D
-        <span style="color: #fb4933;">0x0010</span> 24 14 01 c3                                      $...
+<pre class="src src-asm"><span style="color: #c3e88d;">""</span>.add STEXT nosplit size=20 args=0x10 locals=0x0
+        <span style="color: #89DDFF;">0x0000</span> 00000 (call.go:4)        TEXT    <span style="color: #c3e88d;">""</span>.add(SB), NOSPLIT, $0-16
+        <span style="color: #89DDFF;">0x0000</span> 00000 (call.go:4)        FUNCDATA        $0, gclocals&#183;f207267fbf96a0178e8758c6e3e0ce28(SB)
+        <span style="color: #89DDFF;">0x0000</span> 00000 (call.go:4)        FUNCDATA        $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb(SB)
+        <span style="color: #89DDFF;">0x0000</span> 00000 (call.go:4)        MOVL    <span style="color: #c3e88d;">""</span>.b+12(SP), AX
+        <span style="color: #89DDFF;">0x0004</span> 00004 (call.go:4)        MOVL    <span style="color: #c3e88d;">""</span>.a+8(SP), CX
+        <span style="color: #89DDFF;">0x0008</span> 00008 (call.go:5)        ADDL    CX, AX
+        <span style="color: #89DDFF;">0x000a</span> 00010 (call.go:5)        MOVL    AX, <span style="color: #c3e88d;">""</span>.~r2+16(SP)
+        <span style="color: #89DDFF;">0x000e</span> 00014 (call.go:5)        MOVB    $1, <span style="color: #c3e88d;">""</span>.~r3+20(SP)
+        <span style="color: #89DDFF;">0x0013</span> 00019 (call.go:5)        RET
+        <span style="color: #89DDFF;">0x0000</span> 8b 44 24 0c 8b 4c 24 08 01 c8 89 44 24 10 c6 44  .D$..L$....D$..D
+        <span style="color: #89DDFF;">0x0010</span> 24 14 01 c3                                      $...
 </pre>
 </div>
 <p>
@@ -330,53 +132,53 @@ SP 指向当前栈顶部 .a+8(SP) 之前的.a表示助记符，没有特别含�
 </p>
 </div>
 </div>
-<div id="outline-container-org75aa03b" class="outline-4">
-<h4 id="org75aa03b"><span class="section-number-4">1.3.2</span> 第二个例子</h4>
-<div class="outline-text-4" id="text-1-3-2">
+<div id="outline-container-org7ff5117" class="outline-3">
+<h3 id="org7ff5117"><span class="section-number-3">1.5</span> 第二个例子</h3>
+<div class="outline-text-3" id="text-1-5">
 <div class="org-src-container">
-<pre class="src src-go"><span style="color: #fb4933;">package</span> main
+<pre class="src src-go"><span style="color: #89DDFF;">package</span> main
 
-<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
-<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">add</span><span style="color: #458588;">(</span>a, b <span style="color: #d3869b;">int32</span><span style="color: #458588;">)</span> <span style="color: #458588;">(</span><span style="color: #d3869b;">int32</span>, <span style="color: #d3869b;">bool</span><span style="color: #458588;">)</span> <span style="color: #458588;">{</span>
-  <span style="color: #fb4933;">return</span> a + b, <span style="color: #d3869b;">true</span>
-<span style="color: #458588;">}</span>
-<span style="color: #7c6f64;">//</span><span style="color: #7c6f64;">go:noinline</span>
-<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">callAdd</span><span style="color: #458588;">()</span> <span style="color: #d3869b;">int32</span> <span style="color: #458588;">{</span>
-  a, _ := <span style="color: #fabd2f;">add</span><span style="color: #b16286;">(</span><span style="color: #d3869b;">10</span>, <span style="color: #d3869b;">20</span><span style="color: #b16286;">)</span>
-  <span style="color: #fb4933;">return</span> a
-<span style="color: #458588;">}</span>
-<span style="color: #fb4933;">func</span> <span style="color: #fabd2f;">main</span><span style="color: #458588;">()</span> <span style="color: #458588;">{</span>
-  <span style="color: #fabd2f;">callAdd</span><span style="color: #b16286;">()</span>
-<span style="color: #458588;">}</span>
+<span style="color: #676E95;">//</span><span style="color: #676E95;">go:noinline</span>
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">add</span>(<span style="color: #ffcb6b;">a</span>, <span style="color: #ffcb6b;">b</span> <span style="color: #c792ea;">int32</span>) (<span style="color: #c792ea;">int32</span>, <span style="color: #c792ea;">bool</span>) {
+  <span style="color: #89DDFF;">return</span> a + b, <span style="color: #f78c6c;">true</span>
+}
+<span style="color: #676E95;">//</span><span style="color: #676E95;">go:noinline</span>
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">callAdd</span>() <span style="color: #c792ea;">int32</span> {
+  <span style="color: #ffcb6b;">a</span>, <span style="color: #ffcb6b;">_</span> := <span style="color: #82aaff;">add</span>(10, 20)
+  <span style="color: #89DDFF;">return</span> a
+}
+<span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">main</span>() {
+  <span style="color: #82aaff;">callAdd</span>()
+}
 </pre>
 </div>
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #b8bb26;">""</span>.callAdd STEXT size=73 args=0x8 locals=0x18
-<span style="color: #fabd2f;">0x0000</span> <span style="color: #fb4933;">00000</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  TEXT  <span style="color: #b8bb26;">""</span>.callAdd<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>, $24-8
-<span style="color: #7c6f64;">; </span><span style="color: #7c6f64;">&#36825;&#19977;&#34892;&#20195;&#30721;&#26816;&#26597;&#26159;&#21542;&#38656;&#35201;&#25193;&#23637;&#26632;, &#38656;&#35201;&#30340;&#35805;&#65292;&#36339;&#21040;0x0042</span>
-<span style="color: #fabd2f;">0x0000</span> <span style="color: #fb4933;">00000</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  MOVQ  <span style="color: #458588;">(</span>TLS<span style="color: #458588;">)</span>, CX
-<span style="color: #fabd2f;">0x0009</span> <span style="color: #fb4933;">00009</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  CMPQ  SP, 16<span style="color: #458588;">(</span>CX<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x000d</span> <span style="color: #fb4933;">00013</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  JLS 66
+<pre class="src src-asm"><span style="color: #c3e88d;">""</span>.callAdd STEXT size=73 args=0x8 locals=0x18
+<span style="color: #82aaff;">0x0000</span> <span style="color: #89DDFF;">00000</span> (call.go:9)        TEXT    <span style="color: #c3e88d;">""</span>.callAdd(SB), $24-8
+<span style="color: #676E95;">; </span><span style="color: #676E95;">&#36825;&#19977;&#34892;&#20195;&#30721;&#26816;&#26597;&#26159;&#21542;&#38656;&#35201;&#25193;&#23637;&#26632;, &#38656;&#35201;&#30340;&#35805;&#65292;&#36339;&#21040;0x0042</span>
+<span style="color: #82aaff;">0x0000</span> <span style="color: #89DDFF;">00000</span> (call.go:9)        MOVQ    (TLS), CX
+<span style="color: #82aaff;">0x0009</span> <span style="color: #89DDFF;">00009</span> (call.go:9)        CMPQ    SP, 16(CX)
+<span style="color: #82aaff;">0x000d</span> <span style="color: #89DDFF;">00013</span> (call.go:9)        JLS     66
 
-<span style="color: #fabd2f;">0x000f</span> <span style="color: #fb4933;">00015</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  SUBQ  $24, SP
-<span style="color: #fabd2f;">0x0013</span> <span style="color: #fb4933;">00019</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  MOVQ  BP, 16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x0018</span> <span style="color: #fb4933;">00024</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  LEAQ  16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, BP
-<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  FUNCDATA  $0, gclocals&#183;2a5305abe05176240e61b8620e19a815<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  FUNCDATA  $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x001d</span> <span style="color: #fb4933;">00029</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVQ  $85899345930, AX
-<span style="color: #fabd2f;">0x0027</span> <span style="color: #fb4933;">00039</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVQ  AX, <span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x002b</span> <span style="color: #fb4933;">00043</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> PCDATA  $0, $0
-<span style="color: #fabd2f;">0x002b</span> <span style="color: #fb4933;">00043</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> CALL  <span style="color: #b8bb26;">""</span>.add<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x0030</span> <span style="color: #fb4933;">00048</span> <span style="color: #458588;">(</span>call.go:10<span style="color: #458588;">)</span> MOVL  8<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, AX
-<span style="color: #fabd2f;">0x0034</span> <span style="color: #fb4933;">00052</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> MOVL  AX, <span style="color: #b8bb26;">""</span>.~r0+32<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x0038</span> <span style="color: #fb4933;">00056</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> MOVQ  16<span style="color: #458588;">(</span>SP<span style="color: #458588;">)</span>, BP
-<span style="color: #fabd2f;">0x003d</span> <span style="color: #fb4933;">00061</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> ADDQ  $24, SP
-<span style="color: #fabd2f;">0x0041</span> <span style="color: #fb4933;">00065</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> RET
-<span style="color: #7c6f64;">; </span><span style="color: #7c6f64;">&#25193;&#23637;&#26632;, &#25193;&#23637;&#23436;&#20102;&#21518;&#36339;&#21040;&#26368;&#24320;&#22987;</span>
-<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:11<span style="color: #458588;">)</span> NOP
-<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  PCDATA  $0, $-1
-<span style="color: #fabd2f;">0x0042</span> <span style="color: #fb4933;">00066</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  CALL  runtime.morestack_noctxt<span style="color: #458588;">(</span>SB<span style="color: #458588;">)</span>
-<span style="color: #fabd2f;">0x0047</span> <span style="color: #fb4933;">00071</span> <span style="color: #458588;">(</span>call.go:9<span style="color: #458588;">)</span>  JMP 0
+<span style="color: #82aaff;">0x000f</span> <span style="color: #89DDFF;">00015</span> (call.go:9)        SUBQ    $24, SP
+<span style="color: #82aaff;">0x0013</span> <span style="color: #89DDFF;">00019</span> (call.go:9)        MOVQ    BP, 16(SP)
+<span style="color: #82aaff;">0x0018</span> <span style="color: #89DDFF;">00024</span> (call.go:9)        LEAQ    16(SP), BP
+<span style="color: #82aaff;">0x001d</span> <span style="color: #89DDFF;">00029</span> (call.go:9)        FUNCDATA        $0, gclocals&#183;2a5305abe05176240e61b8620e19a815(SB)
+<span style="color: #82aaff;">0x001d</span> <span style="color: #89DDFF;">00029</span> (call.go:9)        FUNCDATA        $1, gclocals&#183;33cdeccccebe80329f1fdbee7f5874cb(SB)
+<span style="color: #82aaff;">0x001d</span> <span style="color: #89DDFF;">00029</span> (call.go:10)       MOVQ    $85899345930, AX
+<span style="color: #82aaff;">0x0027</span> <span style="color: #89DDFF;">00039</span> (call.go:10)       MOVQ    AX, (SP)
+<span style="color: #82aaff;">0x002b</span> <span style="color: #89DDFF;">00043</span> (call.go:10)       PCDATA  $0, $0
+<span style="color: #82aaff;">0x002b</span> <span style="color: #89DDFF;">00043</span> (call.go:10)       CALL    <span style="color: #c3e88d;">""</span>.add(SB)
+<span style="color: #82aaff;">0x0030</span> <span style="color: #89DDFF;">00048</span> (call.go:10)       MOVL    8(SP), AX
+<span style="color: #82aaff;">0x0034</span> <span style="color: #89DDFF;">00052</span> (call.go:11)       MOVL    AX, <span style="color: #c3e88d;">""</span>.~r0+32(SP)
+<span style="color: #82aaff;">0x0038</span> <span style="color: #89DDFF;">00056</span> (call.go:11)       MOVQ    16(SP), BP
+<span style="color: #82aaff;">0x003d</span> <span style="color: #89DDFF;">00061</span> (call.go:11)       ADDQ    $24, SP
+<span style="color: #82aaff;">0x0041</span> <span style="color: #89DDFF;">00065</span> (call.go:11)       RET
+<span style="color: #676E95;">; </span><span style="color: #676E95;">&#25193;&#23637;&#26632;, &#25193;&#23637;&#23436;&#20102;&#21518;&#36339;&#21040;&#26368;&#24320;&#22987;</span>
+<span style="color: #82aaff;">0x0042</span> <span style="color: #89DDFF;">00066</span> (call.go:11)       NOP
+<span style="color: #82aaff;">0x0042</span> <span style="color: #89DDFF;">00066</span> (call.go:9)        PCDATA  $0, $-1
+<span style="color: #82aaff;">0x0042</span> <span style="color: #89DDFF;">00066</span> (call.go:9)        CALL    runtime.morestack_noctxt(SB)
+<span style="color: #82aaff;">0x0047</span> <span style="color: #89DDFF;">00071</span> (call.go:9)        JMP     0
 </pre>
 </div>
 <p>
@@ -392,9 +194,9 @@ RET指令加载返回地址，跳到返回地址。
 </div>
 </div>
 </div>
-<div id="outline-container-org2794517" class="outline-3">
-<h3 id="org2794517"><span class="section-number-3">1.4</span> 参考资料</h3>
-<div class="outline-text-3" id="text-1-4">
+<div id="outline-container-org0e0adfb" class="outline-3">
+<h3 id="org0e0adfb"><span class="section-number-3">1.6</span> 参考资料</h3>
+<div class="outline-text-3" id="text-1-6">
 <ul class="org-ul">
 <li><a href="https://lrita.github.io/2017/12/12/golang-asm/">https://lrita.github.io/2017/12/12/golang-asm/</a></li>
 <li><a href="https://lrita.github.io/images/posts/go/GoFunctionsInAssembly.pdf">https://lrita.github.io/images/posts/go/GoFunctionsInAssembly.pdf</a></li>
@@ -407,8 +209,7 @@ RET指令加载返回地址，跳到返回地址。
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-07 Sat 16:42</p>
-<p class="validation"></p>
+<p class="date">Created: 2021-01-22 Fri 17:59</p>
 </div>
 </body>
 </html>
