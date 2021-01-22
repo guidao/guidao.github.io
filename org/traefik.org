@@ -1,0 +1,245 @@
+#+TITLE: Traefik 代理研究
+
+* 前言
+Traefik(https://traefik.io/) 是一个网络流量代理。目前支持http，https，tcp流量代理.
+由于选择使用Traefik 来作为公司服务网格的数据面，所以研究了一下Traefik代码并添加了一些新功能。
+** 主要特性
+- 支持负载均衡
+- 支持动态配置
+- 支持路由选择
+- 支持中间件
+- 支持插件机制(还比较新，不大稳定)
+- 支持webUI
+** Benchmark:
+- https://github.com/NickMRamirez/Proxy-Benchmarks
+就压测情况来看，Traefik略逊于nginx。对于我们公司的业务场景来说，还算能够接受的。
+** 使用方式
+*** 数据面
+在我们的实现的Service Mesh中，计划使用Traefik作为我们的数据面，所以Traefik需要以下特性：
+- 能够支持透明代理（比如由iptables直接劫持过来的流量）
+- 支持从控制面获取配置
+- 支持协议探测
+*** Ingress 网关
+同样，我们计划使用Traefik来替代我们的nginx，同样能够通过控制面来管理我们的入口网关，所以Traefik需要以下特性：
+- 支持路由配置应用到Ingress还是数据面
+- 支持流量权重配置
+- 支持虚拟service
+- 支持自定义路由规则等
+* 架构
+Traefik的代码十分简洁，对于主要的代理功能来说主要分为以下几个部分：
+  - 路由功能
+  - 反向代理
+  - 配置获取
+  - 中间件
+  - 动态插件
+** 反向代理
+作为一个代理服务来说，Traefik的基本功能就是用作反向代理。由于Traefik的tcp代理是2.0新加的功能，所以对于Traefik的设计上不支持协议探测功能，必须手动指定代理服务的协议，否则使用默认协议。
+*** HTTP 协议
+http的反向代理，Traefik 使用的是golang 标准库的包, 代码如下：
+#+begin_src go 
+// pkg/server/service/proxy.go
+  func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) (http.Handler, error) {
+         //.... 去掉不影响逻辑的代码 
+          proxy := &httputil.ReverseProxy{
+                  Director: func(outReq *http.Request) {
+                          u := outReq.URL
+                          if outReq.RequestURI != "" {
+                                  parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+                                  if err == nil {
+                                          u = parsedURL
+                                  }
+                          }
+
+                          outReq.URL.Path = u.Path
+                          outReq.URL.RawPath = u.RawPath
+                          outReq.URL.RawQuery = u.RawQuery
+                          outReq.RequestURI = "" // Outgoing request should not have RequestURI
+
+                          outReq.Proto = "HTTP/1.1"
+                          outReq.ProtoMajor = 1
+                          outReq.ProtoMinor = 1
+
+                          if _, ok := outReq.Header["User-Agent"]; !ok {
+                                  outReq.Header.Set("User-Agent", "")
+                          }
+
+                          // Do not pass client Host header unless optsetter PassHostHeader is set.
+                          if passHostHeader != nil && !*passHostHeader {
+                                  outReq.Host = outReq.URL.Host
+                          }
+
+                          // Even if the websocket RFC says that headers should be case-insensitive,
+                          // some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,
+                          // Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
+                          // https://tools.ietf.org/html/rfc6455#page-20
+                          outReq.Header["Sec-WebSocket-Key"] = outReq.Header["Sec-Websocket-Key"]
+                          outReq.Header["Sec-WebSocket-Extensions"] = outReq.Header["Sec-Websocket-Extensions"]
+                          outReq.Header["Sec-WebSocket-Accept"] = outReq.Header["Sec-Websocket-Accept"]
+                          outReq.Header["Sec-WebSocket-Protocol"] = outReq.Header["Sec-Websocket-Protocol"]
+                          outReq.Header["Sec-WebSocket-Version"] = outReq.Header["Sec-Websocket-Version"]
+                          delete(outReq.Header, "Sec-Websocket-Key")
+                          delete(outReq.Header, "Sec-Websocket-Extensions")
+                          delete(outReq.Header, "Sec-Websocket-Accept")
+                          delete(outReq.Header, "Sec-Websocket-Protocol")
+                          delete(outReq.Header, "Sec-Websocket-Version")
+                  },
+                  Transport:     roundTripper,
+                  FlushInterval: time.Duration(flushInterval),
+                  BufferPool:    bufferPool,
+                  ErrorHandler: func(w http.ResponseWriter, request *http.Request, err error) {
+                          statusCode := http.StatusInternalServerError
+
+                          switch {
+                          case err == io.EOF:
+                                  statusCode = http.StatusBadGateway
+                          case err == context.Canceled:
+                                  statusCode = StatusClientClosedRequest
+                          default:
+                                  if e, ok := err.(net.Error); ok {
+                                          if e.Timeout() {
+                                                  statusCode = http.StatusGatewayTimeout
+                                          } else {
+                                                  statusCode = http.StatusBadGateway
+                                          }
+                                  }
+                          }
+
+                          log.Debugf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+                          w.WriteHeader(statusCode)
+                          _, werr := w.Write([]byte(statusText(statusCode)))
+                          if werr != nil {
+                                  log.Debugf("Error while writing status code", werr)
+                          }
+                  },
+          }
+
+          return proxy, nil
+  }
+#+end_src
+这里没有设置的代理的后端地址的原因是，负责均衡包会动态改变请求的后端地址，所以反向代理就不用更改了。
+*** TCP 协议
+tcp协议的反向代理原理也很简单，主要是向代理的后端建立一个tcp连接，然后执行io.Copy执行数据，代码如下：
+#+begin_src go
+  // ServeTCP forwards the connection to a service.
+  func (p *Proxy) ServeTCP(ctx context.Context, conn WriteCloser) {
+          log.Debugf("Handling connection from %s", conn.RemoteAddr())
+          // needed because of e.g. server.trackedConnection
+          defer conn.Close()
+
+          var (
+                  connBackend WriteCloser
+                  err         error
+          )
+          // 向代理的后端建立一条tcp连接
+          connBackend, err = net.DialTCP("tcp", nil, p.target)
+          if err != nil {
+                  log.Errorf("Error while connection to backend: %v", err)
+                  return
+          }
+
+          // maybe not needed, but just in case
+          defer connBackend.Close()
+
+          errChan := make(chan error)
+          // 把请求的数据复制到后端
+          // 把返回的数据复制到请求端
+          go p.connCopy(conn, connBackend, errChan)
+          go p.connCopy(connBackend, conn, errChan)
+
+          err = <-errChan
+          if err != nil {
+                  log.WithoutContext().Errorf("Error during connection: %v", err)
+          }
+
+          <-errChan
+  }
+#+end_src
+** 负载均衡
+负载均衡对一个反向代理来说是一个非常重要的功能，对于http协议来说很容易做到请求级别的负载均衡，但是对于tcp协议来说只能做到连接的负载均衡(ps: 除非解析具体的tcp协议)
+HTTP 协议的负载均衡主要使用的是 https://github.com/vulcand/oxy/roundrobin 这个第三方包。相关代码如下：
+#+begin_src go
+func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+	logger := log.FromContext(ctx)
+	logger.Debug("Creating load-balancer")
+
+	var options []roundrobin.LBOption
+
+	var cookieName string
+	if service.Sticky != nil && service.Sticky.Cookie != nil {
+		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
+
+		opts := roundrobin.CookieOptions{
+			HTTPOnly: service.Sticky.Cookie.HTTPOnly,
+			Secure:   service.Sticky.Cookie.Secure,
+			SameSite: convertSameSite(service.Sticky.Cookie.SameSite),
+		}
+
+		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
+
+		logger.Debugf("Sticky session cookie name: %v", cookieName)
+	}
+
+	lb, err := roundrobin.New(fwd, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
+	if err := m.upsertServers(ctx, lbsu, service.Servers); err != nil {
+		return nil, fmt.Errorf("error configuring load balancer for service %s: %w", serviceName, err)
+	}
+
+	return lbsu, nil
+}
+#+end_src
+** 配置获取
+Traefik的配置来源支持多种方式，这可以在代理的provider目录中看见，每一种类型的proivder需要实现以下interface：
+#+begin_src go
+// Provider defines methods of a provider.
+type Provider interface {
+	// Provide allows the provider to provide configurations to traefik
+	// using the given configuration channel.
+	Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error
+	Init() error
+}
+#+end_src
+当前支持的配置来源有：
+- Docker
+- Kubernetes
+- Consul Catalog
+- ECS	
+- Marathon	
+- Rancher	
+- File	
+- Consul
+- Etcd	
+- ZooKeeper	
+- Redis
+- HTTP
+** 动态插件
+Traefik为了能够动态加载自定义中间件，实现了一个很有趣的功能，就是插件功能，通过实现了一个完全兼容go的解释器：https://github.com/traefik/yaegi, 当插件load后会通过解释器执行你的自定义插件，来更改实现中间件的目的。但是个人不大喜欢这种方式，第一：解释执行会对性能有一定损耗，而且对一个反向代理服务来说，qps是比较高的。第二：目前虽然go是一直向前兼容，但是要是出现不兼容的go版本，这个解释器就比较麻烦了。
+** 中间件
+Traefik 目前自带很多中间件，比如修改header，修改path等。对于http协议还是比较方便的。目前支持以下中间件：
+  - AddPrefix
+  - BasicAuth
+  - Buffering
+  - Chain
+  - CircuitBreaker
+  - Compress
+  - DigestAuth
+  - Errors
+  - ForwardAuth
+  - Headers
+  - IPWhiteList
+  - InFlightReq
+  - PassTLSClientCert
+  - RateLimit
+  - RedirectScheme
+  - RedirectRegex
+  - ReplacePath
+  - ReplacePathRegex
+  - Retry
+  - StripPrefix
+  - StripPrefixRegex
+可以看到Traefik目前支持很多中间件，一般来说已经够用了，如果不够用可以fork代码修改或者使用plugin机制。
+

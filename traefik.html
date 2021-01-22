@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-01-22 Fri 17:29 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Traefik 代理研究</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">Traefik 代理研究</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org5335246">1. 前言</a>
+<ul>
+<li><a href="#orgc729fbd">1.1. 主要特性</a></li>
+<li><a href="#orgbfe820c">1.2. Benchmark:</a></li>
+<li><a href="#orgd5fee3c">1.3. 使用方式</a></li>
+<li><a href="#orga7e7b7c">1.4. 数据面</a></li>
+<li><a href="#org7ac44e4">1.5. Ingress 网关</a></li>
+</ul>
+</li>
+<li><a href="#org9230894">2. 架构</a>
+<ul>
+<li><a href="#org27798c4">2.1. 反向代理</a></li>
+<li><a href="#org6a2ecbb">2.2. HTTP 协议</a></li>
+<li><a href="#orgb207aec">2.3. TCP 协议</a></li>
+<li><a href="#orgca6a988">2.4. 负载均衡</a></li>
+<li><a href="#orga08195a">2.5. 配置获取</a></li>
+<li><a href="#orga7583eb">2.6. 动态插件</a></li>
+<li><a href="#org3fe4339">2.7. 中间件</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org5335246" class="outline-2">
+<h2 id="org5335246"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Traefik(<a href="https://traefik.io/">https://traefik.io/</a>) 是一个网络流量代理。目前支持http，https，tcp流量代理.
+由于选择使用Traefik 来作为公司服务网格的数据面，所以研究了一下Traefik代码并添加了一些新功能。
+</p>
+</div>
+<div id="outline-container-orgc729fbd" class="outline-3">
+<h3 id="orgc729fbd"><span class="section-number-3">1.1</span> 主要特性</h3>
+<div class="outline-text-3" id="text-1-1">
+<ul class="org-ul">
+<li>支持负载均衡</li>
+<li>支持动态配置</li>
+<li>支持路由选择</li>
+<li>支持中间件</li>
+<li>支持插件机制(还比较新，不大稳定)</li>
+<li>支持webUI</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgbfe820c" class="outline-3">
+<h3 id="orgbfe820c"><span class="section-number-3">1.2</span> Benchmark:</h3>
+<div class="outline-text-3" id="text-1-2">
+<ul class="org-ul">
+<li><a href="https://github.com/NickMRamirez/Proxy-Benchmarks">https://github.com/NickMRamirez/Proxy-Benchmarks</a></li>
+</ul>
+<p>
+就压测情况来看，Traefik略逊于nginx。对于我们公司的业务场景来说，还算能够接受的。
+</p>
+</div>
+</div>
+<div id="outline-container-orgd5fee3c" class="outline-3">
+<h3 id="orgd5fee3c"><span class="section-number-3">1.3</span> 使用方式</h3>
+<div class="outline-text-3" id="text-1-3">
+</div>
+<div id="outline-container-orga7e7b7c" class="outline-3">
+<h3 id="orga7e7b7c"><span class="section-number-3">1.4</span> 数据面</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+在我们的实现的Service Mesh中，计划使用Traefik作为我们的数据面，所以Traefik需要以下特性：
+</p>
+<ul class="org-ul">
+<li>能够支持透明代理（比如由iptables直接劫持过来的流量）</li>
+<li>支持从控制面获取配置</li>
+<li>支持协议探测</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org7ac44e4" class="outline-3">
+<h3 id="org7ac44e4"><span class="section-number-3">1.5</span> Ingress 网关</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+同样，我们计划使用Traefik来替代我们的nginx，同样能够通过控制面来管理我们的入口网关，所以Traefik需要以下特性：
+</p>
+<ul class="org-ul">
+<li>支持路由配置应用到Ingress还是数据面</li>
+<li>支持流量权重配置</li>
+<li>支持虚拟service</li>
+<li>支持自定义路由规则等</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org9230894" class="outline-2">
+<h2 id="org9230894"><span class="section-number-2">2</span> 架构</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Traefik的代码十分简洁，对于主要的代理功能来说主要分为以下几个部分：
+</p>
+<ul class="org-ul">
+<li>路由功能</li>
+<li>反向代理</li>
+<li>配置获取</li>
+<li>中间件</li>
+<li>动态插件</li>
+</ul>
+</div>
+<div id="outline-container-org27798c4" class="outline-3">
+<h3 id="org27798c4"><span class="section-number-3">2.1</span> 反向代理</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+作为一个代理服务来说，Traefik的基本功能就是用作反向代理。由于Traefik的tcp代理是2.0新加的功能，所以对于Traefik的设计上不支持协议探测功能，必须手动指定代理服务的协议，否则使用默认协议。
+</p>
+</div>
+<div id="outline-container-org6a2ecbb" class="outline-3">
+<h3 id="org6a2ecbb"><span class="section-number-3">2.2</span> HTTP 协议</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+http的反向代理，Traefik 使用的是golang 标准库的包, 代码如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #676E95;">// </span><span style="color: #676E95;">pkg/server/service/proxy.go</span>
+  <span style="color: #89DDFF;">func</span> <span style="color: #82aaff;">buildProxy</span>(<span style="color: #ffcb6b;">passHostHeader</span> *<span style="color: #c792ea;">bool</span>, <span style="color: #ffcb6b;">responseForwarding</span> *<span style="color: #c792ea;">dynamic.ResponseForwarding</span>, <span style="color: #ffcb6b;">roundTripper</span> <span style="color: #c792ea;">http.RoundTripper</span>, <span style="color: #ffcb6b;">bufferPool</span> <span style="color: #c792ea;">httputil.BufferPool</span>) (<span style="color: #c792ea;">http.Handler</span>, <span style="color: #c792ea;">error</span>) {
+     <span style="color: #676E95;">//</span><span style="color: #676E95;">.... &#21435;&#25481;&#19981;&#24433;&#21709;&#36923;&#36753;&#30340;&#20195;&#30721; </span>
+      <span style="color: #ffcb6b;">proxy</span> := &amp;<span style="color: #c792ea;">httputil.ReverseProxy</span>{
+          <span style="color: #f78c6c;">Director</span>: <span style="color: #89DDFF;">func</span>(<span style="color: #ffcb6b;">outReq</span> *<span style="color: #c792ea;">http.Request</span>) {
+              <span style="color: #ffcb6b;">u</span> := outReq.URL
+              <span style="color: #89DDFF;">if</span> outReq.RequestURI != <span style="color: #c3e88d;">""</span> {
+                  <span style="color: #ffcb6b;">parsedURL</span>, <span style="color: #ffcb6b;">err</span> := url.<span style="color: #82aaff;">ParseRequestURI</span>(outReq.RequestURI)
+                  <span style="color: #89DDFF;">if</span> err == <span style="color: #f78c6c;">nil</span> {
+                      u = parsedURL
+                  }
+              }
+
+              outReq.URL.Path = u.Path
+              outReq.URL.RawPath = u.RawPath
+              outReq.URL.RawQuery = u.RawQuery
+              outReq.RequestURI = <span style="color: #c3e88d;">""</span> <span style="color: #676E95;">// </span><span style="color: #676E95;">Outgoing request should not have RequestURI</span>
+
+              outReq.Proto = <span style="color: #c3e88d;">"HTTP/1.1"</span>
+              outReq.ProtoMajor = 1
+              outReq.ProtoMinor = 1
+
+              <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">ok</span> := outReq.Header[<span style="color: #c3e88d;">"User-Agent"</span>]; <span style="color: #89DDFF; font-weight: bold;">!</span>ok {
+                  outReq.Header.<span style="color: #82aaff;">Set</span>(<span style="color: #c3e88d;">"User-Agent"</span>, <span style="color: #c3e88d;">""</span>)
+              }
+
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">Do not pass client Host header unless optsetter PassHostHeader is set.</span>
+              <span style="color: #89DDFF;">if</span> passHostHeader != <span style="color: #f78c6c;">nil</span> &amp;&amp; <span style="color: #89DDFF; font-weight: bold;">!</span>*passHostHeader {
+                  outReq.Host = outReq.URL.Host
+              }
+
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">Even if the websocket RFC says that headers should be case-insensitive,</span>
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,</span>
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.</span>
+              <span style="color: #676E95;">// </span><span style="color: #676E95;">https://tools.ietf.org/html/rfc6455#page-20</span>
+              outReq.Header[<span style="color: #c3e88d;">"Sec-WebSocket-Key"</span>] = outReq.Header[<span style="color: #c3e88d;">"Sec-Websocket-Key"</span>]
+              outReq.Header[<span style="color: #c3e88d;">"Sec-WebSocket-Extensions"</span>] = outReq.Header[<span style="color: #c3e88d;">"Sec-Websocket-Extensions"</span>]
+              outReq.Header[<span style="color: #c3e88d;">"Sec-WebSocket-Accept"</span>] = outReq.Header[<span style="color: #c3e88d;">"Sec-Websocket-Accept"</span>]
+              outReq.Header[<span style="color: #c3e88d;">"Sec-WebSocket-Protocol"</span>] = outReq.Header[<span style="color: #c3e88d;">"Sec-Websocket-Protocol"</span>]
+              outReq.Header[<span style="color: #c3e88d;">"Sec-WebSocket-Version"</span>] = outReq.Header[<span style="color: #c3e88d;">"Sec-Websocket-Version"</span>]
+              <span style="color: #82aaff;">delete</span>(outReq.Header, <span style="color: #c3e88d;">"Sec-Websocket-Key"</span>)
+              <span style="color: #82aaff;">delete</span>(outReq.Header, <span style="color: #c3e88d;">"Sec-Websocket-Extensions"</span>)
+              <span style="color: #82aaff;">delete</span>(outReq.Header, <span style="color: #c3e88d;">"Sec-Websocket-Accept"</span>)
+              <span style="color: #82aaff;">delete</span>(outReq.Header, <span style="color: #c3e88d;">"Sec-Websocket-Protocol"</span>)
+              <span style="color: #82aaff;">delete</span>(outReq.Header, <span style="color: #c3e88d;">"Sec-Websocket-Version"</span>)
+          },
+          <span style="color: #f78c6c;">Transport</span>:     roundTripper,
+          <span style="color: #f78c6c;">FlushInterval</span>: time.<span style="color: #82aaff;">Duration</span>(flushInterval),
+          <span style="color: #f78c6c;">BufferPool</span>:    bufferPool,
+          <span style="color: #f78c6c;">ErrorHandler</span>: <span style="color: #89DDFF;">func</span>(<span style="color: #ffcb6b;">w</span> <span style="color: #c792ea;">http.ResponseWriter</span>, <span style="color: #ffcb6b;">request</span> *<span style="color: #c792ea;">http.Request</span>, <span style="color: #ffcb6b;">err</span> <span style="color: #c792ea;">error</span>) {
+              <span style="color: #ffcb6b;">statusCode</span> := http.StatusInternalServerError
+
+              <span style="color: #89DDFF;">switch</span> {
+              <span style="color: #89DDFF;">case</span> err == io.EOF:
+                  statusCode = http.StatusBadGateway
+              <span style="color: #89DDFF;">case</span> err == context.Canceled:
+                  statusCode = StatusClientClosedRequest
+              <span style="color: #89DDFF;">default</span>:
+                  <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">e</span>, <span style="color: #ffcb6b;">ok</span> := err.(<span style="color: #c792ea;">net.Error</span>); ok {
+                      <span style="color: #89DDFF;">if</span> e.<span style="color: #82aaff;">Timeout</span>() {
+                          statusCode = http.StatusGatewayTimeout
+                      } <span style="color: #89DDFF;">else</span> {
+                          statusCode = http.StatusBadGateway
+                      }
+                  }
+              }
+
+              log.<span style="color: #82aaff;">Debugf</span>(<span style="color: #c3e88d;">"'%d %s' caused by: %v"</span>, statusCode, <span style="color: #82aaff;">statusText</span>(statusCode), err)
+              w.<span style="color: #82aaff;">WriteHeader</span>(statusCode)
+              <span style="color: #ffcb6b;">_</span>, <span style="color: #ffcb6b;">werr</span> := w.<span style="color: #82aaff;">Write</span>([]<span style="color: #82aaff;">byte</span>(<span style="color: #82aaff;">statusText</span>(statusCode)))
+              <span style="color: #89DDFF;">if</span> werr != <span style="color: #f78c6c;">nil</span> {
+                  log.<span style="color: #82aaff;">Debugf</span>(<span style="color: #c3e88d;">"Error while writing status code"</span>, werr)
+              }
+          },
+      }
+
+      <span style="color: #89DDFF;">return</span> proxy, <span style="color: #f78c6c;">nil</span>
+  }
+</pre>
+</div>
+<p>
+这里没有设置的代理的后端地址的原因是，负责均衡包会动态改变请求的后端地址，所以反向代理就不用更改了。
+</p>
+</div>
+</div>
+<div id="outline-container-orgb207aec" class="outline-3">
+<h3 id="orgb207aec"><span class="section-number-3">2.3</span> TCP 协议</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+tcp协议的反向代理原理也很简单，主要是向代理的后端建立一个tcp连接，然后执行io.Copy执行数据，代码如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #676E95;">// </span><span style="color: #676E95;">ServeTCP forwards the connection to a service.</span>
+<span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">p</span> *<span style="color: #c792ea;">Proxy</span>) <span style="color: #82aaff;">ServeTCP</span>(<span style="color: #ffcb6b;">ctx</span> <span style="color: #c792ea;">context.Context</span>, <span style="color: #ffcb6b;">conn</span> <span style="color: #c792ea;">WriteCloser</span>) {
+    log.<span style="color: #82aaff;">Debugf</span>(<span style="color: #c3e88d;">"Handling connection from %s"</span>, conn.<span style="color: #82aaff;">RemoteAddr</span>())
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">needed because of e.g. server.trackedConnection</span>
+    <span style="color: #89DDFF;">defer</span> conn.<span style="color: #82aaff;">Close</span>()
+
+    <span style="color: #89DDFF;">var</span> (
+        <span style="color: #ffcb6b;">connBackend</span> <span style="color: #c792ea;">WriteCloser</span>
+        <span style="color: #ffcb6b;">err</span>         <span style="color: #c792ea;">error</span>
+    )
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">&#21521;&#20195;&#29702;&#30340;&#21518;&#31471;&#24314;&#31435;&#19968;&#26465;tcp&#36830;&#25509;</span>
+    connBackend, err = net.<span style="color: #82aaff;">DialTCP</span>(<span style="color: #c3e88d;">"tcp"</span>, <span style="color: #f78c6c;">nil</span>, p.target)
+    <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+        log.<span style="color: #82aaff;">Errorf</span>(<span style="color: #c3e88d;">"Error while connection to backend: %v"</span>, err)
+        <span style="color: #89DDFF;">return</span>
+    }
+
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">maybe not needed, but just in case</span>
+    <span style="color: #89DDFF;">defer</span> connBackend.<span style="color: #82aaff;">Close</span>()
+
+    <span style="color: #ffcb6b;">errChan</span> := <span style="color: #82aaff;">make</span>(<span style="color: #89DDFF;">chan</span> <span style="color: #c792ea;">error</span>)
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">&#25226;&#35831;&#27714;&#30340;&#25968;&#25454;&#22797;&#21046;&#21040;&#21518;&#31471;</span>
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">&#25226;&#36820;&#22238;&#30340;&#25968;&#25454;&#22797;&#21046;&#21040;&#35831;&#27714;&#31471;</span>
+    <span style="color: #89DDFF;">go</span> p.<span style="color: #82aaff;">connCopy</span>(conn, connBackend, errChan)
+    <span style="color: #89DDFF;">go</span> p.<span style="color: #82aaff;">connCopy</span>(connBackend, conn, errChan)
+
+    err = &lt;-errChan
+    <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+        log.<span style="color: #82aaff;">WithoutContext</span>().<span style="color: #82aaff;">Errorf</span>(<span style="color: #c3e88d;">"Error during connection: %v"</span>, err)
+    }
+
+    &lt;-errChan
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgca6a988" class="outline-3">
+<h3 id="orgca6a988"><span class="section-number-3">2.4</span> 负载均衡</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+负载均衡对一个反向代理来说是一个非常重要的功能，对于http协议来说很容易做到请求级别的负载均衡，但是对于tcp协议来说只能做到连接的负载均衡(ps: 除非解析具体的tcp协议)
+HTTP 协议的负载均衡主要使用的是 <a href="https://github.com/vulcand/oxy/roundrobin">https://github.com/vulcand/oxy/roundrobin</a> 这个第三方包。相关代码如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #89DDFF;">func</span> (<span style="color: #ffcb6b;">m</span> *<span style="color: #c792ea;">Manager</span>) <span style="color: #82aaff;">getLoadBalancer</span>(<span style="color: #ffcb6b;">ctx</span> <span style="color: #c792ea;">context.Context</span>, <span style="color: #ffcb6b;">serviceName</span> <span style="color: #c792ea;">string</span>, <span style="color: #ffcb6b;">service</span> *<span style="color: #c792ea;">dynamic.ServersLoadBalancer</span>, <span style="color: #ffcb6b;">fwd</span> <span style="color: #c792ea;">http.Handler</span>) (<span style="color: #c792ea;">healthcheck.BalancerHandler</span>, <span style="color: #c792ea;">error</span>) {
+    <span style="color: #ffcb6b;">logger</span> := log.<span style="color: #82aaff;">FromContext</span>(ctx)
+    logger.<span style="color: #82aaff;">Debug</span>(<span style="color: #c3e88d;">"Creating load-balancer"</span>)
+
+    <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">options</span> []<span style="color: #c792ea;">roundrobin.LBOption</span>
+
+    <span style="color: #89DDFF;">var</span> <span style="color: #ffcb6b;">cookieName</span> <span style="color: #c792ea;">string</span>
+    <span style="color: #89DDFF;">if</span> service.Sticky != <span style="color: #f78c6c;">nil</span> &amp;&amp; service.Sticky.Cookie != <span style="color: #f78c6c;">nil</span> {
+        cookieName = cookie.<span style="color: #82aaff;">GetName</span>(service.Sticky.Cookie.Name, serviceName)
+
+        <span style="color: #ffcb6b;">opts</span> := <span style="color: #c792ea;">roundrobin.CookieOptions</span>{
+            <span style="color: #f78c6c;">HTTPOnly</span>: service.Sticky.Cookie.HTTPOnly,
+            <span style="color: #f78c6c;">Secure</span>:   service.Sticky.Cookie.Secure,
+            <span style="color: #f78c6c;">SameSite</span>: <span style="color: #82aaff;">convertSameSite</span>(service.Sticky.Cookie.SameSite),
+        }
+
+        options = <span style="color: #82aaff;">append</span>(options, roundrobin.<span style="color: #82aaff;">EnableStickySession</span>(roundrobin.<span style="color: #82aaff;">NewStickySessionWithOptions</span>(cookieName, opts)))
+
+        logger.<span style="color: #82aaff;">Debugf</span>(<span style="color: #c3e88d;">"Sticky session cookie name: %v"</span>, cookieName)
+    }
+
+    <span style="color: #ffcb6b;">lb</span>, <span style="color: #ffcb6b;">err</span> := roundrobin.<span style="color: #82aaff;">New</span>(fwd, options...)
+    <span style="color: #89DDFF;">if</span> err != <span style="color: #f78c6c;">nil</span> {
+        <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">nil</span>, err
+    }
+
+    <span style="color: #ffcb6b;">lbsu</span> := healthcheck.<span style="color: #82aaff;">NewLBStatusUpdater</span>(lb, m.configs[serviceName])
+    <span style="color: #89DDFF;">if</span> <span style="color: #ffcb6b;">err</span> := m.<span style="color: #82aaff;">upsertServers</span>(ctx, lbsu, service.Servers); err != <span style="color: #f78c6c;">nil</span> {
+        <span style="color: #89DDFF;">return</span> <span style="color: #f78c6c;">nil</span>, fmt.<span style="color: #82aaff;">Errorf</span>(<span style="color: #c3e88d;">"error configuring load balancer for service %s: %w"</span>, serviceName, err)
+    }
+
+    <span style="color: #89DDFF;">return</span> lbsu, <span style="color: #f78c6c;">nil</span>
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga08195a" class="outline-3">
+<h3 id="orga08195a"><span class="section-number-3">2.5</span> 配置获取</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+Traefik的配置来源支持多种方式，这可以在代理的provider目录中看见，每一种类型的proivder需要实现以下interface：
+</p>
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #676E95;">// </span><span style="color: #676E95;">Provider defines methods of a provider.</span>
+<span style="color: #89DDFF;">type</span> <span style="color: #c792ea;">Provider</span> <span style="color: #89DDFF;">interface</span> {
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">Provide allows the provider to provide configurations to traefik</span>
+    <span style="color: #676E95;">// </span><span style="color: #676E95;">using the given configuration channel.</span>
+    <span style="color: #82aaff;">Provide</span>(<span style="color: #ffcb6b;">configurationChan</span> <span style="color: #89DDFF;">chan</span>&lt;- <span style="color: #c792ea;">dynamic.Message</span>, <span style="color: #ffcb6b;">pool</span> *<span style="color: #c792ea;">safe.Pool</span>) <span style="color: #c792ea;">error</span>
+    <span style="color: #82aaff;">Init</span>() <span style="color: #c792ea;">error</span>
+}
+</pre>
+</div>
+<p>
+当前支持的配置来源有：
+</p>
+<ul class="org-ul">
+<li>Docker</li>
+<li>Kubernetes</li>
+<li>Consul Catalog</li>
+<li>ECS</li>
+<li>Marathon</li>
+<li>Rancher</li>
+<li>File</li>
+<li>Consul</li>
+<li>Etcd</li>
+<li>ZooKeeper</li>
+<li>Redis</li>
+<li>HTTP</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orga7583eb" class="outline-3">
+<h3 id="orga7583eb"><span class="section-number-3">2.6</span> 动态插件</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+Traefik为了能够动态加载自定义中间件，实现了一个很有趣的功能，就是插件功能，通过实现了一个完全兼容go的解释器：<a href="https://github.com/traefik/yaegi">https://github.com/traefik/yaegi</a>, 当插件load后会通过解释器执行你的自定义插件，来更改实现中间件的目的。但是个人不大喜欢这种方式，第一：解释执行会对性能有一定损耗，而且对一个反向代理服务来说，qps是比较高的。第二：目前虽然go是一直向前兼容，但是要是出现不兼容的go版本，这个解释器就比较麻烦了。
+</p>
+</div>
+</div>
+<div id="outline-container-org3fe4339" class="outline-3">
+<h3 id="org3fe4339"><span class="section-number-3">2.7</span> 中间件</h3>
+<div class="outline-text-3" id="text-2-7">
+<p>
+Traefik 目前自带很多中间件，比如修改header，修改path等。对于http协议还是比较方便的。目前支持以下中间件：
+</p>
+<ul class="org-ul">
+<li>AddPrefix</li>
+<li>BasicAuth</li>
+<li>Buffering</li>
+<li>Chain</li>
+<li>CircuitBreaker</li>
+<li>Compress</li>
+<li>DigestAuth</li>
+<li>Errors</li>
+<li>ForwardAuth</li>
+<li>Headers</li>
+<li>IPWhiteList</li>
+<li>InFlightReq</li>
+<li>PassTLSClientCert</li>
+<li>RateLimit</li>
+<li>RedirectScheme</li>
+<li>RedirectRegex</li>
+<li>ReplacePath</li>
+<li>ReplacePathRegex</li>
+<li>Retry</li>
+<li>StripPrefix</li>
+<li>StripPrefixRegex</li>
+</ul>
+<p>
+可以看到Traefik目前支持很多中间件，一般来说已经够用了，如果不够用可以fork代码修改或者使用plugin机制。
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2021-01-22 Fri 17:29</p>
+</div>
+</body>
+</html>
