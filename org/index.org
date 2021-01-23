@@ -1,4 +1,4 @@
-#+TITLE: 个人blog
+#+TITLE: 一个懒惰的程序员
 #+OPTIONS: TOC:nil
 #+OPTIONS: NUM:nil
 #+OPTIONS: AUTHOR:nil 
