@@ -1,0 +1,79 @@
+#+TITLE: kubelet 源码阅读(一)
+
+* 前言
+一直在使用k8s，但是也一直没有看过k8s的源码，一来是因为一直都是使用的状态，有问题就呼叫容器组；二来是觉得项目比较大，会耗费很多时间。目前换了个比较不大忙的工作，所以就想着把这块内容补起来，起码得把k8s几大组件都简单看一遍。
+
+** TODO 主任务
+* ImageManager 的作用与实现
+ ImageManager 用于管理主机上的image的生命周期。
+ #+begin_src go
+ type ImageGCManager interface {
+	GarbageCollect() error
+	Start()
+	GetImageList() ([]container.Image, error)
+	DeleteUnusedImages() error
+ }
+ #+end_src
+- Start 函数每五分钟检测本机是否有新的镜像，更新镜像使用时间。
+- Start 函数每30s获取本机的所有镜像，更新到自己的缓存中。
+- GetImageList 从缓存中获取本地的所有镜像。
+- GarbageCollect 获取本机的镜像使用情况，如果使用量达到一定的水位，则会尝试删除未使用的镜像。(如果镜像存在时间过短也不会删除，防止刚拉取的镜像还未使用就被删除，这个时间默认是2分钟)
+- DeleteUnusedImages 删除未使用的镜像，回收磁盘空间，跟 GarbageCollect 不同的 GC 是当镜像磁盘使用率达到一定空间后才会触发，而且只回收一定的空间(满足空间未达到高水位), 而此函数会尽可能的回收所有空间。
+
+* VolumeManager 的作用与实现
+#+begin_src go
+type VolumeManager interface {
+	Run(sourcesReady config.SourcesReady, stopCh <-chan struct{})
+	WaitForAttachAndMount(pod *v1.Pod) error
+	GetMountedVolumesForPod(podName types.UniquePodName) container.VolumeMap
+	GetExtraSupplementalGroupsForPod(pod *v1.Pod) []int64
+	GetVolumesInUse() []v1.UniqueVolumeName
+	VolumeIsAttached(volumeName v1.UniqueVolumeName) bool
+	MarkVolumesAsReportedInUse(volumesReportedAsInUse []v1.UniqueVolumeName)
+}
+#+end_src
+ - Run 会启动desiredStateOfWorldPopulator 和 reconciler 两个goroutinue。
+ - desiredStateOfWorldPopulator 从PodManager中获取Pods，计算最终的数据，存放在desiredStateOfWorld.
+ - reconciler 通过desiredStateOfWorld 把现在的状态慢慢的迁移到期望的状态, reconciler 主要执行以下三个操作.
+#+begin_src go
+func (rc *reconciler) reconcile() {
+	// Unmounts are triggered before mounts so that a volume that was
+	// referenced by a pod that was deleted and is now referenced by another
+	// pod is unmounted from the first pod before being mounted to the new
+	// pod.
+	rc.unmountVolumes()
+
+	// Next we mount required volumes. This function could also trigger
+	// attach if kubelet is responsible for attaching volumes.
+	// If underlying PVC was resized while in-use then this function also handles volume
+	// resizing.
+	rc.mountAttachVolumes()
+
+	// Ensure devices that should be detached/unmounted are detached/unmounted.
+	rc.unmountDetachDevices()
+}
+#+end_src
+ - WaitForAttachAndMount 会检查pod是否达到期望状态，会等待2分钟。
+ - GetMountedVolumesForPod 获取当前pod的卷的实际状态。 
+ - GetVolumesInUse 获取实际状态和期望状态的在使用的卷。
+ - VolumeIsAttached 如果volumeName在实际状态中，则表示在已经attach
+* 其他一些简单goroutinue的工作
+- 同步节点状态
+- 同步租约
+- 更新容器运行时状态
+- 每秒执行PodKilling
+* StatusManager 的作用与实现
+#+begin_src go
+type Manager interface {
+	PodStatusProvider
+	Start()
+	SetPodStatus(pod *v1.Pod, status v1.PodStatus)
+	SetContainerReadiness(podUID types.UID, containerID kubecontainer.ContainerID, ready bool)
+	SetContainerStartup(podUID types.UID, containerID kubecontainer.ContainerID, started bool)
+	TerminatePod(pod *v1.Pod)
+	RemoveOrphanedStatuses(podUIDs map[types.UID]bool)
+}
+#+end_src
+- Start 启动一个goroutinue 定时同步Pod的状态到api server
+- SetPodStatus 在监听到pod状态改变的时候更新Pod的状态
+* 未完待续

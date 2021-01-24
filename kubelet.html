@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-01-24 Sun 21:14 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>kubelet 源码阅读(一)</title>
+<meta name="generator" content="Org mode" />
+<link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/gitalk/dist/gitalk.css"/> <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href="index.html"> HOME </a>
+</div><div id="content">
+<h1 class="title">kubelet 源码阅读(一)</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org289cdd4">1. 前言</a>
+<ul>
+<li><a href="#orgc353f98">1.1. <span class="todo TODO">TODO</span> 主任务</a></li>
+</ul>
+</li>
+<li><a href="#org894304c">2. ImageManager 的作用与实现</a></li>
+<li><a href="#org37fe9dd">3. VolumeManager 的作用与实现</a></li>
+<li><a href="#org038073a">4. 其他一些简单goroutinue的工作</a></li>
+<li><a href="#orgd521b98">5. StatusManager 的作用与实现</a></li>
+<li><a href="#org1d48cb1">6. 未完待续</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org289cdd4" class="outline-2">
+<h2 id="org289cdd4"><span class="section-number-2">1</span> 前言</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+一直在使用k8s，但是也一直没有看过k8s的源码，一来是因为一直都是使用的状态，有问题就呼叫容器组；二来是觉得项目比较大，会耗费很多时间。目前换了个比较不大忙的工作，所以就想着把这块内容补起来，起码得把k8s几大组件都简单看一遍。
+</p>
+</div>
+
+<div id="outline-container-orgc353f98" class="outline-3">
+<h3 id="orgc353f98"><span class="section-number-3">1.1</span> <span class="todo TODO">TODO</span> 主任务</h3>
+</div>
+</div>
+<div id="outline-container-org894304c" class="outline-2">
+<h2 id="org894304c"><span class="section-number-2">2</span> ImageManager 的作用与实现</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+ImageManager 用于管理主机上的image的生命周期。
+</p>
+<div class="org-src-container">
+<pre class="src src-go">type ImageGCManager interface {
+       GarbageCollect() error
+       Start()
+       GetImageList() ([]container.Image, error)
+       DeleteUnusedImages() error
+}
+</pre>
+</div>
+<ul class="org-ul">
+<li>Start 函数每五分钟检测本机是否有新的镜像，更新镜像使用时间。</li>
+<li>Start 函数每30s获取本机的所有镜像，更新到自己的缓存中。</li>
+<li>GetImageList 从缓存中获取本地的所有镜像。</li>
+<li>GarbageCollect 获取本机的镜像使用情况，如果使用量达到一定的水位，则会尝试删除未使用的镜像。(如果镜像存在时间过短也不会删除，防止刚拉取的镜像还未使用就被删除，这个时间默认是2分钟)</li>
+<li>DeleteUnusedImages 删除未使用的镜像，回收磁盘空间，跟 GarbageCollect 不同的 GC 是当镜像磁盘使用率达到一定空间后才会触发，而且只回收一定的空间(满足空间未达到高水位), 而此函数会尽可能的回收所有空间。</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org37fe9dd" class="outline-2">
+<h2 id="org37fe9dd"><span class="section-number-2">3</span> VolumeManager 的作用与实现</h2>
+<div class="outline-text-2" id="text-3">
+<div class="org-src-container">
+<pre class="src src-go">type VolumeManager interface {
+	Run(sourcesReady config.SourcesReady, stopCh &lt;-chan struct{})
+	WaitForAttachAndMount(pod *v1.Pod) error
+	GetMountedVolumesForPod(podName types.UniquePodName) container.VolumeMap
+	GetExtraSupplementalGroupsForPod(pod *v1.Pod) []int64
+	GetVolumesInUse() []v1.UniqueVolumeName
+	VolumeIsAttached(volumeName v1.UniqueVolumeName) bool
+	MarkVolumesAsReportedInUse(volumesReportedAsInUse []v1.UniqueVolumeName)
+}
+</pre>
+</div>
+<ul class="org-ul">
+<li>Run 会启动desiredStateOfWorldPopulator 和 reconciler 两个goroutinue。</li>
+<li>desiredStateOfWorldPopulator 从PodManager中获取Pods，计算最终的数据，存放在desiredStateOfWorld.</li>
+<li>reconciler 通过desiredStateOfWorld 把现在的状态慢慢的迁移到期望的状态, reconciler 主要执行以下三个操作.</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-go">func (rc *reconciler) reconcile() {
+	// Unmounts are triggered before mounts so that a volume that was
+	// referenced by a pod that was deleted and is now referenced by another
+	// pod is unmounted from the first pod before being mounted to the new
+	// pod.
+	rc.unmountVolumes()
+
+	// Next we mount required volumes. This function could also trigger
+	// attach if kubelet is responsible for attaching volumes.
+	// If underlying PVC was resized while in-use then this function also handles volume
+	// resizing.
+	rc.mountAttachVolumes()
+
+	// Ensure devices that should be detached/unmounted are detached/unmounted.
+	rc.unmountDetachDevices()
+}
+</pre>
+</div>
+<ul class="org-ul">
+<li>WaitForAttachAndMount 会检查pod是否达到期望状态，会等待2分钟。</li>
+<li>GetMountedVolumesForPod 获取当前pod的卷的实际状态。</li>
+<li>GetVolumesInUse 获取实际状态和期望状态的在使用的卷。</li>
+<li>VolumeIsAttached 如果volumeName在实际状态中，则表示在已经attach</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org038073a" class="outline-2">
+<h2 id="org038073a"><span class="section-number-2">4</span> 其他一些简单goroutinue的工作</h2>
+<div class="outline-text-2" id="text-4">
+<ul class="org-ul">
+<li>同步节点状态</li>
+<li>同步租约</li>
+<li>更新容器运行时状态</li>
+<li>每秒执行PodKilling</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgd521b98" class="outline-2">
+<h2 id="orgd521b98"><span class="section-number-2">5</span> StatusManager 的作用与实现</h2>
+<div class="outline-text-2" id="text-5">
+<div class="org-src-container">
+<pre class="src src-go">type Manager interface {
+	PodStatusProvider
+	Start()
+	SetPodStatus(pod *v1.Pod, status v1.PodStatus)
+	SetContainerReadiness(podUID types.UID, containerID kubecontainer.ContainerID, ready bool)
+	SetContainerStartup(podUID types.UID, containerID kubecontainer.ContainerID, started bool)
+	TerminatePod(pod *v1.Pod)
+	RemoveOrphanedStatuses(podUIDs map[types.UID]bool)
+}
+</pre>
+</div>
+<ul class="org-ul">
+<li>Start 启动一个goroutinue 定时同步Pod的状态到api server</li>
+<li>SetPodStatus 在监听到pod状态改变的时候更新Pod的状态</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org1d48cb1" class="outline-2">
+<h2 id="org1d48cb1"><span class="section-number-2">6</span> 未完待续</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<div id="gitalk" /> <script> var gitalk = new Gitalk({
+  clientID: 'f30e66bb5ab9089aa742',
+  clientSecret: '5d256d445447bd4db16540c2aab0e0884218ed12',
+  repo: 'guidao.github.io',
+  owner: 'guidao',
+  admin: ['guidao'],
+  id: location.pathname,      // Ensure uniqueness and length less than 50
+  distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk') </script>
+</div>
+</body>
+</html>

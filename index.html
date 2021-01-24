@@ -8,7 +8,53 @@
 <title>一个懒惰的程序员</title>
 <meta name="generator" content="Org mode" />
 <link rel="stylesheet" type="text/css" href="./css/org-css.css"/>
-<link rel="stylesheet" type="text/css" href="./css/gitalk.css"/> <script src="./js/gitalk.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/gitalk/dist/gitalk.css"/> <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -17,18 +63,19 @@
  <a accesskey="H" href="index.html"> HOME </a>
 </div><div id="content">
 <h1 class="title">一个懒惰的程序员</h1>
-<div id="outline-container-org281af38" class="outline-2">
-<h2 id="org281af38">2020</h2>
-<div class="outline-text-2" id="text-org281af38">
+<div id="outline-container-orgde3f040" class="outline-2">
+<h2 id="orgde3f040">2020</h2>
+<div class="outline-text-2" id="text-orgde3f040">
 <ul class="org-ul">
+<li><a href="kubelet.html">Kubelet 源码阅读(一)</a></li>
 <li><a href="traefik.html">Traefik 代理研究</a></li>
 <li><a href="2021-01-13T2048.html">Service Mesh 调研</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgdfd76cb" class="outline-2">
-<h2 id="orgdfd76cb">2018</h2>
-<div class="outline-text-2" id="text-orgdfd76cb">
+<div id="outline-container-org374315b" class="outline-2">
+<h2 id="org374315b">2018</h2>
+<div class="outline-text-2" id="text-org374315b">
 <ul class="org-ul">
 <li><a href="nsq.html">nsq源码阅读(一)</a></li>
 <li><a href="lock.html">分布式锁总结</a></li>
@@ -36,9 +83,9 @@
 </ul>
 </div>
 </div>
-<div id="outline-container-orgdcfc3c1" class="outline-2">
-<h2 id="orgdcfc3c1">2017</h2>
-<div class="outline-text-2" id="text-orgdcfc3c1">
+<div id="outline-container-org8d808f3" class="outline-2">
+<h2 id="org8d808f3">2017</h2>
+<div class="outline-text-2" id="text-org8d808f3">
 <ul class="org-ul">
 <li><a href="malloc.html">golang内存分配分析</a></li>
 <li><a href="elixir_script.html">使用elixir作为日常脚本</a></li>
@@ -51,9 +98,9 @@
 </ul>
 </div>
 </div>
-<div id="outline-container-org8ef4a07" class="outline-2">
-<h2 id="org8ef4a07">2016</h2>
-<div class="outline-text-2" id="text-org8ef4a07">
+<div id="outline-container-orgfdb998e" class="outline-2">
+<h2 id="orgfdb998e">2016</h2>
+<div class="outline-text-2" id="text-orgfdb998e">
 <ul class="org-ul">
 <li><a href="go_timer.html">go中的定时器实现</a></li>
 <li><a href="go_debug.html">golang调试工具</a></li>
