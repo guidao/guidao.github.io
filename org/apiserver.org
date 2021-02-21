@@ -1,6 +1,7 @@
 #+TITLE: apiserver 源码阅读(一) 
 
 * 前言
+apiserver 提供了给其他组件对资源对象的增删改查等，其他组件通过监听apiserver的资源执行相应的操作。
 * Authorizer
 主要通过role，rolebinding获取对应的配置。根据配置判断是否角色有对应权限. 
 #+begin_src go
