@@ -1,0 +1,229 @@
+#+TITLE: golang pprof 总结
+
+* 简介
+pprof用于采样golang程序运行情况，可以用来监控goroutinue的堆栈，block，mutex，cpu的耗时跟堆的分配情况。在调试一些问题的时候十分有帮助。pprof数据格式是通过protobuf定义的，所以采样数据也是protobuf的格式，可以使用protoc工具解析，当然最好是利用 go tool pprof 进行解析。每次在使用pprof工具的时候只会照葫芦画瓢，只知道如何去看产生的数据却不知道数据是如何产生的，有空翻了一下源码记录在此，文笔不好，思维也比较乱，见谅。
+** pprof格式定义
+定义pprof的格式: https://github.com/google/pprof/blob/master/proto/profile.proto
+* Goroutinue
+一个简单的例子：
+使用 =go tool pprof -raw ./pprof.pb.gz=
+#+begin_src 
+PeriodType: goroutine count
+Period: 1
+Time: 2021-01-14 23:45:13.677929 +0800 CST
+Samples:
+goroutine/count
+          2: 1 2 3
+                test_label:[test_value]
+          1: 1 4 5 6
+                test_label:[test_value]
+          1: 1 7 8 9 10 11 12 13
+          1: 1 7 8 9 10 11 12 14 15 16 17
+                test_label:[test_value]
+          1: 1 7 8 9 18 19 20 21 22 23 24
+          1: 1 25 26
+                test_label:[test_value]
+          1: 1 25 27 28 29 30 31 32 33 34 35 36 37 38
+                test_label:[test_value]
+          1: 1 2 39
+                test_label:[test_value]
+          1: 40 41 42 43 44 45 46 47 48 49
+Locations
+     1: 0x103b124 M=1 runtime.gopark /usr/local/Cellar/go/1.15.6/libexec/src/runtime/proc.go:306 s=0
+     2: 0x106cd1e M=1 time.Sleep /usr/local/Cellar/go/1.15.6/libexec/src/runtime/time.go:188 s=0
+     3: 0x13ac449 M=1 main.shortSleepLoop /Users/felix.geisendoerfer/go/src/github.com/felixge/go-profiler-notes/examples/goroutine/main.go:165 s=0
+     4: 0x10083ee M=1 runtime.chanrecv /usr/local/Cellar/go/1.15.6/libexec/src/runtime/chan.go:577 s=0
+     5: 0x100802a M=1 runtime.chanrecv1 /usr/local/Cellar/go/1.15.6/libexec/src/runtime/chan.go:439 s=0
+.... 省略
+#+end_src
+
+使用 =go tool pprof ./pprof.pb.gz=
+#+begin_src 
+Type: goroutine
+Time: Jan 14, 2021 at 11:45pm (CST)
+Entering interactive mode (type "help" for commands, "o" for options)
+(pprof) top
+Showing nodes accounting for 10, 100% of 10 total
+Showing top 10 nodes out of 53
+      flat  flat%   sum%        cum   cum%
+         9 90.00% 90.00%          9 90.00%  runtime.gopark
+         1 10.00%   100%          1 10.00%  runtime/pprof.runtime_goroutineProfileWithLabels
+         0     0%   100%          1 10.00%  bufio.(*Reader).Peek
+         0     0%   100%          1 10.00%  bufio.(*Reader).fill
+         0     0%   100%          1 10.00%  internal/poll.(*FD).Accept
+         0     0%   100%          2 20.00%  internal/poll.(*FD).Read
+         0     0%   100%          3 30.00%  internal/poll.(*pollDesc).wait
+         0     0%   100%          3 30.00%  internal/poll.(*pollDesc).waitRead (inline)
+         0     0%   100%          3 30.00%  internal/poll.runtime_pollWait
+         0     0%   100%          1 10.00%  main.chanReceiveForever
+(pprof)
+#+end_src
+这里可以看到有9个goroutinue停留在gopark，一个goroutinue停留在pprof。
+
+** 实现方式
+那么goroutinue的pprof数据是怎么统计的呢？代码如下：
+- 如果 debug > 2 则通过 runtime.Stack 获取
+- 其他情况则通过  =runtime_goroutineProfileWithLabels= 获取
+当然，所有情况都是通过 stopTheWorld 后通过读取 allgs 中的 goroutinue 的堆栈数据
+#+begin_src go
+  func writeGoroutine(w io.Writer, debug int) error {
+          // 如果 debug > 2 则使用 runtime.Stack 数据
+          if debug >= 2 {
+                  return writeGoroutineStacks(w)
+          }
+          return writeRuntimeProfile(w, debug, "goroutine", runtime_goroutineProfileWithLabels)
+  }
+
+  func writeGoroutineStacks(w io.Writer) error {
+          // We don't know how big the buffer needs to be to collect
+          // all the goroutines. Start with 1 MB and try a few times, doubling each time.
+          // Give up and use a truncated trace if 64 MB is not enough.
+          buf := make([]byte, 1<<20)
+          for i := 0; ; i++ {
+                  n := runtime.Stack(buf, true)
+                  if n < len(buf) {
+                          buf = buf[:n]
+                          break
+                  }
+                  if len(buf) >= 64<<20 {
+                          // Filled 64 MB - stop there.
+                          break
+                  }
+                  buf = make([]byte, 2*len(buf))
+          }
+          _, err := w.Write(buf)
+          return err
+  }
+#+end_src
+
+* Block & Mutex
+ block 跟mutex 实现差不多，当 block 被唤醒或者 mutex 被释放的时候记录一下相关的信息。
+相关代码见：
+#+begin_src go
+  func mutexevent(cycles int64, skip int) {
+          if cycles < 0 {
+                  cycles = 0
+          }
+          rate := int64(atomic.Load64(&mutexprofilerate))
+          // TODO(pjw): measure impact of always calling fastrand vs using something
+          // like malloc.go:nextSample()
+          if rate > 0 && int64(fastrand())%rate == 0 {
+                  saveblockevent(cycles, skip+1, mutexProfile)
+          }
+  }
+#+end_src
+当 mutex 获取的时候回触发此函数，如果 rate > 0 则按 rate 的采样率执行记录。这里可以看到，如果设置了 rate 则不是每次锁等待都会被记录。
+
+#+begin_src go
+func blockevent(cycles int64, skip int) {
+	if cycles <= 0 {
+		cycles = 1
+	}
+	if blocksampled(cycles) {
+		saveblockevent(cycles, skip+1, blockProfile)
+	}
+}
+
+func blocksampled(cycles int64) bool {
+	rate := int64(atomic.Load64(&blockprofilerate))
+	if rate <= 0 || (rate > cycles && int64(fastrand())%rate > cycles) {
+		return false
+	}
+	return true
+}
+#+end_src
+block 采样稍微有点不一样，分为两种情况：
+- 对于 block 时间大于 rate 的，则全部记录
+- 对于 block 时间小于 rete 的，采样概率为 cycles / rate 
+* CPU
+cpu 的采样是通过 SIGPROF 信号实现的，golang默认会处理这个这些，官方文档如下：
+#+BEGIN_QUOTE
+By default, a synchronous signal is converted into a run-time panic. A SIGHUP, SIGINT, or SIGTERM signal causes the program to exit. A SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGSTKFLT, SIGEMT, or SIGSYS signal causes the program to exit with a stack dump. A SIGTSTP, SIGTTIN, or SIGTTOU signal gets the system default behavior (these signals are used by the shell for job control). The SIGPROF signal is handled directly by the Go runtime to implement runtime.CPUProfile. Other signals will be caught but no action will be taken.
+#+END_QUOTE
+
+信号处理函数：
+#+begin_src go
+  func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
+          _g_ := getg()
+          c := &sigctxt{info, ctxt}
+
+          if sig == _SIGPROF {
+                  sigprof(c.sigpc(), c.sigsp(), c.siglr(), gp, _g_.m)
+                  return
+          }
+  }
+#+end_src
+开启CPU采样：
+#+begin_src go
+func StartCPUProfile(w io.Writer) error {
+	const hz = 100
+
+	cpu.Lock()
+	defer cpu.Unlock()
+	if cpu.done == nil {
+		cpu.done = make(chan bool)
+	}
+	// Double-check.
+	if cpu.profiling {
+		return fmt.Errorf("cpu profiling already in use")
+	}
+	cpu.profiling = true
+	runtime.SetCPUProfileRate(hz)
+	go profileWriter(w)
+	return nil
+}
+
+func profileWriter(w io.Writer) {
+	b := newProfileBuilder(w)
+	var err error
+	for {
+		time.Sleep(100 * time.Millisecond)
+		data, tags, eof := readProfile()
+		if e := b.addCPUData(data, tags); e != nil && err == nil {
+			err = e
+		}
+		if eof {
+			break
+		}
+	}
+	if err != nil {
+		panic("runtime/pprof: converting profile: " + err.Error())
+	}
+	b.build()
+	cpu.done <- true
+}
+#+end_src
+cpu 采样的完整流程如下：
+- 通过设置 sigprof 信号的采样频率
+- 每次收到 sigprof 信号后把当前 cpu 占用的堆栈信息写入到 cpuprof 全局变量
+- 每 100ms 从 cpuprof 变量中读取采样记录写入到最终的pprof数据中
+
+所以从上可知，cpu的pprof记录的当前函数占用的采样次数。所以当前函数占用cpu的时间可以直接换算得出：时间=次数*采样周期
+** TODO 多线程如何处理
+* Heap
+heap 跟 block，mutex 的方式差不多，如果设置了采样 rate，则每次分配的时候记录分配空间的大小。
+#+begin_src go
+  func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
+          //.....忽略其他逻辑
+          if rate := MemProfileRate; rate > 0 {
+                  if rate != 1 && size < c.nextSample {
+                          c.nextSample -= size
+                  } else {
+                          mp := acquirem()
+                          profilealloc(mp, x, size)
+                          releasem(mp)
+                  }
+          }
+          //......忽略其他逻辑
+  }	
+#+end_src
+采样方式如下：
+- 如果rate == 1 则始终采样
+- 如果rate > 1 则未采样的分配数据大于rate时进行采样
+- 其他情况不采样
+
+
+
+
+* 参考链接
+- https://github.com/DataDog/go-profiler-notes
